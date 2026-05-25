@@ -237,6 +237,13 @@
     "title": "Analiz",
     "subtitle": "Finansal akışına dair içgörüler",
     "cashFlow": "Nakit Akışı",
+    "cashFlowFixed": "Nakit Akışı · Sabit Giderler",
+    "cashFlowVariable": "Nakit Akışı · Değişken Giderler",
+    "expenseTypeFilter": {
+      "all": "Tümü",
+      "fixed": "Sabit",
+      "variable": "Değişken"
+    },
     "income": "Gelir",
     "expense": "Gider",
     "netSavings": "Net Birikim",

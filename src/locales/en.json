@@ -237,6 +237,13 @@
     "title": "Analytics",
     "subtitle": "Insights into your financial flow",
     "cashFlow": "Cash Flow",
+    "cashFlowFixed": "Cash Flow · Fixed Expenses",
+    "cashFlowVariable": "Cash Flow · Variable Expenses",
+    "expenseTypeFilter": {
+      "all": "All",
+      "fixed": "Fixed",
+      "variable": "Variable"
+    },
     "income": "Income",
     "expense": "Expense",
     "netSavings": "Net Savings",

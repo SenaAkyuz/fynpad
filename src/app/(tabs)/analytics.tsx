@@ -17,7 +17,13 @@ import { useBudgets } from '@/hooks/useBudgets';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
-import { avgDailySpend, cashFlowSeries, topCategories } from '@/lib/analytics';
+import {
+  avgDailySpend,
+  cashFlowSeries,
+  filterByExpenseType,
+  topCategories,
+  type ExpenseType,
+} from '@/lib/analytics';
 import { computeBudgetStatus, startOfMonthISO } from '@/lib/budgets';
 import { getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
@@ -35,6 +41,7 @@ export default function AnalyticsScreen() {
   const locale = useAppStore((s) => s.locale);
 
   const [period, setPeriod] = useState<Period>('month');
+  const [expenseType, setExpenseType] = useState<ExpenseType>('all');
 
   const { data: transactions = [], isLoading } = useTransactions({ period });
   const { data: categories = [] } = useCategories();
@@ -47,13 +54,24 @@ export default function AnalyticsScreen() {
 
   const currency: Currency = profile?.defaultCurrency ?? 'TRY';
 
-  const totals = useMemo(() => getTotals(transactions), [transactions]);
-  const cashFlow = useMemo(
-    () => cashFlowSeries(transactions, period, locale),
-    [transactions, period, locale]
+  // Gider tipi filtresi gelir'i etkilemez (filterByExpenseType gelirleri korur):
+  // net = gelir − filtreli gider, böylece Sabit/Değişken seçiminde net birikim güncellenir.
+  const totals = useMemo(
+    () => getTotals(filterByExpenseType(transactions, expenseType)),
+    [transactions, expenseType]
   );
-  const avgDaily = useMemo(() => avgDailySpend(transactions, period), [transactions, period]);
-  const topCats = useMemo(() => topCategories(transactions, 5), [transactions]);
+  const cashFlow = useMemo(
+    () => cashFlowSeries(transactions, period, locale, expenseType),
+    [transactions, period, locale, expenseType]
+  );
+  const avgDaily = useMemo(
+    () => avgDailySpend(transactions, period, expenseType),
+    [transactions, period, expenseType]
+  );
+  const topCats = useMemo(
+    () => topCategories(transactions, 5, expenseType),
+    [transactions, expenseType]
+  );
   const budgetStatuses = useMemo(
     () => budgets.map((b) => computeBudgetStatus(b, monthTransactions)),
     [budgets, monthTransactions]
@@ -68,6 +86,20 @@ export default function AnalyticsScreen() {
     { value: 'month', label: t('dashboard.period.month') },
     { value: 'year', label: t('dashboard.period.year') },
   ];
+
+  const expenseTypeOptions: SegmentOption[] = [
+    { value: 'all', label: t('analytics.expenseTypeFilter.all') },
+    { value: 'fixed', label: t('analytics.expenseTypeFilter.fixed') },
+    { value: 'variable', label: t('analytics.expenseTypeFilter.variable') },
+  ];
+
+  // Cash Flow başlığı filtreye göre değişir — kullanıcı aktif filtreyi hisseder.
+  const cashFlowTitle =
+    expenseType === 'fixed'
+      ? t('analytics.cashFlowFixed')
+      : expenseType === 'variable'
+        ? t('analytics.cashFlowVariable')
+        : t('analytics.cashFlow');
 
   const openAddBudget = () => router.push('/budget-edit');
   const openEditBudget = (status: BudgetStatus) =>
@@ -85,11 +117,18 @@ export default function AnalyticsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SegmentedControl
-          options={periodOptions}
-          value={period}
-          onChange={(v) => setPeriod(v as Period)}
-        />
+        <View style={styles.selectors}>
+          <SegmentedControl
+            options={periodOptions}
+            value={period}
+            onChange={(v) => setPeriod(v as Period)}
+          />
+          <SegmentedControl
+            options={expenseTypeOptions}
+            value={expenseType}
+            onChange={(v) => setExpenseType(v as ExpenseType)}
+          />
+        </View>
 
         {isLoading && !hasTransactions ? (
           <View style={styles.loading}>
@@ -98,7 +137,7 @@ export default function AnalyticsScreen() {
         ) : (
           <>
             <View style={styles.section}>
-              <Text variant="headlineSm">{t('analytics.cashFlow')}</Text>
+              <Text variant="headlineSm">{cashFlowTitle}</Text>
               <CashFlowChart data={cashFlow.buckets} height={200} />
             </View>
 
@@ -157,6 +196,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: 120,
     gap: spacing.stackMd,
+  },
+  selectors: {
+    gap: spacing.md,
   },
   section: {
     gap: spacing.stackSm,

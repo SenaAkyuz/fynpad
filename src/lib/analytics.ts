@@ -6,6 +6,30 @@ const intlLocale = (locale: Locale): string => (locale === 'tr' ? 'tr-TR' : 'en-
 /** Period başına gün sayısı (avg daily spend için). day=1 (0'a bölme olmasın). */
 const PERIOD_DAYS: Record<Period, number> = { day: 1, week: 7, month: 30, year: 365 };
 
+/**
+ * Gider tipi filtresi (brief 4.3): sabit = recurringRuleId dolu (kira/abonelik/taksit),
+ * değişken = recurringRuleId null (market/restoran). Gelir bu ayrımdan etkilenmez.
+ */
+export type ExpenseType = 'all' | 'fixed' | 'variable';
+
+/** Filtreyi yalnızca gider'lere uygular; gelir her zaman dahil kalır. */
+export function filterByExpenseType(
+  transactions: Transaction[],
+  expenseType: ExpenseType
+): Transaction[] {
+  if (expenseType === 'all') {
+    return transactions;
+  }
+  return transactions.filter((tx) => {
+    if (tx.kind === 'income') {
+      return true;
+    }
+    return expenseType === 'fixed'
+      ? tx.recurringRuleId !== null
+      : tx.recurringRuleId === null;
+  });
+}
+
 export type CashFlowBucket = {
   /** X ekseni etiketi (locale'e göre: hafta günü / gün no / kısa ay) */
   label: string;
@@ -30,8 +54,10 @@ function startOfDay(d: Date): Date {
 export function cashFlowSeries(
   transactions: Transaction[],
   period: Period,
-  locale: Locale = 'tr'
+  locale: Locale = 'tr',
+  expenseType: ExpenseType = 'all'
 ): { buckets: CashFlowBucket[] } {
+  transactions = filterByExpenseType(transactions, expenseType);
   const today = startOfDay(new Date());
 
   if (period === 'year') {
@@ -85,7 +111,11 @@ export function cashFlowSeries(
 }
 
 /** Net birikim: gelir - gider (period'a göre filtrelenmiş transactions üzerinden). */
-export function netSavings(transactions: Transaction[]): number {
+export function netSavings(
+  transactions: Transaction[],
+  expenseType: ExpenseType = 'all'
+): number {
+  transactions = filterByExpenseType(transactions, expenseType);
   let income = 0;
   let expense = 0;
   for (const tx of transactions) {
@@ -96,7 +126,12 @@ export function netSavings(transactions: Transaction[]): number {
 }
 
 /** Ortalama günlük harcama: toplam gider / period gün sayısı. */
-export function avgDailySpend(transactions: Transaction[], period: Period): number {
+export function avgDailySpend(
+  transactions: Transaction[],
+  period: Period,
+  expenseType: ExpenseType = 'all'
+): number {
+  transactions = filterByExpenseType(transactions, expenseType);
   let expense = 0;
   for (const tx of transactions) {
     if (tx.kind === 'expense') expense += tx.amount;
@@ -113,8 +148,10 @@ export type TopCategory = {
 /** En çok harcanan expense kategoriler (top N), toplam + yüzde. */
 export function topCategories(
   transactions: Transaction[],
-  limit: number = 5
+  limit: number = 5,
+  expenseType: ExpenseType = 'all'
 ): TopCategory[] {
+  transactions = filterByExpenseType(transactions, expenseType);
   let total = 0;
   const byCategory = new Map<string, number>();
   for (const tx of transactions) {
