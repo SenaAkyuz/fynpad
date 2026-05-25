@@ -1,0 +1,621 @@
+{
+  "welcome": {
+    "title": "FynPad",
+    "subtitle": "See, test, and control your finances.",
+    "signIn": "Sign In",
+    "createAccount": "Create Account"
+  },
+  "placeholder": {
+    "login": "Login (Part 2)",
+    "register": "Register (Part 2)",
+    "dashboard": "Dashboard (Part 4)",
+    "back": "Back",
+    "subscriptions": "Subscriptions (Part 7)",
+    "analytics": "Analytics (Part 8)",
+    "settings": "Settings (Part 10)"
+  },
+  "tabs": {
+    "dashboard": "Home",
+    "subscriptions": "Subscriptions",
+    "add": "Add",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "totalBalance": "Total Net Worth",
+    "income": "Income",
+    "expense": "Expense",
+    "spendingBreakdown": "Spending Breakdown",
+    "recentTransactions": "Recent Transactions",
+    "viewAll": "View All",
+    "total": "Total",
+    "noTransactions": "No transactions in this period",
+    "period": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
+    },
+    "trend": {
+      "day": "today",
+      "week": "this week",
+      "month": "this month",
+      "year": "this year"
+    },
+    "categories": {
+      "salary": "Salary",
+      "freelance": "Freelance",
+      "groceries": "Groceries",
+      "rent": "Rent",
+      "transport": "Transport",
+      "food": "Food & Drink",
+      "subscriptions": "Subscriptions",
+      "other": "Other"
+    },
+    "emptyState": {
+      "title": "No transactions yet",
+      "subtitle": "Tap + to add your first transaction"
+    },
+    "emptyChart": "No spending in this period"
+  },
+  "quickAdd": {
+    "title": "New Transaction",
+    "kindIncome": "Income",
+    "kindExpense": "Expense",
+    "kindTransfer": "Transfer",
+    "kindTransferSoon": "Soon",
+    "amount": "Amount",
+    "amountPlaceholder": "0.00",
+    "category": "Category",
+    "addCategory": "New category",
+    "date": "Date",
+    "currency": "Currency",
+    "note": "Note (optional)",
+    "notePlaceholder": "Add a note...",
+    "submit": "Save Transaction",
+    "cancel": "Cancel",
+    "saving": "Saving..."
+  },
+  "categoryEdit": {
+    "createTitle": "New Category",
+    "editTitle": "Edit Category",
+    "nameLabel": "Name",
+    "namePlaceholder": "Category name",
+    "iconLabel": "Icon",
+    "colorLabel": "Color",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete category",
+    "deleteConfirmMessage": "Transactions in {{name}} will be moved to 'Other'. Continue?",
+    "deleteCancel": "Cancel",
+    "defaultCannotDelete": "Default categories can't be deleted"
+  },
+  "recurring": {
+    "toggle": "Recurring",
+    "frequency": "Frequency",
+    "freqDaily": "Daily",
+    "freqWeekly": "Weekly",
+    "freqMonthly": "Monthly",
+    "freqYearly": "Yearly",
+    "dayOfWeek": "Which day",
+    "dayOfMonth": "Day of month",
+    "monthOfYear": "Which month",
+    "lastDayOfMonth": "Last day",
+    "startDate": "Start",
+    "endDate": "End",
+    "noEndDate": "No end date",
+    "editTitle": "Edit Recurrence",
+    "weekdays": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
+    "months": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "summaryDaily": "Every day",
+    "summaryWeekly": "Every {{weekday}}",
+    "summaryMonthly": "Day {{day}} every month",
+    "summaryMonthlyLast": "Last day every month",
+    "summaryYearly": "{{month}} {{day}} every year",
+    "listTitle": "Recurring Transactions",
+    "listEmpty": "You don't have any recurring rules yet. Turn on Recurring in Quick Add to create one.",
+    "deleteConfirmTitle": "Delete recurring rule",
+    "deleteConfirmMessage": "If you delete this rule, no new transactions will be generated. Past transactions stay as they are.",
+    "deleteConfirmAction": "Delete",
+    "deleteCancel": "Cancel"
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "subtitle": "Recurring monthly payments",
+    "totalMonthly": "Monthly Subscription Spend",
+    "activeSubs": "Active Subs",
+    "activeCount": "{{count}} active subscriptions",
+    "active": "Active Subscriptions",
+    "growth": "Subscription Growth",
+    "addSubscription": "New Subscription",
+    "empty": "You don't have any subscriptions yet",
+    "emptyHint": "Tap + to add a subscription",
+    "perMonth": "/mo",
+    "nextShort": "Next",
+    "nextDueLabel": "Next",
+    "nextDueValue": "{{name}} — {{relative}}",
+    "noUpcoming": "No upcoming",
+    "trend": {
+      "vsLastMonth": "vs last month",
+      "up": "+{{pct}}% {{vs}}",
+      "down": "-{{pct}}% {{vs}}",
+      "flat": "Same as last month",
+      "new": "New"
+    },
+    "iconLabels": {
+      "tv": "TV",
+      "music": "Music",
+      "cloud": "Cloud",
+      "game": "Games",
+      "education": "Education",
+      "fitness": "Fitness",
+      "news": "News",
+      "other": "Other"
+    },
+    "notificationChannel": "Subscription Renewals",
+    "renewalNotificationTitle": "{{name}} renews in 2 days",
+    "renewalNotificationBody": "{{amount}} — {{date}}",
+    "form": {
+      "editTitle": "Edit Subscription",
+      "serviceName": "Service Name",
+      "serviceNamePlaceholder": "e.g. Netflix",
+      "planName": "Plan",
+      "planNamePlaceholder": "e.g. Premium (optional)",
+      "icon": "Icon",
+      "amount": "Price",
+      "currency": "Currency",
+      "frequency": "Frequency",
+      "freqMonthly": "Monthly",
+      "freqYearly": "Yearly",
+      "dayOfMonth": "Day of month",
+      "monthOfYear": "Which month",
+      "startDate": "Start",
+      "endDate": "End",
+      "noEndDate": "No end date",
+      "note": "Note (optional)",
+      "submitCreate": "Add Subscription",
+      "submitUpdate": "Save",
+      "delete": "Delete Subscription",
+      "deleteConfirmTitle": "Delete subscription",
+      "deleteConfirmMessage": "If you delete this subscription, no new transactions will be generated. Past transactions stay as they are.",
+      "deleteConfirmAction": "Delete",
+      "deleteCancel": "Cancel"
+    },
+    "permissions": {
+      "denied": "Notification permission denied. Renewal reminders won't work. You can enable it later in device settings.",
+      "openSettings": "Open Settings"
+    },
+    "errors": {
+      "serviceNameRequired": "Service name is required",
+      "amountRequired": "Price is required",
+      "amountPositive": "Price must be greater than 0",
+      "createFailed": "Couldn't create the subscription",
+      "updateFailed": "Couldn't update the subscription",
+      "deleteFailed": "Couldn't delete the subscription"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Insights into your financial flow",
+    "cashFlow": "Cash Flow",
+    "income": "Income",
+    "expense": "Expense",
+    "netSavings": "Net Savings",
+    "avgDailySpend": "Avg Daily Spend",
+    "topCategories": "Top Spending Categories",
+    "budgets": "Monthly Budgets",
+    "addBudget": "Add Budget",
+    "budgetItem": {
+      "spentOf": "{{spent}} / {{total}}",
+      "overBy": "Over by {{amount}}",
+      "remaining": "{{amount}} remaining",
+      "noSpend": "No spending yet"
+    },
+    "budgetEdit": {
+      "createTitle": "New Budget",
+      "editTitle": "Edit Budget",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "noCategories": "All expense categories already have a budget.",
+      "amountLabel": "Monthly Limit",
+      "currencyLabel": "Currency",
+      "save": "Save",
+      "delete": "Delete Budget",
+      "deleteConfirmTitle": "Delete budget",
+      "deleteConfirmMessage": "Are you sure you want to delete this budget?",
+      "deleteConfirmAction": "Delete",
+      "deleteCancel": "Cancel"
+    },
+    "empty": {
+      "noTransactions": "No data for this period",
+      "noBudgets": "You don't have any budgets yet",
+      "noBudgetsHint": "Tap + to create your first budget"
+    }
+  },
+  "insights": {
+    "strategicInsights": "Strategic Insights",
+    "subtitle": "Patterns from your spending",
+    "empty": "No insights right now",
+    "viewBudget": "View budget",
+    "viewAnalytics": "View analytics",
+    "viewSubscription": "View subscription",
+    "budgetExceeded": {
+      "title": "{{category}} budget exceeded",
+      "desc": "Over by {{amount}} — {{pct}}% over"
+    },
+    "aboveAverage": {
+      "title": "High {{category}} spending",
+      "desc": "{{pct}}% above your average this month"
+    },
+    "subscriptionReview": {
+      "title": "Review {{name}}",
+      "desc": "Active for {{months}} months — still using it?"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your account",
+      "emailLabel": "Email",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot password",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Take control of your finances",
+      "emailLabel": "Email",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "passwordHint": "At least 8 characters, with a letter and a number",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "submit": "Create Account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email and we'll send a reset link",
+      "emailLabel": "Email",
+      "emailPlaceholder": "example@email.com",
+      "submit": "Send Reset Link",
+      "backToLogin": "Back to Sign In",
+      "successTitle": "Check your email",
+      "successMessage": "We sent a reset link to {{email}}."
+    },
+    "resetPassword": {
+      "title": "New Password",
+      "subtitle": "Set your new password",
+      "newPasswordLabel": "New Password",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmPasswordLabel": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Re-enter your new password",
+      "submit": "Update Password",
+      "invalidLink": "This link is invalid or has expired.",
+      "requestNew": "Request new link"
+    },
+    "signOut": "Sign Out",
+    "loggedInAs": "Logged in as {{email}}"
+  },
+  "lock": {
+    "title": "FynPad",
+    "subtitle": "Enter your PIN",
+    "subtitleBiometric": "Scan your face or enter your PIN",
+    "forgotPin": "Forgot PIN",
+    "forgotPinConfirmTitle": "You'll be signed out",
+    "forgotPinConfirmMessage": "If you continue, your session ends and you'll need to sign in again. Your PIN will be deleted. Continue?",
+    "forgotPinConfirmAction": "Continue",
+    "forgotPinCancel": "Cancel",
+    "wrongPin": "Wrong PIN, try again",
+    "tooManyAttempts": "Too many attempts. Wait {{seconds}}s.",
+    "biometricButtonLabel": "Biometrics",
+    "biometricPrompt": "Unlock FynPad"
+  },
+  "pinSetup": {
+    "welcomeTitle": "Lock FynPad",
+    "welcomeSubtitle": "Protect your data with a PIN and biometrics.",
+    "welcomeContinue": "Continue",
+    "welcomeCancel": "Cancel",
+    "createTitle": "Create a new PIN",
+    "createSubtitle": "Choose a 6-digit PIN.",
+    "confirmTitle": "Confirm your PIN",
+    "confirmSubtitle": "Enter the same PIN again.",
+    "pinMismatch": "PINs don't match, try again",
+    "biometricTitle": "Enable biometrics",
+    "biometricSubtitle": "Use your face or fingerprint for faster unlocking.",
+    "biometricEnable": "Enable",
+    "biometricSkip": "Skip for now",
+    "biometricFailed": "Biometric authentication failed.",
+    "doneTitle": "All set",
+    "doneSubtitle": "Device lock is on. You'll be asked for your PIN next time.",
+    "doneContinue": "Continue"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Account, preferences and data",
+    "sections": {
+      "profile": "Profile",
+      "preferences": "Preferences",
+      "security": "Security",
+      "data": "Data",
+      "about": "About",
+      "account": "Account"
+    },
+    "profile": {
+      "editAction": "Edit",
+      "noName": "No name set"
+    },
+    "language": "Language",
+    "languageTr": "Turkish",
+    "languageEn": "English",
+    "currency": "Default Currency",
+    "currencyTry": "Turkish Lira (₺)",
+    "currencyUsd": "US Dollar ($)",
+    "currencyEur": "Euro (€)",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "appLock": "App Lock",
+    "biometric": "Biometrics",
+    "biometricRequiresLock": "Enable App Lock first",
+    "biometricUnavailable": "Set up fingerprint or face recognition in phone settings first.",
+    "categories": "Categories",
+    "categoriesSubtitle": "{{defaults}} default + {{custom}} custom",
+    "recurringTransactions": "Recurring Transactions",
+    "exportData": "Export Data",
+    "version": "Version",
+    "signOut": "Sign Out",
+    "signOutConfirmTitle": "Are you sure you want to sign out?",
+    "signOutConfirmAction": "Sign Out",
+    "signOutCancel": "Cancel",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "lockDisableConfirmTitle": "Turn off lock",
+    "lockDisableConfirmMessage": "Are you sure you want to turn off device lock?",
+    "lockDisableConfirmAction": "Turn off",
+    "lockDisableCancel": "Cancel"
+  },
+  "profileEdit": {
+    "title": "Edit Profile",
+    "emailLabel": "Email",
+    "emailHelper": "Changing email isn't supported right now",
+    "nameLabel": "Full Name",
+    "namePlaceholder": "Your name (optional)",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "export": {
+    "title": "Export Data",
+    "subtitle": "Download transactions for the selected period as CSV or PDF",
+    "dateRange": "Date Range",
+    "from": "From",
+    "to": "To",
+    "quickPicks": {
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisYear": "This year",
+      "last3Months": "Last 3 months",
+      "allTime": "All time"
+    },
+    "format": "Format",
+    "formatCsv": "CSV (Excel compatible)",
+    "formatPdf": "PDF (Report)",
+    "submit": "Export",
+    "exporting": "Preparing...",
+    "noData": "No transactions in this range",
+    "transactionCount": "{{count}} transactions",
+    "report": {
+      "title": "Transaction Report",
+      "period": "Period",
+      "totalIncome": "Total Income",
+      "totalExpense": "Total Expense",
+      "net": "Net",
+      "generatedAt": "Generated"
+    },
+    "columns": {
+      "date": "Date",
+      "kind": "Kind",
+      "category": "Category",
+      "amount": "Amount",
+      "currency": "Currency",
+      "note": "Note",
+      "recurring": "Recurring"
+    },
+    "kindIncome": "Income",
+    "kindExpense": "Expense",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "categoriesScreen": {
+    "title": "Categories",
+    "filterIncome": "Income",
+    "filterExpense": "Expense",
+    "addNew": "New Category",
+    "defaultBadge": "Default",
+    "customCount": "{{count}} custom categories",
+    "emptyCustom": "No custom categories yet"
+  },
+  "deleteAccount": {
+    "title": "Delete Account",
+    "warningTitle": "You're about to delete your account",
+    "warningPoints": [
+      "All your transactions will be permanently deleted",
+      "All your budgets will be deleted",
+      "All your subscriptions will be deleted",
+      "This action cannot be undone",
+      "Your email becomes available for a new sign-up"
+    ],
+    "confirmPrompt": "Type {{keyword}} below to continue",
+    "confirmKeyword": "DELETE",
+    "confirmPlaceholder": "Confirmation word",
+    "submit": "Permanently Delete My Account",
+    "submitting": "Deleting...",
+    "errorAuth": "Your session expired, please sign in again",
+    "errorGeneric": "Couldn't delete the account"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "effectiveDate": "Effective date: {{date}}",
+    "intro": "At FynPad ('we', 'our', 'the app') we care about your privacy. This policy explains how your personal data is collected, used and protected when you use the FynPad mobile app.",
+    "sections": {
+      "collected": {
+        "title": "1. Data We Collect",
+        "body": "Your email address, for account verification and sign-in. The financial records you add (income, expense, category, date, amount, note). Your device language and theme preference. The budget limits and subscription details you define in the app. Your biometric data or PIN code is stored locally on your device — it is NOT sent to our servers."
+      },
+      "purpose": {
+        "title": "2. How We Use Data",
+        "body": "To manage your account, store and display your financial records, and provide analytics and budget comparisons. We do NOT use your data for marketing or third-party advertising."
+      },
+      "thirdParty": {
+        "title": "3. Third-Party Processors",
+        "body": "Database and authentication: Supabase Inc. (USA). Email delivery: Resend via Supabase (sign-up confirmation, password reset). These providers act as data processors and are subject to their own privacy policies."
+      },
+      "rights": {
+        "title": "4. Your Rights",
+        "body": "You can delete your account and permanently remove all your data from within the app (Settings → Account → Delete Account). This action is irreversible. You can export your data as CSV or PDF (Settings → Export Data)."
+      },
+      "security": {
+        "title": "5. Security",
+        "body": "All data transfer is encrypted over HTTPS. Your password is stored hashed. Your device lock (PIN) never leaves your device."
+      },
+      "retention": {
+        "title": "6. Data Retention",
+        "body": "Your data is kept for as long as your account is active. When you delete your account, all your financial records are permanently and immediately deleted."
+      },
+      "changes": {
+        "title": "7. Policy Changes",
+        "body": "We may update this policy from time to time. We will notify you of significant changes via an in-app notice."
+      }
+    },
+    "contact": "For questions: <contact-email-here>"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "effectiveDate": "Effective date: {{date}}",
+    "intro": "By using FynPad you agree to the following terms.",
+    "sections": {
+      "use": {
+        "title": "1. Use of the Service",
+        "body": "FynPad is designed for personal finance tracking. You may use it only through your own account and with your own financial data. You agree not to use the service unlawfully or in a way that harms others."
+      },
+      "account": {
+        "title": "2. Account Responsibility",
+        "body": "You are responsible for the security of your account. Do not share your password or device lock PIN with anyone. If you suspect unauthorized access, change your password immediately."
+      },
+      "data": {
+        "title": "3. Data and Content",
+        "body": "The financial data you add belongs to you. FynPad does not use this data other than to provide you the service. When you delete your account, all your data is permanently deleted."
+      },
+      "warranty": {
+        "title": "4. Disclaimer",
+        "body": "FynPad does NOT provide financial advice. The analyses and insights provided are for informational purposes. You are solely responsible for your financial decisions. The service is provided 'as is' — it is not guaranteed to be uninterrupted or error-free."
+      },
+      "termination": {
+        "title": "5. Account Closure",
+        "body": "You can delete your account at any time from within the app. We may suspend or close accounts that violate these terms without notice."
+      },
+      "changes": {
+        "title": "6. Changes to Terms",
+        "body": "We may update these terms from time to time. We will inform you of significant changes."
+      },
+      "governing": {
+        "title": "7. Governing Law",
+        "body": "These terms are governed by the laws of the Republic of Türkiye. Disputes will be resolved in the Istanbul Courts."
+      }
+    },
+    "contact": "Contact: <contact-email-here>"
+  },
+  "signUp": {
+    "consentPrefix": "By signing up, I agree to the ",
+    "consentTerms": "Terms of Service",
+    "consentAnd": " and ",
+    "consentPrivacy": "Privacy Policy",
+    "consentSuffix": "."
+  },
+  "errors": {
+    "profile": {
+      "updateFailed": "Couldn't update profile"
+    },
+    "export": {
+      "failed": "Export failed",
+      "noTransactions": "No transactions in the selected date range",
+      "invalidDateRange": "End date can't be before the start date",
+      "sharingUnavailable": "Sharing is not available on this device"
+    },
+    "budget": {
+      "categoryRequired": "Category is required",
+      "amountRequired": "Limit is required",
+      "amountPositive": "Limit must be greater than 0",
+      "alreadyExists": "This category already has a budget",
+      "createFailed": "Couldn't create the budget",
+      "updateFailed": "Couldn't update the budget",
+      "deleteFailed": "Couldn't delete the budget"
+    },
+    "transaction": {
+      "amountRequired": "Amount is required",
+      "amountPositive": "Amount must be greater than 0",
+      "categoryRequired": "Select a category",
+      "noteTooLong": "Note can't exceed 200 characters",
+      "createFailed": "Couldn't save the transaction. Try again."
+    },
+    "category": {
+      "nameRequired": "Category name is required",
+      "createFailed": "Couldn't create the category.",
+      "deleteFailed": "Couldn't delete the category."
+    },
+    "recurring": {
+      "createFailed": "Couldn't create the rule.",
+      "updateFailed": "Couldn't update the rule.",
+      "deleteFailed": "Couldn't delete the rule."
+    },
+    "auth": {
+      "invalidCredentials": "Invalid email or password.",
+      "emailAlreadyInUse": "This email is already registered.",
+      "weakPassword": "Password is too weak.",
+      "rateLimitEmail": "Too many attempts. Please wait 1 hour and try again.",
+      "redirectNotAllowed": "Redirect address not allowed. Check Supabase configuration.",
+      "invalidEmail": "Please enter a valid email address.",
+      "network": "Connection error. Check your internet.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "validation": {
+      "emailInvalid": "Enter a valid email.",
+      "emailRequired": "Email is required.",
+      "passwordRequired": "Password is required.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordNeedsLetter": "Password must contain at least one letter.",
+      "passwordNeedsNumber": "Password must contain at least one number.",
+      "passwordsDoNotMatch": "Passwords do not match.",
+      "recurringConfigIncomplete": "Recurrence settings are incomplete"
+    }
+  }
+}

@@ -1,0 +1,621 @@
+{
+  "welcome": {
+    "title": "FynPad",
+    "subtitle": "Finansını gör, dene, kontrol et.",
+    "signIn": "Giriş Yap",
+    "createAccount": "Hesap Oluştur"
+  },
+  "placeholder": {
+    "login": "Giriş (Part 2)",
+    "register": "Kayıt (Part 2)",
+    "dashboard": "Dashboard (Part 4)",
+    "back": "Geri",
+    "subscriptions": "Abonelikler (Part 7)",
+    "analytics": "Analiz (Part 8)",
+    "settings": "Ayarlar (Part 10)"
+  },
+  "tabs": {
+    "dashboard": "Ana Sayfa",
+    "subscriptions": "Abonelikler",
+    "add": "Ekle",
+    "analytics": "Analiz",
+    "settings": "Ayarlar"
+  },
+  "dashboard": {
+    "totalBalance": "Toplam Net Değer",
+    "income": "Gelir",
+    "expense": "Gider",
+    "spendingBreakdown": "Harcama Dağılımı",
+    "recentTransactions": "Son İşlemler",
+    "viewAll": "Tümünü gör",
+    "total": "Toplam",
+    "noTransactions": "Bu dönemde işlem yok",
+    "period": {
+      "day": "Gün",
+      "week": "Hafta",
+      "month": "Ay",
+      "year": "Yıl"
+    },
+    "trend": {
+      "day": "bugün",
+      "week": "bu hafta",
+      "month": "bu ay",
+      "year": "bu yıl"
+    },
+    "categories": {
+      "salary": "Maaş",
+      "freelance": "Freelance",
+      "groceries": "Markete",
+      "rent": "Kira",
+      "transport": "Ulaşım",
+      "food": "Yeme-İçme",
+      "subscriptions": "Abonelikler",
+      "other": "Diğer"
+    },
+    "emptyState": {
+      "title": "Henüz işlem yok",
+      "subtitle": "+ tuşuna basarak ilk işlemini ekle"
+    },
+    "emptyChart": "Bu dönem için harcama yok"
+  },
+  "quickAdd": {
+    "title": "Yeni İşlem",
+    "kindIncome": "Gelir",
+    "kindExpense": "Gider",
+    "kindTransfer": "Transfer",
+    "kindTransferSoon": "Yakında",
+    "amount": "Tutar",
+    "amountPlaceholder": "0,00",
+    "category": "Kategori",
+    "addCategory": "Yeni kategori",
+    "date": "Tarih",
+    "currency": "Para Birimi",
+    "note": "Not (opsiyonel)",
+    "notePlaceholder": "Bir not ekle...",
+    "submit": "İşlemi Kaydet",
+    "cancel": "İptal",
+    "saving": "Kaydediliyor..."
+  },
+  "categoryEdit": {
+    "createTitle": "Yeni Kategori",
+    "editTitle": "Kategoriyi Düzenle",
+    "nameLabel": "İsim",
+    "namePlaceholder": "Kategori adı",
+    "iconLabel": "İkon",
+    "colorLabel": "Renk",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "deleteConfirmTitle": "Kategoriyi sil",
+    "deleteConfirmMessage": "{{name}} kategorisine ait işlemler 'Diğer'e taşınacak. Devam edilsin mi?",
+    "deleteCancel": "Vazgeç",
+    "defaultCannotDelete": "Varsayılan kategoriler silinemez"
+  },
+  "recurring": {
+    "toggle": "Tekrarla",
+    "frequency": "Sıklık",
+    "freqDaily": "Günlük",
+    "freqWeekly": "Haftalık",
+    "freqMonthly": "Aylık",
+    "freqYearly": "Yıllık",
+    "dayOfWeek": "Hangi gün",
+    "dayOfMonth": "Ayın hangi günü",
+    "monthOfYear": "Hangi ay",
+    "lastDayOfMonth": "Son gün",
+    "startDate": "Başlangıç",
+    "endDate": "Bitiş",
+    "noEndDate": "Süresiz",
+    "editTitle": "Tekrarlamayı Düzenle",
+    "weekdays": {
+      "0": "Pzr",
+      "1": "Pzt",
+      "2": "Sal",
+      "3": "Çar",
+      "4": "Per",
+      "5": "Cum",
+      "6": "Cmt"
+    },
+    "months": {
+      "1": "Ocak",
+      "2": "Şubat",
+      "3": "Mart",
+      "4": "Nisan",
+      "5": "Mayıs",
+      "6": "Haziran",
+      "7": "Temmuz",
+      "8": "Ağustos",
+      "9": "Eylül",
+      "10": "Ekim",
+      "11": "Kasım",
+      "12": "Aralık"
+    },
+    "summaryDaily": "Her gün",
+    "summaryWeekly": "Her {{weekday}}",
+    "summaryMonthly": "Her ayın {{day}}'ı",
+    "summaryMonthlyLast": "Her ayın son günü",
+    "summaryYearly": "Her yıl {{day}} {{month}}",
+    "listTitle": "Tekrarlayan İşlemler",
+    "listEmpty": "Henüz tekrarlayan kuralın yok. Quick Add'de Tekrarla'yı açıp oluştur.",
+    "deleteConfirmTitle": "Tekrarlama kuralını sil",
+    "deleteConfirmMessage": "Bu kuralı silersen ileride yeni işlem üretilmez. Geçmiş işlemler aynen kalır.",
+    "deleteConfirmAction": "Sil",
+    "deleteCancel": "Vazgeç"
+  },
+  "subscriptions": {
+    "title": "Abonelikler",
+    "subtitle": "Aylık tekrarlanan ödemeler",
+    "totalMonthly": "Aylık Abonelik Harcaması",
+    "activeSubs": "Aktif Abonelik",
+    "activeCount": "{{count}} aktif abonelik",
+    "active": "Aktif Abonelikler",
+    "growth": "Abonelik Büyümesi",
+    "addSubscription": "Yeni Abonelik",
+    "empty": "Henüz aboneliğin yok",
+    "emptyHint": "+ tuşuna basarak abonelik ekle",
+    "perMonth": "/ay",
+    "nextShort": "Sonraki",
+    "nextDueLabel": "Sıradaki",
+    "nextDueValue": "{{name}} — {{relative}}",
+    "noUpcoming": "Yenilenme yok",
+    "trend": {
+      "vsLastMonth": "geçen aya göre",
+      "up": "+%{{pct}} {{vs}}",
+      "down": "-%{{pct}} {{vs}}",
+      "flat": "Geçen ayla aynı",
+      "new": "Yeni"
+    },
+    "iconLabels": {
+      "tv": "TV",
+      "music": "Müzik",
+      "cloud": "Bulut",
+      "game": "Oyun",
+      "education": "Eğitim",
+      "fitness": "Fitness",
+      "news": "Haber",
+      "other": "Diğer"
+    },
+    "notificationChannel": "Abonelik Yenilenmeleri",
+    "renewalNotificationTitle": "{{name}} 2 gün sonra yenileniyor",
+    "renewalNotificationBody": "{{amount}} — {{date}}",
+    "form": {
+      "editTitle": "Aboneliği Düzenle",
+      "serviceName": "Servis Adı",
+      "serviceNamePlaceholder": "örn. Netflix",
+      "planName": "Plan",
+      "planNamePlaceholder": "örn. Premium (opsiyonel)",
+      "icon": "İkon",
+      "amount": "Ücret",
+      "currency": "Para Birimi",
+      "frequency": "Sıklık",
+      "freqMonthly": "Aylık",
+      "freqYearly": "Yıllık",
+      "dayOfMonth": "Ayın hangi günü",
+      "monthOfYear": "Hangi ay",
+      "startDate": "Başlangıç",
+      "endDate": "Bitiş",
+      "noEndDate": "Süresiz",
+      "note": "Not (opsiyonel)",
+      "submitCreate": "Aboneliği Ekle",
+      "submitUpdate": "Kaydet",
+      "delete": "Aboneliği Sil",
+      "deleteConfirmTitle": "Aboneliği sil",
+      "deleteConfirmMessage": "Bu aboneliği silersen ileride yeni işlem üretilmez. Geçmiş işlemler aynen kalır.",
+      "deleteConfirmAction": "Sil",
+      "deleteCancel": "Vazgeç"
+    },
+    "permissions": {
+      "denied": "Bildirim izni verilmedi. Yenilenme hatırlatmaları çalışmayacak. Cihaz ayarlarından sonradan açabilirsin.",
+      "openSettings": "Ayarları Aç"
+    },
+    "errors": {
+      "serviceNameRequired": "Servis adı zorunlu",
+      "amountRequired": "Ücret zorunlu",
+      "amountPositive": "Ücret 0'dan büyük olmalı",
+      "createFailed": "Abonelik oluşturulamadı",
+      "updateFailed": "Abonelik güncellenemedi",
+      "deleteFailed": "Abonelik silinemedi"
+    }
+  },
+  "analytics": {
+    "title": "Analiz",
+    "subtitle": "Finansal akışına dair içgörüler",
+    "cashFlow": "Nakit Akışı",
+    "income": "Gelir",
+    "expense": "Gider",
+    "netSavings": "Net Birikim",
+    "avgDailySpend": "Günlük Ortalama Harcama",
+    "topCategories": "En Çok Harcanan Kategoriler",
+    "budgets": "Aylık Bütçeler",
+    "addBudget": "Bütçe Ekle",
+    "budgetItem": {
+      "spentOf": "{{spent}} / {{total}}",
+      "overBy": "{{amount}} aşıldı",
+      "remaining": "{{amount}} kaldı",
+      "noSpend": "Henüz harcama yok"
+    },
+    "budgetEdit": {
+      "createTitle": "Yeni Bütçe",
+      "editTitle": "Bütçeyi Düzenle",
+      "categoryLabel": "Kategori",
+      "categoryPlaceholder": "Kategori seç",
+      "noCategories": "Tüm gider kategorilerinin zaten bir bütçesi var.",
+      "amountLabel": "Aylık Limit",
+      "currencyLabel": "Para Birimi",
+      "save": "Kaydet",
+      "delete": "Bütçeyi Sil",
+      "deleteConfirmTitle": "Bütçeyi sil",
+      "deleteConfirmMessage": "Bu bütçeyi silmek istediğine emin misin?",
+      "deleteConfirmAction": "Sil",
+      "deleteCancel": "Vazgeç"
+    },
+    "empty": {
+      "noTransactions": "Bu dönem için veri yok",
+      "noBudgets": "Henüz bütçen yok",
+      "noBudgetsHint": "+ tuşuna basarak ilk bütçeni oluştur"
+    }
+  },
+  "insights": {
+    "strategicInsights": "Akıllı Uyarılar",
+    "subtitle": "Harcama paternlerinden çıkarımlar",
+    "empty": "Şu an uyarı yok",
+    "viewBudget": "Bütçeyi gör",
+    "viewAnalytics": "Analizi gör",
+    "viewSubscription": "Aboneliği gör",
+    "budgetExceeded": {
+      "title": "{{category}} bütçen aşıldı",
+      "desc": "{{amount}} aştın — %{{pct}} üzerinde"
+    },
+    "aboveAverage": {
+      "title": "Yüksek {{category}} harcaması",
+      "desc": "Bu ay ortalamanın %{{pct}} üzerinde"
+    },
+    "subscriptionReview": {
+      "title": "{{name}} aboneliğini gözden geçir",
+      "desc": "{{months}} aydır aktif — hâlâ kullanıyor musun?"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Tekrar Hoş Geldin",
+      "subtitle": "Hesabına giriş yap",
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "ornek@email.com",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "Şifreni gir",
+      "forgotPassword": "Şifremi unuttum",
+      "submit": "Giriş Yap",
+      "noAccount": "Hesabın yok mu?",
+      "signUp": "Kayıt ol"
+    },
+    "register": {
+      "title": "Hesap Oluştur",
+      "subtitle": "Finansını kontrol altına al",
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "ornek@email.com",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "Şifreni gir",
+      "passwordHint": "En az 8 karakter, harf ve rakam içermeli",
+      "confirmPasswordLabel": "Şifre tekrar",
+      "confirmPasswordPlaceholder": "Şifreni tekrar gir",
+      "submit": "Hesap Oluştur",
+      "haveAccount": "Zaten hesabın var mı?",
+      "signIn": "Giriş yap"
+    },
+    "forgotPassword": {
+      "title": "Şifremi Unuttum",
+      "subtitle": "E-postanı gir, sıfırlama linki gönderelim",
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "ornek@email.com",
+      "submit": "Sıfırlama Linki Gönder",
+      "backToLogin": "Girişe dön",
+      "successTitle": "E-postanı kontrol et",
+      "successMessage": "{{email}} adresine sıfırlama linki gönderdik."
+    },
+    "resetPassword": {
+      "title": "Yeni Şifre",
+      "subtitle": "Yeni şifreni belirle",
+      "newPasswordLabel": "Yeni Şifre",
+      "newPasswordPlaceholder": "Yeni şifreni gir",
+      "confirmPasswordLabel": "Yeni Şifre (Tekrar)",
+      "confirmPasswordPlaceholder": "Yeni şifreni tekrar gir",
+      "submit": "Şifreyi Güncelle",
+      "invalidLink": "Bu link geçersiz veya süresi dolmuş.",
+      "requestNew": "Yeni link iste"
+    },
+    "signOut": "Çıkış Yap",
+    "loggedInAs": "Giriş yapılan hesap: {{email}}"
+  },
+  "lock": {
+    "title": "FynPad",
+    "subtitle": "PIN'ini gir",
+    "subtitleBiometric": "Yüzünü tara veya PIN'ini gir",
+    "forgotPin": "PIN'imi unuttum",
+    "forgotPinConfirmTitle": "Çıkış yapılacak",
+    "forgotPinConfirmMessage": "Devam edersen oturumun kapanır, tekrar giriş yapman gerekir. PIN'in silinecek. Devam edilsin mi?",
+    "forgotPinConfirmAction": "Devam et",
+    "forgotPinCancel": "Vazgeç",
+    "wrongPin": "Yanlış PIN, tekrar dene",
+    "tooManyAttempts": "Çok fazla deneme. {{seconds}} saniye bekle.",
+    "biometricButtonLabel": "Biyometrik",
+    "biometricPrompt": "FynPad'i aç"
+  },
+  "pinSetup": {
+    "welcomeTitle": "FynPad'i kilitle",
+    "welcomeSubtitle": "Verilerini PIN ve biyometrikle koru.",
+    "welcomeContinue": "Devam et",
+    "welcomeCancel": "İptal",
+    "createTitle": "Yeni PIN oluştur",
+    "createSubtitle": "6 haneli bir PIN seç.",
+    "confirmTitle": "PIN'i onayla",
+    "confirmSubtitle": "Aynı PIN'i tekrar gir.",
+    "pinMismatch": "PIN'ler eşleşmiyor, tekrar dene",
+    "biometricTitle": "Biyometrik etkinleştir",
+    "biometricSubtitle": "Daha hızlı açılış için yüzünü veya parmak izini kullan.",
+    "biometricEnable": "Etkinleştir",
+    "biometricSkip": "Şimdilik atla",
+    "biometricFailed": "Biyometrik doğrulanamadı.",
+    "doneTitle": "Hazır",
+    "doneSubtitle": "Cihaz kilidi etkin. Bir sonraki açılışta PIN sorulacak.",
+    "doneContinue": "Devam"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "subtitle": "Hesap, tercihler ve veri",
+    "sections": {
+      "profile": "Profil",
+      "preferences": "Tercihler",
+      "security": "Güvenlik",
+      "data": "Veri",
+      "about": "Hakkında",
+      "account": "Hesap"
+    },
+    "profile": {
+      "editAction": "Düzenle",
+      "noName": "İsim belirlenmedi"
+    },
+    "language": "Dil",
+    "languageTr": "Türkçe",
+    "languageEn": "İngilizce",
+    "currency": "Varsayılan Para Birimi",
+    "currencyTry": "Türk Lirası (₺)",
+    "currencyUsd": "ABD Doları ($)",
+    "currencyEur": "Euro (€)",
+    "theme": "Tema",
+    "themeLight": "Açık",
+    "themeDark": "Koyu",
+    "appLock": "Cihaz Kilidi",
+    "biometric": "Biyometrik",
+    "biometricRequiresLock": "Önce cihaz kilidi açılmalı",
+    "biometricUnavailable": "Önce telefon ayarlarından parmak izi veya yüz tanıma kur.",
+    "categories": "Kategoriler",
+    "categoriesSubtitle": "{{defaults}} varsayılan + {{custom}} özel",
+    "recurringTransactions": "Tekrarlayan İşlemler",
+    "exportData": "Veriyi Dışa Aktar",
+    "version": "Sürüm",
+    "signOut": "Çıkış Yap",
+    "signOutConfirmTitle": "Çıkış yapmak istediğine emin misin?",
+    "signOutConfirmAction": "Çıkış Yap",
+    "signOutCancel": "Vazgeç",
+    "dangerZone": "Tehlikeli Alan",
+    "deleteAccount": "Hesabı Sil",
+    "privacyPolicy": "Gizlilik Politikası",
+    "termsOfService": "Kullanım Koşulları",
+    "lockDisableConfirmTitle": "Kilidi kapat",
+    "lockDisableConfirmMessage": "Cihaz kilidini kapatmak istediğine emin misin?",
+    "lockDisableConfirmAction": "Kapat",
+    "lockDisableCancel": "Vazgeç"
+  },
+  "profileEdit": {
+    "title": "Profili Düzenle",
+    "emailLabel": "E-posta",
+    "emailHelper": "E-posta değişikliği şu an desteklenmiyor",
+    "nameLabel": "Tam Ad",
+    "namePlaceholder": "İsmin (opsiyonel)",
+    "save": "Kaydet",
+    "cancel": "İptal"
+  },
+  "export": {
+    "title": "Veriyi Dışa Aktar",
+    "subtitle": "Seçili dönemdeki işlemleri CSV veya PDF olarak indir",
+    "dateRange": "Tarih Aralığı",
+    "from": "Başlangıç",
+    "to": "Bitiş",
+    "quickPicks": {
+      "thisMonth": "Bu ay",
+      "lastMonth": "Geçen ay",
+      "thisYear": "Bu yıl",
+      "last3Months": "Son 3 ay",
+      "allTime": "Tüm zamanlar"
+    },
+    "format": "Format",
+    "formatCsv": "CSV (Excel uyumlu)",
+    "formatPdf": "PDF (Rapor)",
+    "submit": "Dışa Aktar",
+    "exporting": "Hazırlanıyor...",
+    "noData": "Bu aralıkta işlem yok",
+    "transactionCount": "{{count}} işlem",
+    "report": {
+      "title": "İşlem Raporu",
+      "period": "Dönem",
+      "totalIncome": "Toplam Gelir",
+      "totalExpense": "Toplam Gider",
+      "net": "Net",
+      "generatedAt": "Oluşturulma"
+    },
+    "columns": {
+      "date": "Tarih",
+      "kind": "Tür",
+      "category": "Kategori",
+      "amount": "Tutar",
+      "currency": "Para Birimi",
+      "note": "Not",
+      "recurring": "Tekrarlayan"
+    },
+    "kindIncome": "Gelir",
+    "kindExpense": "Gider",
+    "yes": "Evet",
+    "no": "Hayır"
+  },
+  "categoriesScreen": {
+    "title": "Kategoriler",
+    "filterIncome": "Gelir",
+    "filterExpense": "Gider",
+    "addNew": "Yeni Kategori",
+    "defaultBadge": "Varsayılan",
+    "customCount": "{{count}} özel kategori",
+    "emptyCustom": "Henüz özel kategori yok"
+  },
+  "deleteAccount": {
+    "title": "Hesabı Sil",
+    "warningTitle": "Hesabını silmek üzeresin",
+    "warningPoints": [
+      "Tüm işlemlerin kalıcı olarak silinecek",
+      "Tüm bütçelerin silinecek",
+      "Tüm aboneliklerin silinecek",
+      "Bu işlem geri alınamaz",
+      "E-posta adresin yeni kayıt için kullanılabilir hale gelir"
+    ],
+    "confirmPrompt": "Devam etmek için aşağıya {{keyword}} yazın",
+    "confirmKeyword": "SİL",
+    "confirmPlaceholder": "Onay kelimesi",
+    "submit": "Hesabımı Kalıcı Olarak Sil",
+    "submitting": "Siliniyor...",
+    "errorAuth": "Oturum süresi dolmuş, lütfen tekrar giriş yapın",
+    "errorGeneric": "Hesap silinemedi"
+  },
+  "privacy": {
+    "title": "Gizlilik Politikası",
+    "effectiveDate": "Yürürlük tarihi: {{date}}",
+    "intro": "FynPad olarak ('biz', 'bizim', 'uygulama') gizliliğinize önem veriyoruz. Bu politika, FynPad mobil uygulamasını kullandığınızda kişisel verilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklar.",
+    "sections": {
+      "collected": {
+        "title": "1. Topladığımız Veriler",
+        "body": "E-posta adresiniz, hesap doğrulama ve oturum açma için. Eklediğiniz finansal kayıtlar (gelir, gider, kategori, tarih, miktar, not). Cihaz dili ve tema tercihi. Uygulama içinde tanımladığınız bütçe limitleri ve abonelik bilgileri. Biyometrik veri veya PIN kodunuz cihazınızda yerel olarak saklanır — sunucularımıza GÖNDERİLMEZ."
+      },
+      "purpose": {
+        "title": "2. Verilerin Kullanım Amacı",
+        "body": "Hesabınızı yönetmek, finansal kayıtlarınızı saklayıp size göstermek, analitik ve bütçe karşılaştırması sunmak için. Verilerinizi pazarlama veya üçüncü taraf reklamcılık için KULLANMIYORUZ."
+      },
+      "thirdParty": {
+        "title": "3. Üçüncü Taraf İşleyiciler",
+        "body": "Veri tabanı ve kimlik doğrulama: Supabase Inc. (ABD). E-posta gönderimi: Supabase üzerinden Resend (kayıt onayı, şifre sıfırlama). Bu sağlayıcılar veri işleyici sıfatıyla kendi gizlilik politikalarına tabidir."
+      },
+      "rights": {
+        "title": "4. Haklarınız",
+        "body": "Uygulama içinden hesabınızı silebilir ve tüm verilerinizi kalıcı olarak kaldırabilirsiniz (Ayarlar → Hesap → Hesabı Sil). Bu işlem geri alınamaz. Verilerinizi CSV veya PDF olarak dışa aktarabilirsiniz (Ayarlar → Veriyi Dışa Aktar)."
+      },
+      "security": {
+        "title": "5. Güvenlik",
+        "body": "Tüm veri iletişimi HTTPS üzerinden şifrelenir. Şifreniz hash'lenmiş olarak saklanır. Cihaz kilidiniz (PIN) cihazınızdan ayrılmaz."
+      },
+      "retention": {
+        "title": "6. Veri Saklama Süresi",
+        "body": "Verileriniz hesabınız aktif olduğu sürece saklanır. Hesabınızı silmenizle birlikte tüm finansal kayıtlarınız anında kalıcı olarak silinir."
+      },
+      "changes": {
+        "title": "7. Politika Değişiklikleri",
+        "body": "Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişikliklerde uygulama içi bildirim ile sizi haberdar ederiz."
+      }
+    },
+    "contact": "Sorularınız için: <buraya-iletisim-email-i-konulacak>"
+  },
+  "terms": {
+    "title": "Kullanım Koşulları",
+    "effectiveDate": "Yürürlük tarihi: {{date}}",
+    "intro": "FynPad'i kullanarak aşağıdaki koşulları kabul etmiş sayılırsınız.",
+    "sections": {
+      "use": {
+        "title": "1. Hizmetin Kullanımı",
+        "body": "FynPad kişisel finans takibi için tasarlanmıştır. Yalnızca kendi hesabınız üzerinden ve kendi finansal verilerinizle kullanabilirsiniz. Hizmeti yasalara aykırı veya başkalarına zarar verecek şekilde kullanmamayı kabul edersiniz."
+      },
+      "account": {
+        "title": "2. Hesap Sorumluluğu",
+        "body": "Hesabınızın güvenliğinden siz sorumlusunuz. Şifrenizi ve cihaz kilidi PIN'inizi kimseyle paylaşmayın. Yetkisiz erişim şüphesinde şifrenizi derhal değiştirin."
+      },
+      "data": {
+        "title": "3. Veri ve İçerik",
+        "body": "Eklediğiniz finansal veriler size aittir. FynPad bu verileri size hizmet sunmak dışında kullanmaz. Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir."
+      },
+      "warranty": {
+        "title": "4. Sorumluluk Reddi",
+        "body": "FynPad finansal danışmanlık hizmeti SUNMAZ. Sağlanan analizler ve uyarılar bilgilendirme amaçlıdır. Finansal kararlarınızdan tek başınıza sorumlu olursunuz. Hizmet 'olduğu gibi' (as is) sunulur — kesintisiz veya hatasız olacağı garanti edilmez."
+      },
+      "termination": {
+        "title": "5. Hesap Kapatma",
+        "body": "Hesabınızı dilediğiniz zaman uygulama içinden silebilirsiniz. Koşulları ihlal eden hesapları bildirim yapmaksızın askıya alabilir veya kapatabiliriz."
+      },
+      "changes": {
+        "title": "6. Koşul Değişiklikleri",
+        "body": "Bu koşulları zaman zaman güncelleyebiliriz. Önemli değişikliklerde sizi bilgilendiririz."
+      },
+      "governing": {
+        "title": "7. Uygulanacak Hukuk",
+        "body": "Bu koşullar Türkiye Cumhuriyeti yasalarına tabidir. Anlaşmazlıklar İstanbul Mahkemeleri'nde çözümlenir."
+      }
+    },
+    "contact": "İletişim: <buraya-iletisim-email-i-konulacak>"
+  },
+  "signUp": {
+    "consentPrefix": "Kayıt olarak ",
+    "consentTerms": "Kullanım Koşulları",
+    "consentAnd": " ve ",
+    "consentPrivacy": "Gizlilik Politikası",
+    "consentSuffix": "'nı kabul ediyorum."
+  },
+  "errors": {
+    "profile": {
+      "updateFailed": "Profil güncellenemedi"
+    },
+    "export": {
+      "failed": "Dışa aktarma başarısız",
+      "noTransactions": "Seçili tarih aralığında işlem yok",
+      "invalidDateRange": "Bitiş tarihi başlangıçtan önce olamaz",
+      "sharingUnavailable": "Bu cihazda paylaşım kullanılamıyor"
+    },
+    "budget": {
+      "categoryRequired": "Kategori zorunlu",
+      "amountRequired": "Limit zorunlu",
+      "amountPositive": "Limit 0'dan büyük olmalı",
+      "alreadyExists": "Bu kategori için zaten bir bütçe var",
+      "createFailed": "Bütçe oluşturulamadı",
+      "updateFailed": "Bütçe güncellenemedi",
+      "deleteFailed": "Bütçe silinemedi"
+    },
+    "transaction": {
+      "amountRequired": "Tutar zorunlu",
+      "amountPositive": "Tutar 0'dan büyük olmalı",
+      "categoryRequired": "Kategori seç",
+      "noteTooLong": "Not 200 karakteri geçemez",
+      "createFailed": "İşlem kaydedilemedi. Tekrar dene."
+    },
+    "category": {
+      "nameRequired": "Kategori adı zorunlu",
+      "createFailed": "Kategori oluşturulamadı.",
+      "deleteFailed": "Kategori silinemedi."
+    },
+    "recurring": {
+      "createFailed": "Kural oluşturulamadı.",
+      "updateFailed": "Kural güncellenemedi.",
+      "deleteFailed": "Kural silinemedi."
+    },
+    "auth": {
+      "invalidCredentials": "E-posta veya şifre hatalı.",
+      "emailAlreadyInUse": "Bu e-posta zaten kayıtlı.",
+      "weakPassword": "Şifre çok zayıf.",
+      "rateLimitEmail": "Çok fazla deneme yaptın. Lütfen 1 saat bekle ve tekrar dene.",
+      "redirectNotAllowed": "Yönlendirme adresi izinli değil. Supabase konfigürasyonunu kontrol et.",
+      "invalidEmail": "Geçerli bir e-posta adresi gir.",
+      "network": "Bağlantı hatası. İnternetini kontrol et.",
+      "unknown": "Bir şeyler ters gitti. Tekrar dene."
+    },
+    "validation": {
+      "emailInvalid": "Geçerli bir e-posta gir.",
+      "emailRequired": "E-posta zorunlu.",
+      "passwordRequired": "Şifre zorunlu.",
+      "passwordTooShort": "Şifre en az 8 karakter olmalı.",
+      "passwordNeedsLetter": "Şifre en az bir harf içermeli.",
+      "passwordNeedsNumber": "Şifre en az bir rakam içermeli.",
+      "passwordsDoNotMatch": "Şifreler eşleşmiyor.",
+      "recurringConfigIncomplete": "Tekrarlama ayarları eksik"
+    }
+  }
+}
