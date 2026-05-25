@@ -18,6 +18,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.ordino.fynpad",
       "buildNumber": "1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "FynPad'i Face ID ile açmak için kullanılır."
+      },
       "config": {
         "usesNonExemptEncryption": false
       }
