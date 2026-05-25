@@ -116,6 +116,44 @@ export function formatRelativeFuture(date: string, locale: Locale = 'tr'): strin
   }).format(target);
 }
 
+/**
+ * İşlem tarihi (date-only 'YYYY-MM-DD') için gösterim. `formatRelativeDate`'ten farkı:
+ * created_at zaman damgası değil, kullanıcının seçtiği tarih baz alınır — bu yüzden
+ * gün bazında karşılaştırılır ("2 saat önce" gibi saat bazlı yanıltıcı çıktı olmaz).
+ *   Bugün → "Bugün" · Dün → "Dün" · 2-6 gün → "3 gün önce" · 7+ gün/gelecek → "12 Eki" / "12 Eki 2025"
+ */
+export function formatTransactionDate(date: string, locale: Locale = 'tr'): string {
+  const target = fromISODate(date);
+  const today = fromISODate(toISODate(new Date()));
+  const days = Math.round((today.getTime() - target.getTime()) / MS_DAY);
+
+  if (days === 0) {
+    return locale === 'tr' ? 'Bugün' : 'Today';
+  }
+  if (days === 1) {
+    return locale === 'tr' ? 'Dün' : 'Yesterday';
+  }
+  if (days >= 2 && days < 7) {
+    return locale === 'tr' ? `${days} gün önce` : `${days} days ago`;
+  }
+  // 7+ gün önce veya gelecek tarih → kısa absolute (aynı yılsa yıl gizli)
+  const sameYear = target.getFullYear() === today.getFullYear();
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  }).format(target);
+}
+
+/** Ay başlığı "Mayıs 2026" / "May 2026" (Tüm İşlemler ekranı ay gruplaması). */
+export function formatMonthYear(monthKey: string, locale: Locale = 'tr'): string {
+  // monthKey 'YYYY-MM' veya 'YYYY-MM-DD' — fromISODate eksik günü 1 sayar.
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    month: 'long',
+    year: 'numeric',
+  }).format(fromISODate(monthKey));
+}
+
 /** Tam tarih "12 Ekim 2025" / "October 12, 2025". */
 export function formatAbsoluteDate(date: string, locale: Locale = 'tr'): string {
   return new Intl.DateTimeFormat(intlLocale(locale), {

@@ -58,6 +58,24 @@
     },
     "emptyChart": "No spending in this period"
   },
+  "transactions": {
+    "title": "All Transactions",
+    "filters": {
+      "all": "All",
+      "income": "Income",
+      "expense": "Expense",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "dateRange": "Date",
+      "allDates": "All Dates",
+      "thisMonth": "This Month",
+      "thisYear": "This Year",
+      "last30days": "Last 30 Days"
+    },
+    "empty": "No transactions match these filters",
+    "clearFilters": "Clear Filters",
+    "count": "{{count}} transactions"
+  },
   "quickAdd": {
     "title": "New Transaction",
     "kindIncome": "Income",

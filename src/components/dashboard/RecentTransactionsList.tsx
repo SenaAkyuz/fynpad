@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -13,16 +14,21 @@ export type RecentTransactionsListProps = {
   locale: Locale;
 };
 
-/** Son işlemler: başlık + "Tümünü gör" (no-op) + liste. Boşsa noTransactions. */
+/** Son işlemler: başlık + "Tümünü gör" (→ /transactions) + liste. Boşsa noTransactions. */
 export function RecentTransactionsList({ items, categories, locale }: RecentTransactionsListProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   return (
     <View style={styles.section}>
       <View style={styles.header}>
         <Text variant="headlineSm">{t('dashboard.recentTransactions')}</Text>
-        <Pressable accessibilityRole="button" hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => router.push('/transactions')}
+        >
           <Text variant="labelMd" color="primary">
             {t('dashboard.viewAll')}
           </Text>

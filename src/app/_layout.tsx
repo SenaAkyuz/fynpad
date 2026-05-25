@@ -167,6 +167,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="pin-setup" />
                 <Stack.Screen name="recurring-rules" />
+                <Stack.Screen name="transactions" />
                 <Stack.Screen name="categories" />
                 <Stack.Screen name="privacy" />
                 <Stack.Screen name="terms" />

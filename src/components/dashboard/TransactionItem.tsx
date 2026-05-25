@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { formatCurrency, formatRelativeDate } from '@/lib/format';
+import { formatCurrency, formatTransactionDate } from '@/lib/format';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Category, Locale, Transaction } from '@/types';
@@ -25,7 +25,7 @@ export function TransactionItem({ transaction, category, locale }: TransactionIt
 
   const income = transaction.kind === 'income';
   const title = transaction.note ?? (category ? t(category.name) : '');
-  const subtitle = `${category ? t(category.name) : ''} • ${formatRelativeDate(transaction.date, locale)}`;
+  const subtitle = `${category ? t(category.name) : ''} • ${formatTransactionDate(transaction.date, locale)}`;
   const sign = income ? '+' : '-';
   const amountText = `${sign}${formatCurrency(transaction.amount, transaction.currency, locale)}`;
 

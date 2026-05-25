@@ -58,6 +58,24 @@
     },
     "emptyChart": "Bu dönem için harcama yok"
   },
+  "transactions": {
+    "title": "Tüm İşlemler",
+    "filters": {
+      "all": "Tümü",
+      "income": "Gelir",
+      "expense": "Gider",
+      "category": "Kategori",
+      "allCategories": "Tüm Kategoriler",
+      "dateRange": "Tarih",
+      "allDates": "Tüm Tarihler",
+      "thisMonth": "Bu Ay",
+      "thisYear": "Bu Yıl",
+      "last30days": "Son 30 Gün"
+    },
+    "empty": "Bu filtrelerle eşleşen işlem yok",
+    "clearFilters": "Filtreleri Temizle",
+    "count": "{{count}} işlem"
+  },
   "quickAdd": {
     "title": "Yeni İşlem",
     "kindIncome": "Gelir",
