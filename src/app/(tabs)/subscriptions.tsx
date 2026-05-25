@@ -57,13 +57,6 @@ export default function SubscriptionsScreen() {
           locale={locale}
         />
 
-        {hasSubs ? (
-          <View style={styles.section}>
-            <Text variant="headlineSm">{t('subscriptions.growth')}</Text>
-            <SubscriptionGrowthChart data={growthHistory} locale={locale} />
-          </View>
-        ) : null}
-
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="headlineSm">{t('subscriptions.active')}</Text>
@@ -101,6 +94,13 @@ export default function SubscriptionsScreen() {
             </Pressable>
           )}
         </View>
+
+        {hasSubs ? (
+          <View style={styles.section}>
+            <Text variant="headlineSm">{t('subscriptions.growth')}</Text>
+            <SubscriptionGrowthChart data={growthHistory} locale={locale} />
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );
