@@ -1,4 +1,10 @@
 {
+  "common": {
+    "offline": "Offline — changes will sync when reconnected",
+    "syncing": "Syncing {{count}} change(s)...",
+    "queuedOffline": "{{count}} change(s) queued for sync",
+    "offlineSavedSyncLater": "You're offline — saved and will sync when online"
+  },
   "welcome": {
     "title": "FynPad",
     "subtitle": "See, test, and control your finances.",
@@ -299,6 +305,7 @@
     }
   },
   "auth": {
+    "offlineLoginUnavailable": "Internet connection required to sign in",
     "login": {
       "title": "Welcome Back",
       "subtitle": "Sign in to your account",

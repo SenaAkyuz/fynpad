@@ -27,6 +27,7 @@ import { useCreateTransaction } from '@/hooks/useTransactions';
 import { toISODate } from '@/lib/format';
 import { quickAddSchema, type QuickAddForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -42,6 +43,7 @@ export default function QuickAddScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
+  const isOnline = useNetworkStore((s) => s.isOnline);
 
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: profile } = useProfile();
@@ -88,32 +90,45 @@ export default function QuickAddScreen() {
   const onSubmit = async (values: QuickAddForm) => {
     setFormError('');
     const note = values.note?.trim() ? values.note.trim() : null;
+    const isRecurring = !!(values.recurring && values.recurringRule);
+
+    const runRecurring = () =>
+      // Tekrarlayan kural oluştur (lib içinde backfill için processRecurringRules çağrılır).
+      createRecurringRule.mutateAsync({
+        categoryId: values.categoryId,
+        amount: values.amount,
+        currency: values.currency,
+        kind: values.kind,
+        note,
+        frequency: values.recurringRule!.frequency,
+        dayOfWeek: values.recurringRule!.dayOfWeek ?? null,
+        dayOfMonth: values.recurringRule!.dayOfMonth ?? null,
+        monthOfYear: values.recurringRule!.monthOfYear ?? null,
+        startDate: values.recurringRule!.startDate,
+        endDate: values.recurringRule!.endDate ?? null,
+      });
+    const runTransaction = () =>
+      createTransaction.mutateAsync({
+        categoryId: values.categoryId,
+        amount: values.amount,
+        currency: values.currency,
+        kind: values.kind,
+        date: values.date,
+        note,
+      });
+
+    // Çevrimdışı: mutation 'offlineFirst' ile paused olur → mutateAsync resolve ETMEZ.
+    // Bu yüzden await etme; optimistic update (createTransaction.onMutate) işlemi anında
+    // gösterir, mutation kuyruğa düşer ve bağlantı gelince otomatik gönderilir. Modal hemen
+    // kapanır. (Paused promise reddetmediği için catch tetiklenmez — sadece void'le.)
+    if (!isOnline) {
+      void (isRecurring ? runRecurring() : runTransaction());
+      router.back();
+      return;
+    }
+
     try {
-      if (values.recurring && values.recurringRule) {
-        // Tekrarlayan kural oluştur (lib içinde backfill için processRecurringRules çağrılır).
-        await createRecurringRule.mutateAsync({
-          categoryId: values.categoryId,
-          amount: values.amount,
-          currency: values.currency,
-          kind: values.kind,
-          note,
-          frequency: values.recurringRule.frequency,
-          dayOfWeek: values.recurringRule.dayOfWeek ?? null,
-          dayOfMonth: values.recurringRule.dayOfMonth ?? null,
-          monthOfYear: values.recurringRule.monthOfYear ?? null,
-          startDate: values.recurringRule.startDate,
-          endDate: values.recurringRule.endDate ?? null,
-        });
-      } else {
-        await createTransaction.mutateAsync({
-          categoryId: values.categoryId,
-          amount: values.amount,
-          currency: values.currency,
-          kind: values.kind,
-          date: values.date,
-          note,
-        });
-      }
+      await (isRecurring ? runRecurring() : runTransaction());
       router.back();
     } catch {
       setFormError(
@@ -250,11 +265,17 @@ export default function QuickAddScreen() {
 
           <Button
             label={t('quickAdd.submit')}
-            loading={createTransaction.isPending || createRecurringRule.isPending}
+            loading={isOnline && (createTransaction.isPending || createRecurringRule.isPending)}
             disabled={!isValid}
             onPress={handleSubmit(onSubmit)}
             style={styles.submit}
           />
+
+          {!isOnline ? (
+            <Text variant="labelSm" color="onSurfaceVariant" style={styles.offlineHint}>
+              {t('common.offlineSavedSyncLater')}
+            </Text>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -308,5 +329,9 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: spacing.sm,
+  },
+  offlineHint: {
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });

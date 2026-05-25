@@ -2,7 +2,7 @@
 // çalışmalı; detay için bkz. lib/logbox.ts. Bu import en üstte kalmalı.
 import '@/lib/logbox';
 
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -18,8 +18,10 @@ import { useAppLifecycle } from '@/hooks/useAppLifecycle';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
 import { fontMap } from '@/lib/fonts';
+import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStatus';
 import { rescheduleAll } from '@/lib/notifications';
-import { queryClient } from '@/lib/queryClient';
+import { registerMutationDefaults } from '@/lib/offlineMutations';
+import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
 import { processRecurringRules } from '@/lib/recurring';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/stores/useAppStore';
@@ -28,6 +30,10 @@ import { useLockStore } from '@/stores/useLockStore';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
 void SplashScreen.preventAutoHideAsync();
+
+// Offline mutation default'larını kaydet (restore edilen paused mutation'lar restart sonrası
+// resume edilebilsin — fn serialize edilemediği için merkezi olarak yeniden bağlanır).
+registerMutationDefaults(queryClient);
 
 // Foreground'da bildirim geldiğinde banner + listede göster (Part 7).
 Notifications.setNotificationHandler({
@@ -92,6 +98,12 @@ export default function RootLayout() {
 
   // Arka plana düşünce kilitle (kilit açık + oturum varsa).
   useAppLifecycle();
+
+  // Ağ izleme: NetInfo → görsel store + React Query onlineManager (otomatik resume/sync).
+  useEffect(() => {
+    startNetworkMonitoring();
+    return () => stopNetworkMonitoring();
+  }, []);
 
   // Supabase session'ı yükle + değişiklikleri dinle.
   useEffect(() => {
@@ -158,7 +170,21 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister: asyncStoragePersister,
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 gün — daha eski cache temizlenir
+            buster: 'v1', // tip/şema değişiminde bump et → eski cache geçersiz
+            dehydrateOptions: {
+              shouldDehydrateQuery: () => true,
+            },
+          }}
+          onSuccess={() => {
+            // Cache restore edildikten sonra restore edilen paused mutation'ları resume et.
+            void queryClient.resumePausedMutations();
+          }}
+        >
           <ThemeProvider>
             <View style={{ flex: 1 }}>
               <Stack screenOptions={{ headerShown: false }}>
@@ -224,7 +250,7 @@ export default function RootLayout() {
               {showLock ? <LockScreen /> : null}
             </View>
           </ThemeProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

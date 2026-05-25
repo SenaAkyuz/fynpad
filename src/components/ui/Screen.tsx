@@ -1,6 +1,7 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { useTheme } from '@/theme/useTheme';
 
 export type ScreenProps = {
@@ -16,8 +17,10 @@ export function Screen({ children, center = false, style, edges }: ScreenProps) 
   const { colors } = useTheme();
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={[styles.safe, center && styles.center, style]} edges={edges}>
-        {children}
+      <SafeAreaView style={styles.safe} edges={edges}>
+        {/* Çevrimdışı şeridi her ekranın en üstünde (Part 13.5). center prop'undan etkilenmesin. */}
+        <OfflineBanner />
+        <View style={[styles.content, center && styles.center, style]}>{children}</View>
       </SafeAreaView>
     </View>
   );
@@ -28,6 +31,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safe: {
+    flex: 1,
+  },
+  content: {
     flex: 1,
   },
   center: {

@@ -23,6 +23,7 @@ export function useRecurringRules() {
 export function useCreateRecurringRule() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['createRecurringRule'],
     mutationFn: createRecurringRule,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: recurringRulesKey });
@@ -34,6 +35,7 @@ export function useCreateRecurringRule() {
 export function useUpdateRecurringRule() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['updateRecurringRule'],
     mutationFn: ({ id, patch }: { id: string; patch: RecurringRulePatch }) =>
       updateRecurringRule(id, patch),
     onSuccess: () => {
@@ -46,6 +48,7 @@ export function useUpdateRecurringRule() {
 export function useDeleteRecurringRule() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['deleteRecurringRule'],
     mutationFn: deleteRecurringRule,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: recurringRulesKey });

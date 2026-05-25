@@ -19,6 +19,7 @@ export function useCategories() {
 export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['createCategory'],
     mutationFn: createCategory,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: categoriesKey });
@@ -29,6 +30,7 @@ export function useCreateCategory() {
 export function useUpdateCategory() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['updateCategory'],
     mutationFn: ({
       id,
       patch,
@@ -45,6 +47,7 @@ export function useUpdateCategory() {
 export function useDeleteCategory() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['deleteCategory'],
     mutationFn: deleteCategory,
     onSuccess: () => {
       // delete işlemleri Diğer'e taşıdığı için transactions da geçersiz kılınır

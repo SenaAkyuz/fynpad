@@ -35,6 +35,7 @@ async function refreshAndReschedule(): Promise<void> {
 export function useCreateSubscription() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['createSubscription'],
     mutationFn: createSubscription,
     onSuccess: async () => {
       void qc.invalidateQueries({ queryKey: subscriptionsKey });
@@ -48,6 +49,7 @@ export function useCreateSubscription() {
 export function useUpdateSubscription() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['updateSubscription'],
     mutationFn: ({ id, patch }: { id: string; patch: SubscriptionPatch }) =>
       updateSubscription(id, patch),
     onSuccess: async () => {
@@ -62,6 +64,7 @@ export function useUpdateSubscription() {
 export function useDeleteSubscription() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['deleteSubscription'],
     mutationFn: deleteSubscription,
     onSuccess: async () => {
       void qc.invalidateQueries({ queryKey: subscriptionsKey });

@@ -24,6 +24,7 @@ type CreateInput = Parameters<typeof createTransaction>[0];
 export function useCreateTransaction() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['createTransaction'],
     mutationFn: createTransaction,
     // Optimistic: modal anında kapanır, dashboard'da işlem hemen görünür.
     onMutate: async (input: CreateInput) => {
@@ -63,6 +64,7 @@ export function useCreateTransaction() {
 export function useUpdateTransaction() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['updateTransaction'],
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateTransaction>[1] }) =>
       updateTransaction(id, patch),
     onSuccess: () => {
@@ -74,6 +76,7 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['deleteTransaction'],
     mutationFn: deleteTransaction,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transactionsKey });

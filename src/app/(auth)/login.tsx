@@ -20,11 +20,13 @@ import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { signInWithEmail } from '@/lib/auth';
 import { loginSchema, type LoginForm } from '@/lib/validation';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { spacing } from '@/theme/tokens';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const isOnline = useNetworkStore((s) => s.isOnline);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -128,9 +130,16 @@ export default function LoginScreen() {
               </Text>
             </Pressable>
 
+            {!isOnline ? (
+              <Text variant="labelSm" color="onSurfaceVariant" style={styles.offlineHint}>
+                {t('auth.offlineLoginUnavailable')}
+              </Text>
+            ) : null}
+
             <Button
               label={t('auth.login.submit')}
               loading={loading}
+              disabled={!isOnline}
               onPress={handleSubmit(onSubmit)}
               style={styles.submit}
             />
@@ -190,6 +199,10 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: spacing.xl,
+  },
+  offlineHint: {
+    marginTop: spacing.lg,
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

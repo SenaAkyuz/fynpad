@@ -1,4 +1,10 @@
 {
+  "common": {
+    "offline": "Çevrimdışı — değişiklikler bağlantı gelince senkronize olacak",
+    "syncing": "{{count}} işlem senkronize ediliyor...",
+    "queuedOffline": "{{count}} işlem senkronize bekleniyor",
+    "offlineSavedSyncLater": "Çevrimdışısın — kayıt online olunca gönderilecek"
+  },
   "welcome": {
     "title": "FynPad",
     "subtitle": "Finansını gör, dene, kontrol et.",
@@ -299,6 +305,7 @@
     }
   },
   "auth": {
+    "offlineLoginUnavailable": "Giriş için internet bağlantısı gerekli",
     "login": {
       "title": "Tekrar Hoş Geldin",
       "subtitle": "Hesabına giriş yap",

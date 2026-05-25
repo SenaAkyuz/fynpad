@@ -56,6 +56,7 @@ export function useUpdateProfile() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
+    mutationKey: ['updateProfile'],
     mutationFn: async (patch: Partial<{ fullName: string; defaultCurrency: Currency; locale: Locale }>) => {
       const dbPatch: Record<string, string> = {};
       if (patch.fullName !== undefined) dbPatch.full_name = patch.fullName;

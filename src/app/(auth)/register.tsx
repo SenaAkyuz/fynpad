@@ -22,12 +22,14 @@ import { TextInput } from '@/components/ui/TextInput';
 import { signUpWithEmail } from '@/lib/auth';
 import { registerSchema, type RegisterForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { spacing } from '@/theme/tokens';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
+  const isOnline = useNetworkStore((s) => s.isOnline);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -183,10 +185,16 @@ export default function RegisterScreen() {
               </Text>
             </View>
 
+            {!isOnline ? (
+              <Text variant="labelSm" color="onSurfaceVariant" style={styles.offlineHint}>
+                {t('auth.offlineLoginUnavailable')}
+              </Text>
+            ) : null}
+
             <Button
               label={t('auth.register.submit')}
               loading={loading}
-              disabled={!accepted}
+              disabled={!accepted || !isOnline}
               onPress={handleSubmit(onSubmit)}
               style={styles.submit}
             />
@@ -258,6 +266,10 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: spacing.lg,
+  },
+  offlineHint: {
+    marginTop: spacing.lg,
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

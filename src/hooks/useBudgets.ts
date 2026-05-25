@@ -14,6 +14,7 @@ export function useBudgets() {
 export function useUpsertBudget() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['upsertBudget'],
     mutationFn: upsertBudget,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: budgetsKey });
@@ -24,6 +25,7 @@ export function useUpsertBudget() {
 export function useDeleteBudget() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ['deleteBudget'],
     mutationFn: deleteBudget,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: budgetsKey });

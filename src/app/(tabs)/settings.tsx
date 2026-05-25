@@ -11,6 +11,7 @@ import { SettingsSection } from '@/components/settings/SettingsSection';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { Icon } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
+import { SyncStatusIndicator } from '@/components/ui/SyncStatusIndicator';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
@@ -133,6 +134,8 @@ export default function SettingsScreen() {
             onPress={() => router.push('/export')}
           />
         </SettingsSection>
+
+        <SyncStatusIndicator />
 
         <SettingsSection title={t('settings.sections.about')}>
           <SettingsRow
