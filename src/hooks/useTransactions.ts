@@ -67,7 +67,19 @@ export function useUpdateTransaction() {
     mutationKey: ['updateTransaction'],
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateTransaction>[1] }) =>
       updateTransaction(id, patch),
-    onSuccess: () => {
+    // Optimistic (create ile paralel): liste anında güncellenir, offline'da bile.
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: transactionsKey });
+      const previous = qc.getQueriesData<Transaction[]>({ queryKey: transactionsKey });
+      qc.setQueriesData<Transaction[]>({ queryKey: transactionsKey }, (old) =>
+        old ? old.map((tx) => (tx.id === id ? { ...tx, ...patch } : tx)) : old
+      );
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
+    },
+    onSettled: () => {
       void qc.invalidateQueries({ queryKey: transactionsKey });
     },
   });
@@ -78,7 +90,19 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationKey: ['deleteTransaction'],
     mutationFn: deleteTransaction,
-    onSuccess: () => {
+    // Optimistic: silinen işlem listeden anında kalkar; hata olursa geri yüklenir.
+    onMutate: async (id: string) => {
+      await qc.cancelQueries({ queryKey: transactionsKey });
+      const previous = qc.getQueriesData<Transaction[]>({ queryKey: transactionsKey });
+      qc.setQueriesData<Transaction[]>({ queryKey: transactionsKey }, (old) =>
+        old ? old.filter((tx) => tx.id !== id) : old
+      );
+      return { previous };
+    },
+    onError: (_err, _id, ctx) => {
+      ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
+    },
+    onSettled: () => {
       void qc.invalidateQueries({ queryKey: transactionsKey });
     },
   });

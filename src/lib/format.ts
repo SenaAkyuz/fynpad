@@ -156,11 +156,13 @@ export function formatMonthYear(monthKey: string, locale: Locale = 'tr'): string
 
 /** Tam tarih "12 Ekim 2025" / "October 12, 2025". */
 export function formatAbsoluteDate(date: string, locale: Locale = 'tr'): string {
+  // `new Date('YYYY-MM-DD')` UTC gece yarısı olarak parse edilir → negatif UTC offset'li
+  // cihazlarda bir gün geriye kayar. fromISODate yerel gece yarısı verir (off-by-one yok).
   return new Intl.DateTimeFormat(intlLocale(locale), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(new Date(date));
+  }).format(fromISODate(date));
 }
 
 /** JS Date → 'YYYY-MM-DD' (yerel saat). DB `date` kolonu için. */
