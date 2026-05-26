@@ -117,7 +117,7 @@ export default function QuickAddScreen() {
         note,
       });
 
-    // Çevrimdışı: mutation 'offlineFirst' ile paused olur → mutateAsync resolve ETMEZ.
+    // Çevrimdışı: mutation 'online' networkMode ile paused olur → mutateAsync resolve ETMEZ.
     // Bu yüzden await etme; optimistic update (createTransaction.onMutate) işlemi anında
     // gösterir, mutation kuyruğa düşer ve bağlantı gelince otomatik gönderilir. Modal hemen
     // kapanır. (Paused promise reddetmediği için catch tetiklenmez — sadece void'le.)

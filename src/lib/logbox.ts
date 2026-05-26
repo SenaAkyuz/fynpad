@@ -13,4 +13,9 @@ import { LogBox } from 'react-native';
 LogBox.ignoreLogs([
   /expo-notifications: Android Push notifications.*Expo Go/,
   /expo-notifications.*was removed from Expo Go/,
+  // Offline mod (Part 13.5): mutation'lar 'online' networkMode ile paused olur, ama bağlantı
+  // tam kopmadan (zayıf sinyal) fırlatılan Supabase fetch hataları yine de dev'de kırmızı overlay
+  // tetikleyebilir. Bu suppress YALNIZCA dev içindir; gerçek hata UI'ı (toast/inline) çalışmaya devam eder.
+  /TypeError: Network request failed/,
+  /Network request failed/,
 ]);

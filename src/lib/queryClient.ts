@@ -4,9 +4,10 @@ import { QueryClient } from '@tanstack/react-query';
 
 /**
  * Part 5: React Query istemcisi — data fetching/cache + optimistic updates.
- * Part 13.5: offline mod. networkMode 'offlineFirst' → cache anında gösterilir,
- * mutation'lar offline'da paused olur; AsyncStorage persister cache + paused
- * mutation'ları kalıcı yapar (uygulama kapanıp açılsa da kuyruk korunur).
+ * Part 13.5: offline mod. Query'ler 'offlineFirst' → cache anında gösterilir (offline read).
+ * Mutation'lar 'online' → offline'da hiç DENENMEZ, direkt paused olur (yanlış "Network request
+ * failed" error state'e düşmez). Bağlantı gelince onlineManager event'i ile OTOMATİK resume olur.
+ * AsyncStorage persister cache + paused mutation'ları kalıcı yapar (app kapanıp açılsa da kuyruk korunur).
  */
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,7 +19,9 @@ export const queryClient = new QueryClient({
       retry: 2,
     },
     mutations: {
-      networkMode: 'offlineFirst',
+      // 'offlineFirst' offline'da bir kez dener → network error → error state (resume olmaz).
+      // 'online' offline'da denemez bile → paused → online olunca otomatik gönderilir.
+      networkMode: 'online',
       retry: 3,
     },
   },

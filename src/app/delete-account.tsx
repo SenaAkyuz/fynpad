@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { deleteAccount } from '@/lib/account';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -30,13 +31,15 @@ export default function DeleteAccountScreen() {
 
   const keyword = t('deleteAccount.confirmKeyword');
   const points = t('deleteAccount.warningPoints', { returnObjects: true }) as unknown as string[];
+  const isOnline = useNetworkStore((s) => s.isOnline);
 
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const matches = confirmText.trim().toLocaleUpperCase() === keyword.toLocaleUpperCase();
-  const canSubmit = matches && !submitting;
+  // Hesap silme offline yapılamaz: auth + hard delete RPC ister, queue'ya alınamaz/alınmamalı.
+  const canSubmit = matches && !submitting && isOnline;
 
   const onDelete = async () => {
     if (!canSubmit) {
@@ -126,6 +129,12 @@ export default function DeleteAccountScreen() {
               </Text>
             )}
           </Pressable>
+
+          {!isOnline ? (
+            <Text variant="labelSm" color="onSurfaceVariant" style={styles.offlineHint}>
+              {t('deleteAccount.offlineHint')}
+            </Text>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
@@ -174,6 +183,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   error: {
+    textAlign: 'center',
+  },
+  offlineHint: {
     textAlign: 'center',
   },
   deleteButton: {

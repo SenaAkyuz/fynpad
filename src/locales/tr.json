@@ -511,6 +511,7 @@
     "confirmPlaceholder": "Onay kelimesi",
     "submit": "Hesabımı Kalıcı Olarak Sil",
     "submitting": "Siliniyor...",
+    "offlineHint": "Hesap silmek için internet bağlantısı gerekli",
     "errorAuth": "Oturum süresi dolmuş, lütfen tekrar giriş yapın",
     "errorGeneric": "Hesap silinemedi"
   },

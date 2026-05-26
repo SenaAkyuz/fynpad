@@ -10,6 +10,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -24,6 +25,7 @@ export default function ProfileEditScreen() {
 
   const { data: profile } = useProfile();
   const updateProfile = useUpdateProfile();
+  const isOnline = useNetworkStore((s) => s.isOnline);
 
   const [name, setName] = useState(profile?.fullName ?? '');
   const [error, setError] = useState('');
@@ -33,6 +35,15 @@ export default function ProfileEditScreen() {
 
   const onSave = async () => {
     setError('');
+
+    // Çevrimdışı: 'online' networkMode ile mutation paused olur (resolve etmez) → await etme,
+    // fire-and-forget ile kuyruğa düşür, modal hemen kapansın.
+    if (!isOnline) {
+      updateProfile.mutate({ fullName: name.trim() });
+      router.back();
+      return;
+    }
+
     try {
       await updateProfile.mutateAsync({ fullName: name.trim() });
       router.back();

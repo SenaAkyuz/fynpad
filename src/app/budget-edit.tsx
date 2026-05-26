@@ -16,6 +16,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { budgetSchema, type BudgetForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Category, CategoryBudget } from '@/types';
@@ -42,6 +43,7 @@ function BudgetEditForm({ editing }: { editing: CategoryBudget | null }) {
   const { colors } = useTheme();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
+  const isOnline = useNetworkStore((s) => s.isOnline);
 
   const { data: profile } = useProfile();
   const { data: categories = [] } = useCategories();
@@ -75,12 +77,22 @@ function BudgetEditForm({ editing }: { editing: CategoryBudget | null }) {
   const busy = upsertBudget.isPending || deleteBudget.isPending;
 
   const onSubmit = async (values: BudgetForm) => {
+    const input = {
+      categoryId: values.categoryId,
+      amount: values.amount,
+      currency: values.currency,
+    };
+
+    // Çevrimdışı: 'online' networkMode ile mutation paused olur (resolve etmez) → await etme,
+    // fire-and-forget ile kuyruğa düşür, modal hemen kapansın.
+    if (!isOnline) {
+      upsertBudget.mutate(input);
+      router.back();
+      return;
+    }
+
     try {
-      await upsertBudget.mutateAsync({
-        categoryId: values.categoryId,
-        amount: values.amount,
-        currency: values.currency,
-      });
+      await upsertBudget.mutateAsync(input);
       router.back();
     } catch {
       Alert.alert(t(editing ? 'errors.budget.updateFailed' : 'errors.budget.createFailed'));
@@ -97,11 +109,18 @@ function BudgetEditForm({ editing }: { editing: CategoryBudget | null }) {
         {
           text: t('analytics.budgetEdit.deleteConfirmAction'),
           style: 'destructive',
-          onPress: () =>
+          onPress: () => {
+            // Offline: paused olur, onSuccess/onError tetiklenmez → modal'ı manuel kapat.
+            if (!isOnline) {
+              deleteBudget.mutate(editing.id);
+              router.back();
+              return;
+            }
             deleteBudget.mutate(editing.id, {
               onSuccess: () => router.back(),
               onError: () => Alert.alert(t('errors.budget.deleteFailed')),
-            }),
+            });
+          },
         },
       ]
     );

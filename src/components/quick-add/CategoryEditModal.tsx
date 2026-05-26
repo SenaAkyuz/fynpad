@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { useCreateCategory, useDeleteCategory, useUpdateCategory } from '@/hooks/useCategories';
 import { categoryEditSchema } from '@/lib/validation';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Category, CategoryKind } from '@/types';
@@ -87,6 +88,7 @@ export function CategoryEditModal({
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
+  const isOnline = useNetworkStore((s) => s.isOnline);
 
   const isEdit = !!category;
   const effectiveKind = category?.kind ?? kind;
@@ -120,6 +122,13 @@ export function CategoryEditModal({
     }
 
     if (isEdit && category) {
+      // Çevrimdışı: 'online' networkMode ile mutation paused olur, onSuccess/onError tetiklenmez →
+      // fire-and-forget ile kuyruğa düşür, modal'ı hemen kapat. (Optimistic yok: güncel ad sync sonrası görünür.)
+      if (!isOnline) {
+        updateCategory.mutate({ id: category.id, patch: { name: parsed.data.name, icon, color } });
+        close();
+        return;
+      }
       updateCategory.mutate(
         { id: category.id, patch: { name: parsed.data.name, icon, color } },
         {
@@ -130,6 +139,11 @@ export function CategoryEditModal({
       return;
     }
 
+    if (!isOnline) {
+      createCategory.mutate({ name: parsed.data.name, icon, color, kind: effectiveKind });
+      close();
+      return;
+    }
     createCategory.mutate(
       { name: parsed.data.name, icon, color, kind: effectiveKind },
       {
@@ -154,11 +168,17 @@ export function CategoryEditModal({
         {
           text: t('categoryEdit.delete'),
           style: 'destructive',
-          onPress: () =>
+          onPress: () => {
+            if (!isOnline) {
+              deleteCategory.mutate(category.id);
+              onDeleted?.();
+              return;
+            }
             deleteCategory.mutate(category.id, {
               onSuccess: () => onDeleted?.(),
               onError: () => setError(t('errors.category.deleteFailed')),
-            }),
+            });
+          },
         },
       ]
     );

@@ -13,6 +13,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { useDeleteRecurringRule, useUpdateRecurringRule } from '@/hooks/useRecurringRules';
 import { recurringRuleSchema, type RecurringRuleForm } from '@/lib/validation';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Category, Currency, Locale, RecurringRule } from '@/types';
@@ -51,6 +52,7 @@ export function RecurringRuleEditModal({
   const { colors } = useTheme();
   const updateRule = useUpdateRecurringRule();
   const deleteRule = useDeleteRecurringRule();
+  const isOnline = useNetworkStore((s) => s.isOnline);
 
   const [amount, setAmount] = useState(rule.amount);
   const [categoryId, setCategoryId] = useState(rule.categoryId);
@@ -74,27 +76,33 @@ export function RecurringRuleEditModal({
       setError(t('errors.validation.recurringConfigIncomplete'));
       return;
     }
-    updateRule.mutate(
-      {
-        id: rule.id,
-        patch: {
-          amount,
-          categoryId,
-          currency,
-          note: note.trim() ? note.trim() : null,
-          frequency: parsed.data.frequency,
-          dayOfWeek: parsed.data.dayOfWeek ?? null,
-          dayOfMonth: parsed.data.dayOfMonth ?? null,
-          monthOfYear: parsed.data.monthOfYear ?? null,
-          startDate: parsed.data.startDate,
-          endDate: parsed.data.endDate ?? null,
-        },
+    const payload = {
+      id: rule.id,
+      patch: {
+        amount,
+        categoryId,
+        currency,
+        note: note.trim() ? note.trim() : null,
+        frequency: parsed.data.frequency,
+        dayOfWeek: parsed.data.dayOfWeek ?? null,
+        dayOfMonth: parsed.data.dayOfMonth ?? null,
+        monthOfYear: parsed.data.monthOfYear ?? null,
+        startDate: parsed.data.startDate,
+        endDate: parsed.data.endDate ?? null,
       },
-      {
-        onSuccess: () => onClose(),
-        onError: () => setError(t('errors.recurring.updateFailed')),
-      }
-    );
+    };
+
+    // Çevrimdışı: 'online' networkMode ile mutation paused olur, onSuccess/onError tetiklenmez →
+    // fire-and-forget ile kuyruğa düşür, modal'ı hemen kapat.
+    if (!isOnline) {
+      updateRule.mutate(payload);
+      onClose();
+      return;
+    }
+    updateRule.mutate(payload, {
+      onSuccess: () => onClose(),
+      onError: () => setError(t('errors.recurring.updateFailed')),
+    });
   };
 
   const onDelete = () => {
@@ -103,11 +111,17 @@ export function RecurringRuleEditModal({
       {
         text: t('recurring.deleteConfirmAction'),
         style: 'destructive',
-        onPress: () =>
+        onPress: () => {
+          if (!isOnline) {
+            deleteRule.mutate(rule.id);
+            onClose();
+            return;
+          }
           deleteRule.mutate(rule.id, {
             onSuccess: () => onClose(),
             onError: () => setError(t('errors.recurring.deleteFailed')),
-          }),
+          });
+        },
       },
     ]);
   };

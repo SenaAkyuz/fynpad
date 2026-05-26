@@ -27,6 +27,7 @@ import { toISODate } from '@/lib/format';
 import { requestPermissions } from '@/lib/notifications';
 import { subscriptionSchema, type SubscriptionForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
+import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Subscription } from '@/types';
@@ -57,6 +58,7 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
   const { colors } = useTheme();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
+  const isOnline = useNetworkStore((s) => s.isOnline);
   const { data: profile } = useProfile();
 
   const createSub = useCreateSubscription();
@@ -123,15 +125,31 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
       note: values.note?.trim() ? values.note.trim() : null,
     };
 
+    // İlk kez: bildirim izni iste. Reddedilse de abonelik oluşturulur (sadece hatırlatma atılmaz).
+    if (!editing) {
+      const granted = await requestPermissions();
+      if (!granted) {
+        Alert.alert(t('subscriptions.permissions.denied'));
+      }
+    }
+
+    // Çevrimdışı: mutation 'online' networkMode ile paused olur → mutateAsync RESOLVE ETMEZ.
+    // Bu yüzden await etme; fire-and-forget ile kuyruğa düşür, modal hemen kapansın, bağlantı
+    // gelince otomatik gönderilir.
+    if (!isOnline) {
+      if (editing) {
+        updateSub.mutate({ id: editing.id, patch: input });
+      } else {
+        createSub.mutate(input);
+      }
+      router.back();
+      return;
+    }
+
     try {
       if (editing) {
         await updateSub.mutateAsync({ id: editing.id, patch: input });
       } else {
-        // İlk kez: bildirim izni iste. Reddedilse de abonelik oluşturulur (sadece hatırlatma atılmaz).
-        const granted = await requestPermissions();
-        if (!granted) {
-          Alert.alert(t('subscriptions.permissions.denied'));
-        }
         await createSub.mutateAsync(input);
       }
       router.back();
@@ -147,11 +165,18 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
       {
         text: t('subscriptions.form.deleteConfirmAction'),
         style: 'destructive',
-        onPress: () =>
+        onPress: () => {
+          // Offline: paused olur, onSuccess/onError tetiklenmez → modal'ı manuel kapat.
+          if (!isOnline) {
+            deleteSub.mutate(editing.id);
+            router.back();
+            return;
+          }
           deleteSub.mutate(editing.id, {
             onSuccess: () => router.back(),
             onError: () => Alert.alert(t('subscriptions.errors.deleteFailed')),
-          }),
+          });
+        },
       },
     ]);
   };

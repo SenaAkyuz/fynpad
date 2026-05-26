@@ -511,6 +511,7 @@
     "confirmPlaceholder": "Confirmation word",
     "submit": "Permanently Delete My Account",
     "submitting": "Deleting...",
+    "offlineHint": "Internet connection required to delete your account",
     "errorAuth": "Your session expired, please sign in again",
     "errorGeneric": "Couldn't delete the account"
   },
