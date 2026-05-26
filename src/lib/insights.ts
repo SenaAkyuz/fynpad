@@ -142,7 +142,7 @@ function ruleSubscriptionReview(ctx: GenerateContext): Insight[] {
       descKey: 'insights.subscriptionReview.desc',
       descParams: { months },
       actionLabelKey: 'insights.viewSubscription',
-      actionTarget: '/(tabs)/subscriptions',
+      actionTarget: '/subscriptions',
       iconName: 'rotate-ccw',
     });
   }

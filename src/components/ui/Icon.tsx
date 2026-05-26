@@ -58,6 +58,7 @@ export type IconName =
   | 'download'
   | 'info'
   | 'wifi-off'
+  | 'target'
   | 'log-out';
 
 export type IconProps = {
@@ -381,6 +382,13 @@ const ICONS: Record<IconName, (s: Stroke, color: string) => ReactNode> = {
       <Path {...s} d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <Polyline {...s} points="16 17 21 12 16 7" />
       <Line {...s} x1="21" y1="12" x2="9" y2="12" />
+    </>
+  ),
+  target: (s) => (
+    <>
+      <Circle {...s} cx="12" cy="12" r="10" />
+      <Circle {...s} cx="12" cy="12" r="6" />
+      <Circle {...s} cx="12" cy="12" r="2" />
     </>
   ),
   'wifi-off': (s) => (

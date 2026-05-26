@@ -129,6 +129,11 @@ export default function SettingsScreen() {
             onPress={() => router.push('/recurring-rules')}
           />
           <SettingsRow
+            icon="credit-card"
+            label={t('settings.subscriptions')}
+            onPress={() => router.push('/subscriptions')}
+          />
+          <SettingsRow
             icon="download"
             label={t('settings.exportData')}
             onPress={() => router.push('/export')}

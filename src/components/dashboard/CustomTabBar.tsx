@@ -12,17 +12,17 @@ import { useTheme } from '@/theme/useTheme';
 
 /**
  * DESIGN.md "Bottom Navigation": floating glass bar, kenarlardan boşluklu, full radius.
- * Sıra: Dashboard · Abonelikler · [+ Ekle (yükseltilmiş)] · Analiz · Ayarlar.
- * Aktif: primary tint + 4px nokta. Ekle: route değil, no-op (Part 5'te modal).
+ * Sıra (tasarım canonical): Dashboard · Analiz · [+ Ekle (yükseltilmiş)] · Hedefler · Ayarlar.
+ * Aktif: primary tint + 4px nokta. Ekle: quick-add modal'ını açar.
  */
 const TAB_ICONS: Record<string, IconName> = {
   dashboard: 'home',
-  subscriptions: 'credit-card',
   analytics: 'bar-chart',
+  goals: 'target',
   settings: 'settings',
 };
-const LEFT = ['dashboard', 'subscriptions'];
-const RIGHT = ['analytics', 'settings'];
+const LEFT = ['dashboard', 'analytics'];
+const RIGHT = ['goals', 'settings'];
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();

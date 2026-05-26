@@ -38,11 +38,17 @@ export default function SubscriptionsScreen() {
 
   return (
     <Screen edges={['top']}>
+      {/* Artık tab değil, stack route (Settings → Abonelikler). Geri butonu eklendi. */}
+      <View style={styles.header}>
+        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()}>
+          <Icon name="chevron-left" size={26} color={colors.primary} strokeWidth={2} />
+        </Pressable>
+        <Text variant="headlineMd">{t('subscriptions.title')}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleBlock}>
-          <Text variant="headlineMd" style={styles.title}>
-            {t('subscriptions.title')}
-          </Text>
           <Text variant="bodyMd" color="onSurfaceVariant">
             {t('subscriptions.subtitle')}
           </Text>
@@ -107,18 +113,25 @@ export default function SubscriptionsScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.containerMargin,
+    paddingVertical: spacing.md,
+  },
+  headerSpacer: {
+    width: 26,
+  },
   content: {
     paddingHorizontal: spacing.containerMargin,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.sm,
     // Floating bottom nav clearance (dashboard/settings ile tutarlı). FAB yok artık.
     paddingBottom: 120,
     gap: spacing.stackMd,
   },
   titleBlock: {
     gap: spacing.xs,
-  },
-  title: {
-    fontWeight: '800',
   },
   section: {
     gap: spacing.stackSm,

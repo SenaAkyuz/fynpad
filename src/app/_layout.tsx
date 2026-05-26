@@ -62,7 +62,7 @@ function NotificationsBootstrap() {
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(() => {
-      router.push('/(tabs)/subscriptions');
+      router.push('/subscriptions');
     });
     return () => sub.remove();
   }, [router]);
@@ -195,6 +195,7 @@ export default function RootLayout() {
                 <Stack.Screen name="recurring-rules" />
                 <Stack.Screen name="transactions" />
                 <Stack.Screen name="categories" />
+                <Stack.Screen name="subscriptions" />
                 <Stack.Screen name="privacy" />
                 <Stack.Screen name="terms" />
                 <Stack.Screen

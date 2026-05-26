@@ -25,10 +25,14 @@
   },
   "tabs": {
     "dashboard": "Ana Sayfa",
-    "subscriptions": "Abonelikler",
     "add": "Ekle",
     "analytics": "Analiz",
+    "goals": "Hedefler",
     "settings": "Ayarlar"
+  },
+  "goals": {
+    "title": "Hedefler",
+    "comingSoon": "Yakında eklenecek"
   },
   "dashboard": {
     "totalBalance": "Toplam Net Değer",
@@ -424,6 +428,7 @@
     "categories": "Kategoriler",
     "categoriesSubtitle": "{{defaults}} varsayılan + {{custom}} özel",
     "recurringTransactions": "Tekrarlayan İşlemler",
+    "subscriptions": "Abonelikler",
     "exportData": "Veriyi Dışa Aktar",
     "version": "Sürüm",
     "signOut": "Çıkış Yap",

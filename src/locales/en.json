@@ -25,10 +25,14 @@
   },
   "tabs": {
     "dashboard": "Home",
-    "subscriptions": "Subscriptions",
     "add": "Add",
     "analytics": "Analytics",
+    "goals": "Goals",
     "settings": "Settings"
+  },
+  "goals": {
+    "title": "Goals",
+    "comingSoon": "Coming soon"
   },
   "dashboard": {
     "totalBalance": "Total Net Worth",
@@ -424,6 +428,7 @@
     "categories": "Categories",
     "categoriesSubtitle": "{{defaults}} default + {{custom}} custom",
     "recurringTransactions": "Recurring Transactions",
+    "subscriptions": "Subscriptions",
     "exportData": "Export Data",
     "version": "Version",
     "signOut": "Sign Out",
