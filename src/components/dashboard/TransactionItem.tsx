@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -13,13 +13,15 @@ export type TransactionItemProps = {
   /** çağıran tarafça çözülmüş kategori (Part 5: DB-driven) */
   category?: Category;
   locale: Locale;
+  /** verilirse satır tıklanabilir olur (→ düzenle/sil modal'ı) */
+  onPress?: () => void;
 };
 
 /**
  * İşlem satırı (design): nötr kare ikon + başlık (note) + altsatır (kategori • tarih) + tutar.
- * Income secondary (+), expense tertiary (-).
+ * Income secondary (+), expense tertiary (-). onPress verilirse satır Pressable olur.
  */
-export function TransactionItem({ transaction, category, locale }: TransactionItemProps) {
+export function TransactionItem({ transaction, category, locale, onPress }: TransactionItemProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -29,10 +31,10 @@ export function TransactionItem({ transaction, category, locale }: TransactionIt
   const sign = income ? '+' : '-';
   const amountText = `${sign}${formatCurrency(transaction.amount, transaction.currency, locale)}`;
 
-  return (
-    <View
-      style={[styles.card, { backgroundColor: colors.surfaceContainerLowest, borderColor: colors.glassBorder }]}
-    >
+  const cardColors = { backgroundColor: colors.surfaceContainerLowest, borderColor: colors.glassBorder };
+
+  const inner = (
+    <>
       <View style={styles.left}>
         <View style={[styles.iconBox, { backgroundColor: colors.surfaceContainerHigh }]}>
           <Icon
@@ -60,8 +62,22 @@ export function TransactionItem({ transaction, category, locale }: TransactionIt
       <Text variant="labelMd" color={income ? 'secondary' : 'tertiary'}>
         {amountText}
       </Text>
-    </View>
+    </>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, cardColors, pressed && styles.pressed]}
+      >
+        {inner}
+      </Pressable>
+    );
+  }
+
+  return <View style={[styles.card, cardColors]}>{inner}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -73,6 +89,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
     gap: spacing.md,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   left: {
     flexDirection: 'row',

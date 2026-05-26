@@ -230,6 +230,14 @@ export default function RootLayout() {
                   }}
                 />
                 <Stack.Screen
+                  name="transaction-edit"
+                  options={{
+                    presentation: 'modal',
+                    headerShown: false,
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
                   name="subscription-edit"
                   options={{
                     presentation: 'modal',

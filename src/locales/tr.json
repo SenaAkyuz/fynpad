@@ -1,5 +1,8 @@
 {
   "common": {
+    "save": "Kaydet",
+    "cancel": "Vazgeç",
+    "delete": "Sil",
     "offline": "Çevrimdışı — değişiklikler bağlantı gelince senkronize olacak",
     "syncing": "{{count}} işlem senkronize ediliyor...",
     "queuedOffline": "{{count}} işlem senkronize bekleniyor",
@@ -445,6 +448,14 @@
     "save": "Kaydet",
     "cancel": "İptal"
   },
+  "transactionEdit": {
+    "title": "İşlemi Düzenle",
+    "delete": "İşlemi Sil",
+    "deleteConfirmTitle": "İşlemi sil",
+    "deleteConfirmMessage": "Bu işlemi silmek istediğine emin misin? Bu işlem geri alınamaz.",
+    "fromRecurring": "Bu işlem tekrarlayan bir kuraldan oluştu. Düzenlemen kuralı veya gelecek tekrarları etkilemez.",
+    "notFound": "İşlem bulunamadı."
+  },
   "export": {
     "title": "Veriyi Dışa Aktar",
     "subtitle": "Seçili dönemdeki işlemleri CSV veya PDF olarak indir",
@@ -618,7 +629,9 @@
       "amountPositive": "Tutar 0'dan büyük olmalı",
       "categoryRequired": "Kategori seç",
       "noteTooLong": "Not 200 karakteri geçemez",
-      "createFailed": "İşlem kaydedilemedi. Tekrar dene."
+      "createFailed": "İşlem kaydedilemedi. Tekrar dene.",
+      "updateFailed": "İşlem güncellenemedi",
+      "deleteFailed": "İşlem silinemedi"
     },
     "category": {
       "nameRequired": "Kategori adı zorunlu",

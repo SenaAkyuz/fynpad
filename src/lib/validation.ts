@@ -90,6 +90,20 @@ export const quickAddSchema = z
 
 export type QuickAddForm = z.infer<typeof quickAddSchema>;
 
+/** İşlem düzenleme formu — Quick Add'in transaction alanları (recurring YOK, sadece tek işlem). */
+export const transactionEditSchema = z.object({
+  kind: z.enum(['income', 'expense']),
+  amount: z
+    .number({ message: 'errors.transaction.amountRequired' })
+    .positive('errors.transaction.amountPositive'),
+  categoryId: z.string().uuid('errors.transaction.categoryRequired'),
+  currency: z.enum(['TRY', 'USD', 'EUR']),
+  date: z.string(),
+  note: z.string().max(200, 'errors.transaction.noteTooLong').nullable().optional(),
+});
+
+export type TransactionEditForm = z.infer<typeof transactionEditSchema>;
+
 /** Abonelik formu (Part 7). Subscription = recurring_rules'un is_subscription alt türü. */
 export const subscriptionSchema = z
   .object({

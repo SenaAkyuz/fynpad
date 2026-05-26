@@ -41,7 +41,7 @@ function computeCutoff(range: Exclude<DateRange, 'all'>): string {
 
 /**
  * Tüm İşlemler (Part 13): dashboard "Tümünü Gör" hedefi. Tür / kategori / tarih
- * filtreleri + ay bazlı gruplama. Liste-only — edit/delete/search/sıralama yok (brief).
+ * filtreleri + ay bazlı gruplama. Satıra tap → transaction-edit modal (düzenle/sil).
  */
 export default function TransactionsScreen() {
   const { t } = useTranslation();
@@ -201,6 +201,7 @@ export default function TransactionsScreen() {
               transaction={item}
               category={categoryById.get(item.categoryId)}
               locale={locale}
+              onPress={() => router.push({ pathname: '/transaction-edit', params: { id: item.id } })}
             />
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}

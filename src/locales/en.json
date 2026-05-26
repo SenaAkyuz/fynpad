@@ -1,5 +1,8 @@
 {
   "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
     "offline": "Offline — changes will sync when reconnected",
     "syncing": "Syncing {{count}} change(s)...",
     "queuedOffline": "{{count}} change(s) queued for sync",
@@ -445,6 +448,14 @@
     "save": "Save",
     "cancel": "Cancel"
   },
+  "transactionEdit": {
+    "title": "Edit Transaction",
+    "delete": "Delete Transaction",
+    "deleteConfirmTitle": "Delete transaction",
+    "deleteConfirmMessage": "Are you sure you want to delete this transaction? This cannot be undone.",
+    "fromRecurring": "This transaction was created from a recurring rule. Editing does not affect the rule or future occurrences.",
+    "notFound": "Transaction not found."
+  },
   "export": {
     "title": "Export Data",
     "subtitle": "Download transactions for the selected period as CSV or PDF",
@@ -618,7 +629,9 @@
       "amountPositive": "Amount must be greater than 0",
       "categoryRequired": "Select a category",
       "noteTooLong": "Note can't exceed 200 characters",
-      "createFailed": "Couldn't save the transaction. Try again."
+      "createFailed": "Couldn't save the transaction. Try again.",
+      "updateFailed": "Couldn't update the transaction",
+      "deleteFailed": "Couldn't delete the transaction"
     },
     "category": {
       "nameRequired": "Category name is required",

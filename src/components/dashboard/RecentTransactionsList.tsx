@@ -43,6 +43,7 @@ export function RecentTransactionsList({ items, categories, locale }: RecentTran
               transaction={tx}
               category={categoryById.get(tx.categoryId)}
               locale={locale}
+              onPress={() => router.push({ pathname: '/transaction-edit', params: { id: tx.id } })}
             />
           ))}
         </View>
