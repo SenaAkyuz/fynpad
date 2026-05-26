@@ -14,6 +14,7 @@ import { KindToggle } from '@/components/quick-add/KindToggle';
 import { NoteInput } from '@/components/quick-add/NoteInput';
 import { RecurringConfig, defaultRecurringRule } from '@/components/quick-add/RecurringConfig';
 import { RecurringToggle } from '@/components/quick-add/RecurringToggle';
+import { SubscriptionFields } from '@/components/subscriptions/SubscriptionFields';
 import { Button } from '@/components/ui/Button';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { Icon } from '@/components/ui/Icon';
@@ -24,7 +25,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { useCreateRecurringRule } from '@/hooks/useRecurringRules';
 import { useCreateTransaction } from '@/hooks/useTransactions';
-import { toISODate } from '@/lib/format';
+import { fromISODate, toISODate } from '@/lib/format';
 import { quickAddSchema, type QuickAddForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
@@ -53,6 +54,12 @@ export default function QuickAddScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [formError, setFormError] = useState('');
 
+  // Brief 4.4: tekrarlayan harcamayı abonelik olarak işaretle (recurring ON + expense iken görünür).
+  const [isSubscription, setIsSubscription] = useState(false);
+  const [iconKey, setIconKey] = useState('generic');
+  const [serviceName, setServiceName] = useState('');
+  const [planName, setPlanName] = useState('');
+
   const {
     control,
     handleSubmit,
@@ -78,6 +85,44 @@ export default function QuickAddScreen() {
   const recurring = watch('recurring');
   const recurringRule = watch('recurringRule');
 
+  // Seed'deki "Abonelikler" gider kategorisi (subscription toggle ON iken otomatik seçilir).
+  const subscriptionsCategoryId = categories?.find(
+    (c) => c.name === 'dashboard.categories.subscriptions' && c.kind === 'expense'
+  )?.id;
+
+  const resetSubscription = () => {
+    setIsSubscription(false);
+    setIconKey('generic');
+    setServiceName('');
+    setPlanName('');
+  };
+
+  const onToggleSubscription = (next: boolean) => {
+    setIsSubscription(next);
+    if (!next) {
+      resetSubscription();
+      return;
+    }
+    // Abonelik DB constraint'i: frequency monthly|yearly. daily/weekly ise monthly'e yükselt.
+    if (recurringRule && (recurringRule.frequency === 'daily' || recurringRule.frequency === 'weekly')) {
+      setValue(
+        'recurringRule',
+        {
+          ...recurringRule,
+          frequency: 'monthly',
+          dayOfWeek: null,
+          dayOfMonth: recurringRule.dayOfMonth ?? fromISODate(recurringRule.startDate).getDate(),
+          monthOfYear: null,
+        },
+        { shouldValidate: true }
+      );
+    }
+    // Kategori boşsa Abonelikler'e ayarla (kullanıcı kendi seçtiyse dokunma).
+    if (!watch('categoryId') && subscriptionsCategoryId) {
+      setValue('categoryId', subscriptionsCategoryId, { shouldValidate: true });
+    }
+  };
+
   // Profil yüklenince default currency'yi uygula (kullanıcı henüz dokunmadıysa).
   const currencyInitialized = useRef(false);
   useEffect(() => {
@@ -91,9 +136,18 @@ export default function QuickAddScreen() {
     setFormError('');
     const note = values.note?.trim() ? values.note.trim() : null;
     const isRecurring = !!(values.recurring && values.recurringRule);
+    // Abonelik yalnızca gider + tekrarlayan iken anlamlı (DB constraint).
+    const markSubscription = isRecurring && isSubscription && values.kind === 'expense';
+
+    if (markSubscription && !serviceName.trim()) {
+      setFormError(t('subscriptions.errors.serviceNameRequired'));
+      return;
+    }
 
     const runRecurring = () =>
       // Tekrarlayan kural oluştur (lib içinde backfill için processRecurringRules çağrılır).
+      // markSubscription ise aynı kayıt is_subscription=true + metadata ile yazılır → Subscription
+      // Manager'da görünür, renewal bildirimleri + growth chart + insight otomatik çalışır.
       createRecurringRule.mutateAsync({
         categoryId: values.categoryId,
         amount: values.amount,
@@ -106,6 +160,10 @@ export default function QuickAddScreen() {
         monthOfYear: values.recurringRule!.monthOfYear ?? null,
         startDate: values.recurringRule!.startDate,
         endDate: values.recurringRule!.endDate ?? null,
+        isSubscription: markSubscription,
+        serviceName: markSubscription ? serviceName.trim() : null,
+        planName: markSubscription && planName.trim() ? planName.trim() : null,
+        iconKey: markSubscription ? iconKey : null,
       });
     const runTransaction = () =>
       createTransaction.mutateAsync({
@@ -166,6 +224,10 @@ export default function QuickAddScreen() {
                   onChange(next);
                   // kind değişince kategori seçimi sıfırlanır (liste kind'a göre filtreli)
                   setValue('categoryId', '', { shouldValidate: true });
+                  // Abonelik yalnızca gider olabilir → income'a geçince kapat.
+                  if (next !== 'expense') {
+                    resetSubscription();
+                  }
                 }}
               />
             )}
@@ -247,6 +309,10 @@ export default function QuickAddScreen() {
                     setValue('recurringRule', next ? defaultRecurringRule(watch('date')) : null, {
                       shouldValidate: true,
                     });
+                    // Recurring kapanınca abonelik de kapanır (cascade).
+                    if (!next) {
+                      resetSubscription();
+                    }
                   }}
                 />
               )}
@@ -257,6 +323,22 @@ export default function QuickAddScreen() {
                 value={recurringRule}
                 onChange={(next) => setValue('recurringRule', next, { shouldValidate: true })}
                 locale={locale}
+                allowedFrequencies={isSubscription ? ['monthly', 'yearly'] : undefined}
+              />
+            ) : null}
+
+            {/* Abonelik toggle — yalnızca recurring ON + gider iken (DB: kind='expense'). */}
+            {recurring && recurringRule && kind === 'expense' ? (
+              <SubscriptionFields
+                enabled={isSubscription}
+                onToggle={onToggleSubscription}
+                iconKey={iconKey}
+                onIconKeyChange={setIconKey}
+                serviceName={serviceName}
+                onServiceNameChange={setServiceName}
+                planName={planName}
+                onPlanNameChange={setPlanName}
+                helperKey="quickAdd.subscription.helper"
               />
             ) : null}
           </View>

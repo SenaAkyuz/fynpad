@@ -80,18 +80,18 @@ export function registerMutationDefaults(qc: QueryClient): void {
     onSuccess: () => invalidate(categoriesKey, transactionsKey),
   });
 
-  // — Recurring rules —
+  // — Recurring rules — (kural abonelik olabilir → subscriptionsKey de tazelenir)
   qc.setMutationDefaults(['createRecurringRule'], {
     mutationFn: (input: Parameters<typeof createRecurringRule>[0]) => createRecurringRule(input),
-    onSuccess: () => invalidate(recurringRulesKey, transactionsKey),
+    onSuccess: () => invalidate(recurringRulesKey, transactionsKey, subscriptionsKey),
   });
   qc.setMutationDefaults(['updateRecurringRule'], {
     mutationFn: ({ id, patch }: IdPatch<RecurringRulePatch>) => updateRecurringRule(id, patch),
-    onSuccess: () => invalidate(recurringRulesKey, transactionsKey),
+    onSuccess: () => invalidate(recurringRulesKey, transactionsKey, subscriptionsKey),
   });
   qc.setMutationDefaults(['deleteRecurringRule'], {
     mutationFn: (id: string) => deleteRecurringRule(id),
-    onSuccess: () => invalidate(recurringRulesKey, transactionsKey),
+    onSuccess: () => invalidate(recurringRulesKey, transactionsKey, subscriptionsKey),
   });
 
   // — Subscriptions — (invalidate yeterli: NotificationsBootstrap subs değişince reschedule eder)

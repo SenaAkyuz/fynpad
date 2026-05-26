@@ -7,6 +7,7 @@ import { CategoryPicker } from '@/components/quick-add/CategoryPicker';
 import { CurrencyRow } from '@/components/quick-add/CurrencyRow';
 import { NoteInput } from '@/components/quick-add/NoteInput';
 import { RecurringConfig } from '@/components/quick-add/RecurringConfig';
+import { SubscriptionFields } from '@/components/subscriptions/SubscriptionFields';
 import { Button } from '@/components/ui/Button';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { Icon } from '@/components/ui/Icon';
@@ -61,6 +62,27 @@ export function RecurringRuleEditModal({
   const [config, setConfig] = useState<RecurringRuleForm>(() => ruleToForm(rule));
   const [error, setError] = useState('');
 
+  // Brief 4.4: mevcut tekrarlayan kuralı abonelik yap / geri al. Yalnızca gider kurallarında.
+  const canBeSubscription = rule.kind === 'expense';
+  const [isSubscription, setIsSubscription] = useState(rule.isSubscription);
+  const [iconKey, setIconKey] = useState(rule.iconKey ?? 'generic');
+  const [serviceName, setServiceName] = useState(rule.serviceName ?? '');
+  const [planName, setPlanName] = useState(rule.planName ?? '');
+
+  const onToggleSubscription = (next: boolean) => {
+    setIsSubscription(next);
+    // Abonelik DB constraint'i: frequency monthly|yearly. daily/weekly ise monthly'e yükselt.
+    if (next && (config.frequency === 'daily' || config.frequency === 'weekly')) {
+      setConfig({
+        ...config,
+        frequency: 'monthly',
+        dayOfWeek: null,
+        dayOfMonth: config.dayOfMonth ?? 1,
+        monthOfYear: null,
+      });
+    }
+  };
+
   const onSave = () => {
     setError('');
     if (amount <= 0) {
@@ -73,6 +95,16 @@ export function RecurringRuleEditModal({
     }
     const parsed = recurringRuleSchema.safeParse(config);
     if (!parsed.success) {
+      setError(t('errors.validation.recurringConfigIncomplete'));
+      return;
+    }
+    const markSubscription = canBeSubscription && isSubscription;
+    if (markSubscription && !serviceName.trim()) {
+      setError(t('subscriptions.errors.serviceNameRequired'));
+      return;
+    }
+    // Abonelik DB constraint'i: frequency monthly|yearly olmalı.
+    if (markSubscription && parsed.data.frequency !== 'monthly' && parsed.data.frequency !== 'yearly') {
       setError(t('errors.validation.recurringConfigIncomplete'));
       return;
     }
@@ -89,6 +121,10 @@ export function RecurringRuleEditModal({
         monthOfYear: parsed.data.monthOfYear ?? null,
         startDate: parsed.data.startDate,
         endDate: parsed.data.endDate ?? null,
+        isSubscription: markSubscription,
+        serviceName: markSubscription ? serviceName.trim() : null,
+        planName: markSubscription && planName.trim() ? planName.trim() : null,
+        iconKey: markSubscription ? iconKey : null,
       },
     };
 
@@ -161,7 +197,28 @@ export function RecurringRuleEditModal({
             <CurrencyRow value={currency} onChange={setCurrency} />
             <NoteInput value={note} onChange={setNote} />
 
-            <RecurringConfig value={config} onChange={setConfig} locale={locale} />
+            <RecurringConfig
+              value={config}
+              onChange={setConfig}
+              locale={locale}
+              allowedFrequencies={
+                canBeSubscription && isSubscription ? ['monthly', 'yearly'] : undefined
+              }
+            />
+
+            {canBeSubscription ? (
+              <SubscriptionFields
+                enabled={isSubscription}
+                onToggle={onToggleSubscription}
+                iconKey={iconKey}
+                onIconKeyChange={setIconKey}
+                serviceName={serviceName}
+                onServiceNameChange={setServiceName}
+                planName={planName}
+                onPlanNameChange={setPlanName}
+                helperKey="recurringEdit.subscription.helper"
+              />
+            ) : null}
 
             <ErrorText style={styles.error}>{error}</ErrorText>
 

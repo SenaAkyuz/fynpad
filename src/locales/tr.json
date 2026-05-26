@@ -105,7 +105,18 @@
     "notePlaceholder": "Bir not ekle...",
     "submit": "İşlemi Kaydet",
     "cancel": "İptal",
-    "saving": "Kaydediliyor..."
+    "saving": "Kaydediliyor...",
+    "subscription": {
+      "toggle": "Bu bir abonelik mi?",
+      "helper": "Netflix, Spotify gibi servisler için işaretle. Yenileme bildirimleri otomatik kurulur.",
+      "serviceName": "Servis Adı",
+      "planName": "Plan Adı (opsiyonel)"
+    }
+  },
+  "recurringEdit": {
+    "subscription": {
+      "helper": "İşaretlersen Abonelikler ekranında görünür ve yenileme öncesi bildirim alırsın."
+    }
   },
   "categoryEdit": {
     "createTitle": "Yeni Kategori",

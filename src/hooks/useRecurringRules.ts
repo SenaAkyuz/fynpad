@@ -8,6 +8,7 @@ import {
   updateRecurringRule,
   type RecurringRulePatch,
 } from '@/lib/recurring';
+import { subscriptionsKey } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
 
 export const recurringRulesKey = ['recurring-rules'] as const;
@@ -28,6 +29,8 @@ export function useCreateRecurringRule() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: recurringRulesKey });
       void qc.invalidateQueries({ queryKey: transactionsKey });
+      // Kural abonelik olabilir → subscription listesi/grafik + bildirim reschedule tetiklensin.
+      void qc.invalidateQueries({ queryKey: subscriptionsKey });
     },
   });
 }
@@ -41,6 +44,8 @@ export function useUpdateRecurringRule() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: recurringRulesKey });
       void qc.invalidateQueries({ queryKey: transactionsKey });
+      // Abonelik dönüşümü (recurring↔subscription) listeyi + bildirimleri etkiler.
+      void qc.invalidateQueries({ queryKey: subscriptionsKey });
     },
   });
 }
@@ -54,6 +59,8 @@ export function useDeleteRecurringRule() {
       void qc.invalidateQueries({ queryKey: recurringRulesKey });
       // FK SET NULL ile transaction'lardaki recurring_rule_id değişir → repeat ikonu kaybolsun.
       void qc.invalidateQueries({ queryKey: transactionsKey });
+      // Silinen kural abonelik olabilir → liste + bildirimler güncellensin.
+      void qc.invalidateQueries({ queryKey: subscriptionsKey });
     },
   });
 }

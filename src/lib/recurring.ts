@@ -76,6 +76,15 @@ export type RecurringRuleInput = {
   monthOfYear?: number | null;
   startDate: string;
   endDate?: string | null;
+  /**
+   * Part 7 / brief 4.4: tekrarlayan kural aynı anda abonelik olarak işaretlenebilir.
+   * is_subscription=true ise DB constraint gereği serviceName dolu + kind 'expense' +
+   * frequency 'monthly'|'yearly' olmalı (çağıran taraf doğrular).
+   */
+  isSubscription?: boolean;
+  serviceName?: string | null;
+  planName?: string | null;
+  iconKey?: string | null;
 };
 
 /**
@@ -125,6 +134,10 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
       month_of_year: input.monthOfYear ?? null,
       start_date: input.startDate,
       end_date: input.endDate ?? null,
+      is_subscription: input.isSubscription ?? false,
+      service_name: input.isSubscription ? (input.serviceName ?? null) : null,
+      plan_name: input.isSubscription ? (input.planName ?? null) : null,
+      icon_key: input.isSubscription ? (input.iconKey ?? null) : null,
     })
     .select('*')
     .single();
@@ -149,6 +162,11 @@ export type RecurringRulePatch = Partial<{
   startDate: string;
   endDate: string | null;
   active: boolean;
+  /** Part 7: mevcut kuralı abonelik yap / aboneliği geri al (brief 4.4 "mark as subscription"). */
+  isSubscription: boolean;
+  serviceName: string | null;
+  planName: string | null;
+  iconKey: string | null;
 }>;
 
 /**
@@ -174,6 +192,18 @@ export async function updateRecurringRule(
   if (patch.startDate !== undefined) dbPatch.start_date = patch.startDate;
   if (patch.endDate !== undefined) dbPatch.end_date = patch.endDate;
   if (patch.active !== undefined) dbPatch.active = patch.active;
+  if (patch.serviceName !== undefined) dbPatch.service_name = patch.serviceName;
+  if (patch.planName !== undefined) dbPatch.plan_name = patch.planName;
+  if (patch.iconKey !== undefined) dbPatch.icon_key = patch.iconKey;
+  if (patch.isSubscription !== undefined) {
+    dbPatch.is_subscription = patch.isSubscription;
+    // Aboneliği geri alınca metadata temizlenir (constraint + temiz state).
+    if (!patch.isSubscription) {
+      dbPatch.service_name = null;
+      dbPatch.plan_name = null;
+      dbPatch.icon_key = null;
+    }
+  }
 
   const { data, error } = await supabase
     .from('recurring_rules')

@@ -105,7 +105,18 @@
     "notePlaceholder": "Add a note...",
     "submit": "Save Transaction",
     "cancel": "Cancel",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "subscription": {
+      "toggle": "Is this a subscription?",
+      "helper": "Mark for services like Netflix, Spotify. Renewal reminders are set up automatically.",
+      "serviceName": "Service Name",
+      "planName": "Plan Name (optional)"
+    }
+  },
+  "recurringEdit": {
+    "subscription": {
+      "helper": "Mark it to appear in Subscriptions and receive renewal reminders."
+    }
   },
   "categoryEdit": {
     "createTitle": "New Category",
