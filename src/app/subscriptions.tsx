@@ -66,17 +66,8 @@ export default function SubscriptionsScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="headlineSm">{t('subscriptions.active')}</Text>
-            {/* Tasarım header-action pattern'i (subscription_manager: başlığın sağında aksiyon).
-                Brief 4.4 ekleme gerektirdiği için aksiyon = "+" ekle butonu. FAB kaldırıldı. */}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('subscriptions.addSubscription')}
-              onPress={() => router.push('/subscription-edit')}
-              hitSlop={8}
-              style={[styles.addAction, { backgroundColor: colors.surfaceContainerHigh }]}
-            >
-              <Icon name="plus" size={20} color={colors.primary} strokeWidth={2.5} />
-            </Pressable>
+            {/* Ekleme yalnızca genel "+" (Quick Add → Yeni Abonelik Oluştur) üzerinden yapılır.
+                Bu ekran salt görüntüleme + düzenleme; buradan ekleme girişi yok. */}
           </View>
           {isLoading && !hasSubs ? (
             <View style={styles.loading}>
@@ -85,19 +76,17 @@ export default function SubscriptionsScreen() {
           ) : hasSubs ? (
             <SubscriptionList items={subscriptions} locale={locale} onItemPress={openEdit} />
           ) : (
-            <Pressable accessibilityRole="button" onPress={() => router.push('/subscription-edit')}>
-              <GlassCard style={styles.empty}>
-                <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
-                  <Icon name="repeat" size={28} color={colors.primary} strokeWidth={2} />
-                </View>
-                <Text variant="headlineSm" style={styles.emptyText}>
-                  {t('subscriptions.empty')}
-                </Text>
-                <Text variant="bodyMd" color="onSurfaceVariant" style={styles.emptyText}>
-                  {t('subscriptions.emptyHint')}
-                </Text>
-              </GlassCard>
-            </Pressable>
+            <GlassCard style={styles.empty}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
+                <Icon name="repeat" size={28} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text variant="headlineSm" style={styles.emptyText}>
+                {t('subscriptions.empty')}
+              </Text>
+              <Text variant="bodyMd" color="onSurfaceVariant" style={styles.emptyText}>
+                {t('subscriptions.emptyHint')}
+              </Text>
+            </GlassCard>
           )}
         </View>
 
@@ -140,13 +129,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  addAction: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   loading: {
     paddingVertical: spacing.stackLg,

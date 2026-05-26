@@ -190,7 +190,7 @@
     "growth": "Subscription Growth",
     "addSubscription": "New Subscription",
     "empty": "You don't have any subscriptions yet",
-    "emptyHint": "Tap + to add a subscription",
+    "emptyHint": "Use the + button at the bottom to add subscriptions",
     "perMonth": "/mo",
     "nextShort": "Next",
     "nextDueLabel": "Next",
