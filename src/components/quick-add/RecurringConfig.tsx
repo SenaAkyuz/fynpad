@@ -13,8 +13,6 @@ export type RecurringConfigProps = {
   value: RecurringRuleForm;
   onChange: (next: RecurringRuleForm) => void;
   locale: Locale;
-  /** Gösterilecek sıklıklar (abonelik modunda ['monthly','yearly'] ile sınırlanır). */
-  allowedFrequencies?: RecurringFrequency[];
 };
 
 const FREQUENCIES: { value: RecurringFrequency; labelKey: string }[] = [
@@ -35,13 +33,9 @@ const LAST_DAY = 31;
  * Tasarım kaynağı yok; sistem-içi (DESIGN.md tokenları + quick-add chip pattern'i).
  * Sıklığa göre koşullu picker: weekly→gün, monthly→ayın günü, yearly→ay + gün.
  */
-export function RecurringConfig({ value, onChange, locale, allowedFrequencies }: RecurringConfigProps) {
+export function RecurringConfig({ value, onChange, locale }: RecurringConfigProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-
-  const frequencies = allowedFrequencies
-    ? FREQUENCIES.filter((f) => allowedFrequencies.includes(f.value))
-    : FREQUENCIES;
 
   const patch = (next: Partial<RecurringRuleForm>) => onChange({ ...value, ...next });
 
@@ -96,7 +90,7 @@ export function RecurringConfig({ value, onChange, locale, allowedFrequencies }:
           {t('recurring.frequency')}
         </Text>
         <View style={styles.chips}>
-          {frequencies.map((f) => (
+          {FREQUENCIES.map((f) => (
             <Chip
               key={f.value}
               label={t(f.labelKey)}
