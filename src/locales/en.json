@@ -106,17 +106,15 @@
     "submit": "Save Transaction",
     "cancel": "Cancel",
     "saving": "Saving...",
-    "subscription": {
-      "toggle": "Is this a subscription?",
-      "helper": "Mark for services like Netflix, Spotify. Renewal reminders are set up automatically.",
-      "serviceName": "Service Name",
-      "planName": "Plan Name (optional)"
+    "subscriptionEntry": {
+      "title": "Create New Subscription",
+      "subtitle": "For subscriptions like Netflix, Spotify with renewal reminders"
     }
   },
   "recurringEdit": {
-    "subscription": {
-      "helper": "Mark it to appear in Subscriptions and receive renewal reminders."
-    }
+    "isSubscriptionBanner": "This is marked as a subscription. Use Subscription Editor for service name, icon, and plan info.",
+    "editAsSubscription": "Edit as subscription",
+    "convertToSubscription": "Convert to Subscription"
   },
   "categoryEdit": {
     "createTitle": "New Category",
@@ -220,6 +218,8 @@
     "renewalNotificationBody": "{{amount}} — {{date}}",
     "form": {
       "editTitle": "Edit Subscription",
+      "convertTitle": "Convert to Subscription",
+      "convertHint": "Prefilled from your existing recurring rule. Add a service name and icon, then save.",
       "serviceName": "Service Name",
       "serviceNamePlaceholder": "e.g. Netflix",
       "planName": "Plan",

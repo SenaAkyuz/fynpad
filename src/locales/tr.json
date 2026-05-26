@@ -106,17 +106,15 @@
     "submit": "İşlemi Kaydet",
     "cancel": "İptal",
     "saving": "Kaydediliyor...",
-    "subscription": {
-      "toggle": "Bu bir abonelik mi?",
-      "helper": "Netflix, Spotify gibi servisler için işaretle. Yenileme bildirimleri otomatik kurulur.",
-      "serviceName": "Servis Adı",
-      "planName": "Plan Adı (opsiyonel)"
+    "subscriptionEntry": {
+      "title": "Yeni Abonelik Oluştur",
+      "subtitle": "Netflix, Spotify gibi yenileme bildirimli abonelikler için"
     }
   },
   "recurringEdit": {
-    "subscription": {
-      "helper": "İşaretlersen Abonelikler ekranında görünür ve yenileme öncesi bildirim alırsın."
-    }
+    "isSubscriptionBanner": "Bu kayıt bir abonelik olarak işaretli. Servis adı, ikon ve plan bilgisi için Abonelik Düzenleyici'yi kullan.",
+    "editAsSubscription": "Abonelik olarak düzenle",
+    "convertToSubscription": "Aboneliğe Çevir"
   },
   "categoryEdit": {
     "createTitle": "Yeni Kategori",
@@ -220,6 +218,8 @@
     "renewalNotificationBody": "{{amount}} — {{date}}",
     "form": {
       "editTitle": "Aboneliği Düzenle",
+      "convertTitle": "Aboneliğe Çevir",
+      "convertHint": "Mevcut tekrarlayan kaydın bilgileri dolduruldu. Servis adı ve ikonu ekleyip kaydet.",
       "serviceName": "Servis Adı",
       "serviceNamePlaceholder": "örn. Netflix",
       "planName": "Plan",

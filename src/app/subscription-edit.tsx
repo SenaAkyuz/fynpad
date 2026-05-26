@@ -17,6 +17,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { useProfile } from '@/hooks/useProfile';
+import { useRecurringRules, useUpdateRecurringRule } from '@/hooks/useRecurringRules';
 import {
   useCreateSubscription,
   useDeleteSubscription,
@@ -30,19 +31,22 @@ import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import type { Subscription } from '@/types';
+import type { RecurringRule, Subscription } from '@/types';
 
 const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const LAST_DAY = 31;
 
 export default function SubscriptionEditScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
-  const { data: subs = [], isLoading } = useSubscriptions();
+  // 3 mod: id → mevcut aboneliği düzenle · fromRecurringId → tekrarlayan kuralı aboneliğe çevir · ikisi de yok → yeni.
+  const { id, fromRecurringId } = useLocalSearchParams<{ id?: string; fromRecurringId?: string }>();
+  const { data: subs = [], isLoading: subsLoading } = useSubscriptions();
+  const { data: rules = [], isLoading: rulesLoading } = useRecurringRules();
   const editing = id ? subs.find((s) => s.id === id) ?? null : null;
+  const converting = fromRecurringId ? rules.find((r) => r.id === fromRecurringId) ?? null : null;
 
-  // Edit modunda kural henüz cache'te yoksa kısa spinner.
-  if (id && !editing && isLoading) {
+  // İlgili kayıt henüz cache'te yoksa kısa spinner.
+  if ((id && !editing && subsLoading) || (fromRecurringId && !converting && rulesLoading)) {
     return (
       <Screen center edges={['top', 'bottom']}>
         <Spinner />
@@ -50,10 +54,16 @@ export default function SubscriptionEditScreen() {
     );
   }
 
-  return <SubscriptionEditForm editing={editing} />;
+  return <SubscriptionEditForm editing={editing} converting={converting} />;
 }
 
-function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
+function SubscriptionEditForm({
+  editing,
+  converting,
+}: {
+  editing: Subscription | null;
+  converting: RecurringRule | null;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const router = useRouter();
@@ -64,9 +74,19 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
   const createSub = useCreateSubscription();
   const updateSub = useUpdateSubscription();
   const deleteSub = useDeleteSubscription();
+  const updateRule = useUpdateRecurringRule();
 
+  const mode: 'edit' | 'convert' | 'create' = editing ? 'edit' : converting ? 'convert' : 'create';
   const today = toISODate(new Date());
   const now = new Date();
+
+  // Prefill kaynağı: düzenleme → abonelik; çevirme → tekrarlayan kural. Abonelik DB constraint'i
+  // gereği frequency monthly|yearly olmalı → kaynak daily/weekly ise monthly'e indir.
+  const source = editing ?? converting;
+  const sourceFrequency: 'monthly' | 'yearly' =
+    source && (source.frequency === 'monthly' || source.frequency === 'yearly')
+      ? source.frequency
+      : 'monthly';
 
   const {
     control,
@@ -77,19 +97,19 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
   } = useForm<SubscriptionForm>({
     resolver: zodResolver(subscriptionSchema),
     mode: 'onChange',
-    defaultValues: editing
+    defaultValues: source
       ? {
-          serviceName: editing.serviceName,
-          planName: editing.planName ?? '',
-          iconKey: editing.iconKey ?? 'generic',
-          amount: editing.amount,
-          currency: editing.currency,
-          frequency: editing.frequency,
-          dayOfMonth: editing.dayOfMonth ?? now.getDate(),
-          monthOfYear: editing.monthOfYear ?? now.getMonth() + 1,
-          startDate: editing.startDate,
-          endDate: editing.endDate,
-          note: editing.note ?? '',
+          serviceName: source.serviceName ?? '',
+          planName: source.planName ?? '',
+          iconKey: source.iconKey ?? 'generic',
+          amount: source.amount,
+          currency: source.currency,
+          frequency: sourceFrequency,
+          dayOfMonth: source.dayOfMonth ?? now.getDate(),
+          monthOfYear: source.monthOfYear ?? now.getMonth() + 1,
+          startDate: source.startDate,
+          endDate: source.endDate,
+          note: source.note ?? '',
         }
       : {
           serviceName: '',
@@ -125,12 +145,44 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
       note: values.note?.trim() ? values.note.trim() : null,
     };
 
-    // İlk kez: bildirim izni iste. Reddedilse de abonelik oluşturulur (sadece hatırlatma atılmaz).
-    if (!editing) {
+    // İlk kez abonelik (yeni veya çevirme): bildirim izni iste. Reddedilse de oluşturulur.
+    if (mode !== 'edit') {
       const granted = await requestPermissions();
       if (!granted) {
         Alert.alert(t('subscriptions.permissions.denied'));
       }
+    }
+
+    // Çevirme modu: mevcut tekrarlayan kuralı is_subscription=true + metadata ile günceller
+    // (yeni kayıt OLUŞMAZ, aynı rule.id korunur). updateRecurringRule hook'u subscriptionsKey'i
+    // invalidate ettiği için liste + growth + bildirim reschedule otomatik çalışır.
+    if (mode === 'convert' && converting) {
+      const patch = {
+        isSubscription: true,
+        serviceName: input.serviceName,
+        planName: input.planName,
+        iconKey: input.iconKey,
+        amount: input.amount,
+        currency: input.currency,
+        frequency: input.frequency,
+        dayOfMonth: input.dayOfMonth,
+        monthOfYear: input.monthOfYear,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        note: input.note,
+      };
+      if (!isOnline) {
+        updateRule.mutate({ id: converting.id, patch });
+        router.back();
+        return;
+      }
+      try {
+        await updateRule.mutateAsync({ id: converting.id, patch });
+        router.back();
+      } catch {
+        Alert.alert(t('subscriptions.errors.updateFailed'));
+      }
+      return;
     }
 
     // Çevrimdışı: mutation 'online' networkMode ile paused olur → mutateAsync RESOLVE ETMEZ.
@@ -189,7 +241,13 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
   };
 
   const noEndDate = endDate == null;
-  const busy = createSub.isPending || updateSub.isPending || deleteSub.isPending;
+  const busy = createSub.isPending || updateSub.isPending || deleteSub.isPending || updateRule.isPending;
+  const titleKey =
+    mode === 'edit'
+      ? 'subscriptions.form.editTitle'
+      : mode === 'convert'
+        ? 'subscriptions.form.convertTitle'
+        : 'subscriptions.addSubscription';
 
   const Chip = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => (
     <Pressable
@@ -210,9 +268,7 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
         <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()}>
           <Icon name="x" size={26} color={colors.primary} strokeWidth={2} />
         </Pressable>
-        <Text variant="headlineMd">
-          {t(editing ? 'subscriptions.form.editTitle' : 'subscriptions.addSubscription')}
-        </Text>
+        <Text variant="headlineMd">{t(titleKey)}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -222,6 +278,16 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Çevirme modu: kullanıcıya mevcut kuraldan dolduğunu + eksikleri tamamlamasını anlat. */}
+          {mode === 'convert' ? (
+            <View style={[styles.convertHint, { backgroundColor: colors.surfaceContainerHigh }]}>
+              <Icon name="credit-card" size={18} color={colors.primary} strokeWidth={2} />
+              <Text variant="labelSm" color="onSurfaceVariant" style={styles.convertHintText}>
+                {t('subscriptions.form.convertHint')}
+              </Text>
+            </View>
+          ) : null}
+
           {/* Servis adı */}
           <Controller
             control={control}
@@ -405,8 +471,8 @@ function SubscriptionEditForm({ editing }: { editing: Subscription | null }) {
           />
 
           <Button
-            label={t(editing ? 'subscriptions.form.submitUpdate' : 'subscriptions.form.submitCreate')}
-            loading={createSub.isPending || updateSub.isPending}
+            label={t(mode === 'edit' ? 'subscriptions.form.submitUpdate' : 'subscriptions.form.submitCreate')}
+            loading={createSub.isPending || updateSub.isPending || updateRule.isPending}
             disabled={!isValid || busy}
             onPress={handleSubmit(onSubmit)}
             style={styles.submit}
@@ -437,6 +503,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   headerSpacer: { width: 26 },
+  convertHint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+  },
+  convertHintText: { flex: 1, lineHeight: 18 },
   content: {
     paddingHorizontal: spacing.containerMargin,
     paddingTop: spacing.sm,

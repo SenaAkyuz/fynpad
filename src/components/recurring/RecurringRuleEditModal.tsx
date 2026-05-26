@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -7,7 +8,6 @@ import { CategoryPicker } from '@/components/quick-add/CategoryPicker';
 import { CurrencyRow } from '@/components/quick-add/CurrencyRow';
 import { NoteInput } from '@/components/quick-add/NoteInput';
 import { RecurringConfig } from '@/components/quick-add/RecurringConfig';
-import { SubscriptionFields } from '@/components/subscriptions/SubscriptionFields';
 import { Button } from '@/components/ui/Button';
 import { ErrorText } from '@/components/ui/ErrorText';
 import { Icon } from '@/components/ui/Icon';
@@ -51,6 +51,7 @@ export function RecurringRuleEditModal({
 }: RecurringRuleEditModalProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const router = useRouter();
   const updateRule = useUpdateRecurringRule();
   const deleteRule = useDeleteRecurringRule();
   const isOnline = useNetworkStore((s) => s.isOnline);
@@ -62,25 +63,11 @@ export function RecurringRuleEditModal({
   const [config, setConfig] = useState<RecurringRuleForm>(() => ruleToForm(rule));
   const [error, setError] = useState('');
 
-  // Brief 4.4: mevcut tekrarlayan kuralı abonelik yap / geri al. Yalnızca gider kurallarında.
-  const canBeSubscription = rule.kind === 'expense';
-  const [isSubscription, setIsSubscription] = useState(rule.isSubscription);
-  const [iconKey, setIconKey] = useState(rule.iconKey ?? 'generic');
-  const [serviceName, setServiceName] = useState(rule.serviceName ?? '');
-  const [planName, setPlanName] = useState(rule.planName ?? '');
-
-  const onToggleSubscription = (next: boolean) => {
-    setIsSubscription(next);
-    // Abonelik DB constraint'i: frequency monthly|yearly. daily/weekly ise monthly'e yükselt.
-    if (next && (config.frequency === 'daily' || config.frequency === 'weekly')) {
-      setConfig({
-        ...config,
-        frequency: 'monthly',
-        dayOfWeek: null,
-        dayOfMonth: config.dayOfMonth ?? 1,
-        monthOfYear: null,
-      });
-    }
+  // Abonelik metadata'sı (servis adı/ikon/plan) tek editor'de yönetilir: subscription-edit.
+  // Bu modal yalnızca temel kural alanlarını düzenler + abonelik editor'üne yönlendirir.
+  const openSubscriptionEditor = (params: { id: string } | { fromRecurringId: string }) => {
+    onClose();
+    router.push({ pathname: '/subscription-edit', params });
   };
 
   const onSave = () => {
@@ -98,16 +85,6 @@ export function RecurringRuleEditModal({
       setError(t('errors.validation.recurringConfigIncomplete'));
       return;
     }
-    const markSubscription = canBeSubscription && isSubscription;
-    if (markSubscription && !serviceName.trim()) {
-      setError(t('subscriptions.errors.serviceNameRequired'));
-      return;
-    }
-    // Abonelik DB constraint'i: frequency monthly|yearly olmalı.
-    if (markSubscription && parsed.data.frequency !== 'monthly' && parsed.data.frequency !== 'yearly') {
-      setError(t('errors.validation.recurringConfigIncomplete'));
-      return;
-    }
     const payload = {
       id: rule.id,
       patch: {
@@ -121,10 +98,6 @@ export function RecurringRuleEditModal({
         monthOfYear: parsed.data.monthOfYear ?? null,
         startDate: parsed.data.startDate,
         endDate: parsed.data.endDate ?? null,
-        isSubscription: markSubscription,
-        serviceName: markSubscription ? serviceName.trim() : null,
-        planName: markSubscription && planName.trim() ? planName.trim() : null,
-        iconKey: markSubscription ? iconKey : null,
       },
     };
 
@@ -179,6 +152,27 @@ export function RecurringRuleEditModal({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+            {/* Bu kural zaten abonelik → metadata (servis/ikon/plan) için abonelik editor'üne yönlendir. */}
+            {rule.isSubscription ? (
+              <View style={[styles.banner, { backgroundColor: colors.surfaceContainerHigh }]}>
+                <Icon name="credit-card" size={18} color={colors.primary} strokeWidth={2} />
+                <View style={styles.bannerText}>
+                  <Text variant="labelSm" color="onSurfaceVariant" style={styles.bannerHint}>
+                    {t('recurringEdit.isSubscriptionBanner')}
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    hitSlop={6}
+                    onPress={() => openSubscriptionEditor({ id: rule.id })}
+                  >
+                    <Text variant="labelMd" color="primary">
+                      {t('recurringEdit.editAsSubscription')}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
+
             <AmountInput value={amount} onChange={setAmount} currency={currency} locale={locale} />
 
             <View style={styles.section}>
@@ -197,26 +191,14 @@ export function RecurringRuleEditModal({
             <CurrencyRow value={currency} onChange={setCurrency} />
             <NoteInput value={note} onChange={setNote} />
 
-            <RecurringConfig
-              value={config}
-              onChange={setConfig}
-              locale={locale}
-              allowedFrequencies={
-                canBeSubscription && isSubscription ? ['monthly', 'yearly'] : undefined
-              }
-            />
+            <RecurringConfig value={config} onChange={setConfig} locale={locale} />
 
-            {canBeSubscription ? (
-              <SubscriptionFields
-                enabled={isSubscription}
-                onToggle={onToggleSubscription}
-                iconKey={iconKey}
-                onIconKeyChange={setIconKey}
-                serviceName={serviceName}
-                onServiceNameChange={setServiceName}
-                planName={planName}
-                onPlanNameChange={setPlanName}
-                helperKey="recurringEdit.subscription.helper"
+            {/* Plain recurring (gider) → aboneliğe çevirme girişi (subscription-edit convert mode). */}
+            {rule.kind === 'expense' && !rule.isSubscription ? (
+              <Button
+                label={t('recurringEdit.convertToSubscription')}
+                variant="secondary"
+                onPress={() => openSubscriptionEditor({ fromRecurringId: rule.id })}
               />
             ) : null}
 
@@ -258,6 +240,20 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: spacing.lg,
+  },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+  },
+  bannerText: {
+    flex: 1,
+    gap: spacing.sm,
+  },
+  bannerHint: {
+    lineHeight: 18,
   },
   section: {
     gap: spacing.md,
