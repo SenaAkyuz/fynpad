@@ -1,4 +1,8 @@
-export type InsightKind = 'budget_exceeded' | 'above_average_spending' | 'subscription_review';
+export type InsightKind =
+  | 'budget_exceeded'
+  | 'above_average_spending'
+  | 'subscription_review'
+  | 'goal_deadline';
 
 export type InsightSeverity = 'warning' | 'info' | 'suggestion';
 

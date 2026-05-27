@@ -1,6 +1,7 @@
 import type { Session, User } from '@supabase/supabase-js';
 
 import type { BudgetPeriodType, BudgetStatus, CategoryBudget } from '@/types/budget';
+import type { Goal, GoalProgress } from '@/types/goal';
 import type { Insight, InsightKind, InsightSeverity } from '@/types/insight';
 import type { AuthResult, DefaultCurrency } from '@/lib/auth';
 import type { Locale, ThemeMode } from '@/stores/useAppStore';
@@ -30,6 +31,8 @@ export type {
   CategoryKind,
   Currency,
   DefaultCurrency,
+  Goal,
+  GoalProgress,
   Insight,
   InsightKind,
   InsightSeverity,

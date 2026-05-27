@@ -1,9 +1,11 @@
+import { computeGoalProgress } from '@/lib/goals';
 import { formatCurrency, fromISODate } from '@/lib/format';
 import i18n from '@/locales/i18n';
 import type {
   BudgetStatus,
   Category,
   CategoryBudget,
+  Goal,
   Insight,
   InsightSeverity,
   Locale,
@@ -18,6 +20,7 @@ export type GenerateContext = {
   categories: Category[];
   budgets: CategoryBudget[];
   subscriptions: Subscription[];
+  goals: Goal[];
   budgetStatuses: BudgetStatus[];
   locale: Locale;
   today: Date;
@@ -150,12 +153,46 @@ function ruleSubscriptionReview(ctx: GenerateContext): Insight[] {
 }
 
 /**
+ * Kural 4 — Hedef son tarihi yaklaşıyor (Part 14, brief #13 "tarih yaklaştığında uyarı verilir").
+ * Son tarih ≤ 30 gün + ilerleme < %50 + tamamlanmamış → uyarı.
+ */
+function ruleGoalDeadline(ctx: GenerateContext): Insight[] {
+  const result: Insight[] = [];
+
+  for (const goal of ctx.goals) {
+    if (!goal.targetDate || goal.completedAt) continue;
+    const progress = computeGoalProgress(goal, ctx.today);
+    if (
+      progress.daysUntilDeadline !== null &&
+      progress.daysUntilDeadline > 0 &&
+      progress.daysUntilDeadline <= 30 &&
+      progress.percent < 50
+    ) {
+      result.push({
+        id: `goal-urgent:${goal.id}`,
+        kind: 'goal_deadline',
+        severity: 'warning',
+        titleKey: 'insights.goalDeadline.title',
+        titleParams: { name: goal.name },
+        descKey: 'insights.goalDeadline.desc',
+        descParams: { percent: Math.round(progress.percent), days: progress.daysUntilDeadline },
+        actionLabelKey: 'insights.viewGoals',
+        actionTarget: '/(tabs)/goals',
+        iconName: 'target',
+      });
+    }
+  }
+  return result;
+}
+
+/**
  * Basit kural seti → akıllı uyarılar (brief 5/3). Deterministic, AI yok. Severity'ye göre sıralanır
  * (warning > info > suggestion), en fazla 5 gösterilir.
  */
 export function generateInsights(ctx: GenerateContext): Insight[] {
   const insights: Insight[] = [
     ...ruleBudgetExceeded(ctx),
+    ...ruleGoalDeadline(ctx),
     ...ruleAboveAverageSpending(ctx),
     ...ruleSubscriptionReview(ctx),
   ];

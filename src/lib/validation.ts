@@ -128,6 +128,20 @@ export const subscriptionSchema = z
 
 export type SubscriptionForm = z.infer<typeof subscriptionSchema>;
 
+/** Finansal hedef formu (Part 14, brief #13). */
+export const goalSchema = z.object({
+  name: z.string().trim().min(1, 'goals.errors.nameRequired').max(100),
+  iconKey: z.string().min(1),
+  targetAmount: z
+    .number({ message: 'goals.errors.amountRequired' })
+    .positive('goals.errors.amountPositive'),
+  currency: z.enum(['TRY', 'USD', 'EUR']),
+  targetDate: z.string().nullable().optional(),
+  currentAmount: z.number().min(0).optional(),
+});
+
+export type GoalForm = z.infer<typeof goalSchema>;
+
 /** Yeni/düzenlenen kategori formu. */
 export const categoryEditSchema = z.object({
   name: z.string().trim().min(1, 'errors.category.nameRequired'),

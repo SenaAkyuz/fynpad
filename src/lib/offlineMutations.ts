@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import { budgetsKey } from '@/hooks/useBudgets';
 import { categoriesKey } from '@/hooks/useCategories';
+import { goalsKey } from '@/hooks/useGoals';
 import { recurringRulesKey } from '@/hooks/useRecurringRules';
 import { subscriptionsKey } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
@@ -17,6 +18,14 @@ import {
   type RecurringRulePatch,
 } from '@/lib/recurring';
 import { deleteBudget, upsertBudget } from '@/lib/budgets';
+import {
+  addToGoal,
+  createGoal,
+  deleteGoal,
+  subtractFromGoal,
+  updateGoal,
+  type GoalPatch,
+} from '@/lib/goals';
 import {
   createSubscription,
   deleteSubscription,
@@ -106,6 +115,28 @@ export function registerMutationDefaults(qc: QueryClient): void {
   qc.setMutationDefaults(['deleteSubscription'], {
     mutationFn: (id: string) => deleteSubscription(id),
     onSuccess: () => invalidate(subscriptionsKey, recurringRulesKey, transactionsKey),
+  });
+
+  // — Goals — (Part 14)
+  qc.setMutationDefaults(['createGoal'], {
+    mutationFn: (input: Parameters<typeof createGoal>[0]) => createGoal(input),
+    onSuccess: () => invalidate(goalsKey),
+  });
+  qc.setMutationDefaults(['updateGoal'], {
+    mutationFn: (input: { id: string } & GoalPatch) => updateGoal(input),
+    onSuccess: () => invalidate(goalsKey),
+  });
+  qc.setMutationDefaults(['deleteGoal'], {
+    mutationFn: (id: string) => deleteGoal(id),
+    onSuccess: () => invalidate(goalsKey),
+  });
+  qc.setMutationDefaults(['addToGoal'], {
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => addToGoal(id, amount),
+    onSuccess: () => invalidate(goalsKey),
+  });
+  qc.setMutationDefaults(['subtractFromGoal'], {
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => subtractFromGoal(id, amount),
+    onSuccess: () => invalidate(goalsKey),
   });
 
   // — Budgets —

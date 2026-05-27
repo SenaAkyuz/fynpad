@@ -31,8 +31,49 @@
     "settings": "Ayarlar"
   },
   "goals": {
-    "title": "Hedefler",
-    "comingSoon": "Yakında eklenecek"
+    "title": "Finansal Hedefler",
+    "subtitle": "Birikim hedeflerini takip et",
+    "addGoal": "Yeni Hedef",
+    "totalProgress": "Toplam İlerleme",
+    "completedCount": "{{completed}} / {{total}} tamamlandı",
+    "targetDateShort": "Son Tarih",
+    "empty": "Henüz hedefin yok",
+    "emptyHint": "İlk birikim hedefini oluşturmak için dokun",
+    "completed": "Tamamlandı",
+    "daysLeft": "{{count}} gün kaldı",
+    "daysOverdue": "{{count}} gün geçti",
+    "noDeadline": "Süre yok",
+    "monthlyNeeded": "Aylık {{amount}} biriktir",
+    "progressLabel": "{{current}} / {{target}}",
+    "form": {
+      "createTitle": "Yeni Hedef",
+      "editTitle": "Hedefi Düzenle",
+      "nameLabel": "Hedef Adı",
+      "namePlaceholder": "Örn. Tatil, Yeni telefon",
+      "iconLabel": "İkon",
+      "targetLabel": "Hedef Tutar",
+      "currencyLabel": "Para Birimi",
+      "deadlineLabel": "Son Tarih",
+      "deadlineToggle": "Tarih belirle",
+      "noDeadline": "Süresiz",
+      "currentLabel": "Mevcut Birikim",
+      "addProgress": "+ Ekle",
+      "subtractProgress": "- Çıkar",
+      "progressDialogTitle": "Miktar gir",
+      "save": "Kaydet",
+      "delete": "Hedefi Sil",
+      "deleteCancel": "Vazgeç",
+      "deleteConfirmAction": "Sil",
+      "deleteConfirmTitle": "Hedefi sil",
+      "deleteConfirmMessage": "{{name}} hedefini silmek istediğine emin misin?"
+    },
+    "errors": {
+      "nameRequired": "Hedef adı zorunlu",
+      "amountRequired": "Hedef tutar zorunlu",
+      "amountPositive": "Tutar 0'dan büyük olmalı",
+      "saveFailed": "Hedef kaydedilemedi",
+      "deleteFailed": "Hedef silinemedi"
+    }
   },
   "dashboard": {
     "totalBalance": "Toplam Net Değer",
@@ -320,7 +361,12 @@
     "subscriptionReview": {
       "title": "{{name}} aboneliğini gözden geçir",
       "desc": "{{months}} aydır aktif — hâlâ kullanıyor musun?"
-    }
+    },
+    "goalDeadline": {
+      "title": "{{name}} hedefi yaklaşıyor",
+      "desc": "%{{percent}} tamamlandı, {{days}} gün kaldı"
+    },
+    "viewGoals": "Hedefleri gör"
   },
   "auth": {
     "offlineLoginUnavailable": "Giriş için internet bağlantısı gerekli",

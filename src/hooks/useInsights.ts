@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { useBudgets } from '@/hooks/useBudgets';
 import { useCategories } from '@/hooks/useCategories';
+import { useGoals } from '@/hooks/useGoals';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useTransactions } from '@/hooks/useTransactions';
 import { computeBudgetStatus } from '@/lib/budgets';
@@ -19,6 +20,7 @@ export function useInsights(): { insights: Insight[]; isLoading: boolean } {
   const { data: categories = [], isLoading: lc } = useCategories();
   const { data: budgets = [], isLoading: lb } = useBudgets();
   const { data: subscriptions = [], isLoading: ls } = useSubscriptions();
+  const { data: goals = [], isLoading: lg } = useGoals();
 
   const budgetStatuses = useMemo(
     () => budgets.map((b) => computeBudgetStatus(b, transactions)),
@@ -32,12 +34,13 @@ export function useInsights(): { insights: Insight[]; isLoading: boolean } {
         categories,
         budgets,
         subscriptions,
+        goals,
         budgetStatuses,
         locale,
         today: new Date(),
       }),
-    [transactions, categories, budgets, subscriptions, budgetStatuses, locale]
+    [transactions, categories, budgets, subscriptions, goals, budgetStatuses, locale]
   );
 
-  return { insights, isLoading: lt || lc || lb || ls };
+  return { insights, isLoading: lt || lc || lb || ls || lg };
 }

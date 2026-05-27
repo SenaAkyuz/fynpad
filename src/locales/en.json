@@ -31,8 +31,49 @@
     "settings": "Settings"
   },
   "goals": {
-    "title": "Goals",
-    "comingSoon": "Coming soon"
+    "title": "Financial Goals",
+    "subtitle": "Track your savings goals",
+    "addGoal": "New Goal",
+    "totalProgress": "Total Progress",
+    "completedCount": "{{completed}} / {{total}} completed",
+    "targetDateShort": "Target Date",
+    "empty": "No goals yet",
+    "emptyHint": "Tap to create your first savings goal",
+    "completed": "Completed",
+    "daysLeft": "{{count}} days left",
+    "daysOverdue": "{{count}} days overdue",
+    "noDeadline": "No deadline",
+    "monthlyNeeded": "Save {{amount}} / month",
+    "progressLabel": "{{current}} / {{target}}",
+    "form": {
+      "createTitle": "New Goal",
+      "editTitle": "Edit Goal",
+      "nameLabel": "Goal Name",
+      "namePlaceholder": "e.g. Vacation, New phone",
+      "iconLabel": "Icon",
+      "targetLabel": "Target Amount",
+      "currencyLabel": "Currency",
+      "deadlineLabel": "Target Date",
+      "deadlineToggle": "Set a date",
+      "noDeadline": "No deadline",
+      "currentLabel": "Current Savings",
+      "addProgress": "+ Add",
+      "subtractProgress": "- Subtract",
+      "progressDialogTitle": "Enter amount",
+      "save": "Save",
+      "delete": "Delete Goal",
+      "deleteCancel": "Cancel",
+      "deleteConfirmAction": "Delete",
+      "deleteConfirmTitle": "Delete goal",
+      "deleteConfirmMessage": "Are you sure you want to delete {{name}}?"
+    },
+    "errors": {
+      "nameRequired": "Goal name is required",
+      "amountRequired": "Target amount is required",
+      "amountPositive": "Amount must be greater than 0",
+      "saveFailed": "Could not save goal",
+      "deleteFailed": "Could not delete goal"
+    }
   },
   "dashboard": {
     "totalBalance": "Total Net Worth",
@@ -320,7 +361,12 @@
     "subscriptionReview": {
       "title": "Review {{name}}",
       "desc": "Active for {{months}} months — still using it?"
-    }
+    },
+    "goalDeadline": {
+      "title": "{{name}} deadline approaching",
+      "desc": "{{percent}}% complete, {{days}} days left"
+    },
+    "viewGoals": "View goals"
   },
   "auth": {
     "offlineLoginUnavailable": "Internet connection required to sign in",
