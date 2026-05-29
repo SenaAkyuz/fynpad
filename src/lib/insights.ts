@@ -1,6 +1,8 @@
+import { computeMonthlySavingsProgress } from '@/lib/analytics';
 import { computeGoalProgress } from '@/lib/goals';
-import { formatCurrency, fromISODate } from '@/lib/format';
+import { formatAbsoluteDate, formatCurrency, fromISODate } from '@/lib/format';
 import i18n from '@/locales/i18n';
+import type { Profile } from '@/hooks/useProfile';
 import type {
   BudgetStatus,
   Category,
@@ -15,15 +17,20 @@ import type {
 
 const MS_DAY = 86_400_000;
 
-export type GenerateContext = {
+/** Hedef/birikim kurallarının ihtiyaç duyduğu minimal bağlam (Goals ekranı bunu kullanır). */
+export type GoalInsightContext = {
   transactions: Transaction[];
+  goals: Goal[];
+  profile?: Profile | null;
+  locale: Locale;
+  today: Date;
+};
+
+export type GenerateContext = GoalInsightContext & {
   categories: Category[];
   budgets: CategoryBudget[];
   subscriptions: Subscription[];
-  goals: Goal[];
   budgetStatuses: BudgetStatus[];
-  locale: Locale;
-  today: Date;
 };
 
 function severityOrder(s: InsightSeverity): number {
@@ -156,7 +163,7 @@ function ruleSubscriptionReview(ctx: GenerateContext): Insight[] {
  * Kural 4 — Hedef son tarihi yaklaşıyor (Part 14, brief #13 "tarih yaklaştığında uyarı verilir").
  * Son tarih ≤ 30 gün + ilerleme < %50 + tamamlanmamış → uyarı.
  */
-function ruleGoalDeadline(ctx: GenerateContext): Insight[] {
+function ruleGoalDeadline(ctx: GoalInsightContext): Insight[] {
   const result: Insight[] = [];
 
   for (const goal of ctx.goals) {
@@ -186,6 +193,69 @@ function ruleGoalDeadline(ctx: GenerateContext): Insight[] {
 }
 
 /**
+ * Kural 5 — Hedef için gereken aylık birikim (Part 14 ek). Son tarihi olan, tamamlanmamış ve
+ * eksiği olan hedefler için "ayda X biriktir" önerisi. Fake bilgi yok — monthlyNeeded yalnızca
+ * kalan tutar / kalan ay'dan türetilir (computeGoalProgress).
+ */
+function ruleRequiredMonthlySavings(ctx: GoalInsightContext): Insight[] {
+  const result: Insight[] = [];
+  for (const goal of ctx.goals) {
+    if (!goal.targetDate || goal.completedAt || goal.currentAmount >= goal.targetAmount) continue;
+    const progress = computeGoalProgress(goal, ctx.today);
+    if (progress.monthlyNeeded === null || progress.monthlyNeeded <= 0) continue;
+
+    result.push({
+      id: `goal-required-monthly:${goal.id}`,
+      kind: 'required_monthly_savings',
+      severity: 'info',
+      titleKey: 'insights.requiredMonthlySavings.title',
+      titleParams: { name: goal.name },
+      descKey: 'insights.requiredMonthlySavings.desc',
+      descParams: {
+        amount: formatCurrency(progress.monthlyNeeded, goal.currency, ctx.locale),
+        deadline: formatAbsoluteDate(goal.targetDate, ctx.locale),
+      },
+      actionLabelKey: 'insights.viewGoals',
+      actionTarget: '/(tabs)/goals',
+      iconName: 'trending-up',
+    });
+  }
+  return result;
+}
+
+/**
+ * Kural 6 — Aylık birikim hedefi kontrolü (Part 14 ek). Profilde hedef varsa, bu ayki gerçek net
+ * birikim ile kıyaslar. Yalnızca aynı para biriminde anlamlı → mismatch'te insight ÜRETİLMEZ
+ * (doğrulanamaz bilgi gösterilmez).
+ */
+function ruleMonthlySavingsCheck(ctx: GoalInsightContext): Insight[] {
+  if (!ctx.profile || !ctx.profile.monthlySavingsTarget) return [];
+  const progress = computeMonthlySavingsProgress(ctx.transactions, ctx.profile, ctx.today);
+  if (!progress.hasTarget || !progress.comparable || progress.percent === null) return [];
+
+  const isPositive = progress.status === 'over' || progress.status === 'on-track';
+  return [
+    {
+      id: 'monthly-savings-check',
+      kind: 'monthly_savings_check',
+      severity: isPositive ? 'info' : 'warning',
+      titleKey: isPositive
+        ? 'insights.monthlySavingsCheck.titlePositive'
+        : 'insights.monthlySavingsCheck.titleNegative',
+      descKey: 'insights.monthlySavingsCheck.desc',
+      descParams: {
+        actual: formatCurrency(progress.actual, progress.actualCurrency, ctx.locale),
+        target: formatCurrency(progress.target!, progress.targetCurrency!, ctx.locale),
+        diff: Math.abs(Math.round(progress.percent - 100)),
+      },
+      actionLabelKey: 'insights.viewGoals',
+      actionTarget: '/(tabs)/goals',
+      iconName: isPositive ? 'check' : 'alert-triangle',
+    },
+  ];
+}
+
+/**
  * Basit kural seti → akıllı uyarılar (brief 5/3). Deterministic, AI yok. Severity'ye göre sıralanır
  * (warning > info > suggestion), en fazla 5 gösterilir.
  */
@@ -193,8 +263,24 @@ export function generateInsights(ctx: GenerateContext): Insight[] {
   const insights: Insight[] = [
     ...ruleBudgetExceeded(ctx),
     ...ruleGoalDeadline(ctx),
+    ...ruleMonthlySavingsCheck(ctx),
+    ...ruleRequiredMonthlySavings(ctx),
     ...ruleAboveAverageSpending(ctx),
     ...ruleSubscriptionReview(ctx),
+  ];
+  insights.sort((a, b) => severityOrder(a.severity) - severityOrder(b.severity));
+  return insights.slice(0, 5);
+}
+
+/**
+ * Goals ekranı için yalnızca hedef/birikim ilişkili insight'lar (deadline + gereken aylık birikim +
+ * aylık hedef kontrolü). Genel listenin 5'lik üst sınırından bağımsız hesaplanır.
+ */
+export function generateGoalInsights(ctx: GoalInsightContext): Insight[] {
+  const insights: Insight[] = [
+    ...ruleGoalDeadline(ctx),
+    ...ruleMonthlySavingsCheck(ctx),
+    ...ruleRequiredMonthlySavings(ctx),
   ];
   insights.sort((a, b) => severityOrder(a.severity) - severityOrder(b.severity));
   return insights.slice(0, 5);

@@ -1,5 +1,6 @@
 import { toISODate } from '@/lib/format';
-import type { Locale, Period, Transaction } from '@/types';
+import type { Profile } from '@/hooks/useProfile';
+import type { Currency, Locale, Period, Transaction } from '@/types';
 
 const intlLocale = (locale: Locale): string => (locale === 'tr' ? 'tr-TR' : 'en-US');
 
@@ -137,6 +138,93 @@ export function avgDailySpend(
     if (tx.kind === 'expense') expense += tx.amount;
   }
   return expense / PERIOD_DAYS[period];
+}
+
+/**
+ * Aylık birikim hedefi ilerlemesi. "Fake bilgi yasak" gereği: actual yalnızca profilin
+ * varsayılan para birimindeki bu-ayki işlemlerden hesaplanır (karışık para birimi TOPLANMAZ,
+ * kur dönüşümü yok). Hedef farklı para birimindeyse kıyas anlamsız → comparable=false, percent=null.
+ */
+export type MonthlySavingsProgress = {
+  hasTarget: boolean;
+  target: number | null;
+  targetCurrency: Currency | null;
+  /** Bu ay profilin varsayılan para birimindeki net birikim (gelir - gider). */
+  actual: number;
+  actualCurrency: Currency;
+  /** Hedef ve actual aynı para biriminde mi (kıyas anlamlı mı). */
+  comparable: boolean;
+  /** comparable ise actual/target * 100; değilse null. */
+  percent: number | null;
+  status: 'no-target' | 'mismatch' | 'over' | 'on-track' | 'close' | 'behind';
+};
+
+export function computeMonthlySavingsProgress(
+  transactions: Transaction[],
+  profile: Profile,
+  today: Date = new Date()
+): MonthlySavingsProgress {
+  const profileCurrency = profile.defaultCurrency;
+  const target = profile.monthlySavingsTarget;
+  const targetCurrency = profile.monthlySavingsTargetCurrency;
+
+  // Bu ayın başı (yerel) → ISO; date-only karşılaştırma.
+  const startOfMonthISO = toISODate(new Date(today.getFullYear(), today.getMonth(), 1));
+
+  // actual: yalnızca profil para birimindeki bu-ayki işlemler (karışık birim toplanmaz).
+  let income = 0;
+  let expense = 0;
+  for (const tx of transactions) {
+    if (tx.date < startOfMonthISO || tx.currency !== profileCurrency) continue;
+    if (tx.kind === 'income') income += tx.amount;
+    else expense += tx.amount;
+  }
+  const actual = income - expense;
+
+  if (!target || !targetCurrency) {
+    return {
+      hasTarget: false,
+      target: null,
+      targetCurrency: null,
+      actual,
+      actualCurrency: profileCurrency,
+      comparable: false,
+      percent: null,
+      status: 'no-target',
+    };
+  }
+
+  const comparable = targetCurrency === profileCurrency;
+  if (!comparable) {
+    return {
+      hasTarget: true,
+      target,
+      targetCurrency,
+      actual,
+      actualCurrency: profileCurrency,
+      comparable: false,
+      percent: null,
+      status: 'mismatch',
+    };
+  }
+
+  const percent = (actual / target) * 100;
+  let status: MonthlySavingsProgress['status'];
+  if (percent >= 100) status = 'over';
+  else if (percent >= 90) status = 'on-track';
+  else if (percent >= 50) status = 'close';
+  else status = 'behind';
+
+  return {
+    hasTarget: true,
+    target,
+    targetCurrency,
+    actual,
+    actualCurrency: profileCurrency,
+    comparable: true,
+    percent,
+    status,
+  };
 }
 
 export type TopCategory = {

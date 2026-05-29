@@ -34,8 +34,30 @@
     "title": "Financial Goals",
     "subtitle": "Track your savings goals",
     "addGoal": "New Goal",
-    "totalProgress": "Total Progress",
+    "totalProgress": {
+      "label": "Total Goal Progress",
+      "savedOf": "{{current}} saved"
+    },
     "completedCount": "{{completed}} / {{total}} completed",
+    "monthlySavings": {
+      "label": "Monthly Savings Goal",
+      "notSetCta": "Set a monthly savings goal",
+      "thisMonth": "This month: {{actual}}",
+      "currencyMismatch": "Goal and spending are in different currencies, not compared",
+      "status": {
+        "over": "Exceeded",
+        "on-track": "On track",
+        "close": "Getting close",
+        "behind": "Behind"
+      },
+      "editTitle": "Monthly Savings Goal",
+      "editHint": "This month's net savings (income − expense) is compared with this goal.",
+      "amountLabel": "Monthly Target Amount",
+      "remove": "Remove Goal"
+    },
+    "savingsInsights": {
+      "title": "Savings Insights"
+    },
     "targetDateShort": "Target Date",
     "empty": "No goals yet",
     "emptyHint": "Tap to create your first savings goal",
@@ -146,11 +168,7 @@
     "notePlaceholder": "Add a note...",
     "submit": "Save Transaction",
     "cancel": "Cancel",
-    "saving": "Saving...",
-    "subscriptionEntry": {
-      "title": "Create New Subscription",
-      "subtitle": "For subscriptions like Netflix, Spotify with renewal reminders"
-    }
+    "saving": "Saving..."
   },
   "recurringEdit": {
     "isSubscriptionBanner": "This is marked as a subscription. Use Subscription Editor for service name, icon, and plan info.",
@@ -365,6 +383,15 @@
     "goalDeadline": {
       "title": "{{name}} deadline approaching",
       "desc": "{{percent}}% complete, {{days}} days left"
+    },
+    "requiredMonthlySavings": {
+      "title": "Monthly savings for {{name}}",
+      "desc": "Save {{amount}} per month to reach it by {{deadline}}"
+    },
+    "monthlySavingsCheck": {
+      "titlePositive": "Your monthly savings goal is on track",
+      "titleNegative": "You're behind your monthly savings goal",
+      "desc": "This month {{actual}} · Goal {{target}} · {{diff}}% off"
     },
     "viewGoals": "View goals"
   },

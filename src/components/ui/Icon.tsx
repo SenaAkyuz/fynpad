@@ -17,6 +17,7 @@ export type IconName =
   | 'trending-down'
   | 'arrow-down'
   | 'arrow-up'
+  | 'arrow-up-right'
   | 'briefcase'
   | 'edit-3'
   | 'shopping-bag'
@@ -144,6 +145,12 @@ const ICONS: Record<IconName, (s: Stroke, color: string) => ReactNode> = {
     <>
       <Line {...s} x1="12" y1="19" x2="12" y2="5" />
       <Polyline {...s} points="5 12 12 5 19 12" />
+    </>
+  ),
+  'arrow-up-right': (s) => (
+    <>
+      <Line {...s} x1="7" y1="17" x2="17" y2="7" />
+      <Polyline {...s} points="7 7 17 7 17 17" />
     </>
   ),
   briefcase: (s) => (

@@ -34,8 +34,30 @@
     "title": "Finansal Hedefler",
     "subtitle": "Birikim hedeflerini takip et",
     "addGoal": "Yeni Hedef",
-    "totalProgress": "Toplam İlerleme",
+    "totalProgress": {
+      "label": "Toplam Hedef İlerleme",
+      "savedOf": "{{current}} biriktirildi"
+    },
     "completedCount": "{{completed}} / {{total}} tamamlandı",
+    "monthlySavings": {
+      "label": "Aylık Birikim Hedefi",
+      "notSetCta": "Aylık birikim hedefi belirle",
+      "thisMonth": "Bu ay: {{actual}}",
+      "currencyMismatch": "Hedef ve harcaman farklı para biriminde, kıyaslanmıyor",
+      "status": {
+        "over": "Hedefi aştı",
+        "on-track": "Hedefte",
+        "close": "Hedefe yaklaşıyor",
+        "behind": "Hedefin gerisinde"
+      },
+      "editTitle": "Aylık Birikim Hedefi",
+      "editHint": "Bu ay net birikimin (gelir − gider) bu hedefle kıyaslanır.",
+      "amountLabel": "Aylık Hedef Tutar",
+      "remove": "Hedefi Kaldır"
+    },
+    "savingsInsights": {
+      "title": "Birikim Önerileri"
+    },
     "targetDateShort": "Son Tarih",
     "empty": "Henüz hedefin yok",
     "emptyHint": "İlk birikim hedefini oluşturmak için dokun",
@@ -99,7 +121,7 @@
     "categories": {
       "salary": "Maaş",
       "freelance": "Freelance",
-      "groceries": "Markete",
+      "groceries": "Market",
       "rent": "Kira",
       "transport": "Ulaşım",
       "food": "Yeme-İçme",
@@ -146,11 +168,7 @@
     "notePlaceholder": "Bir not ekle...",
     "submit": "İşlemi Kaydet",
     "cancel": "İptal",
-    "saving": "Kaydediliyor...",
-    "subscriptionEntry": {
-      "title": "Yeni Abonelik Oluştur",
-      "subtitle": "Netflix, Spotify gibi yenileme bildirimli abonelikler için"
-    }
+    "saving": "Kaydediliyor..."
   },
   "recurringEdit": {
     "isSubscriptionBanner": "Bu kayıt bir abonelik olarak işaretli. Servis adı, ikon ve plan bilgisi için Abonelik Düzenleyici'yi kullan.",
@@ -365,6 +383,15 @@
     "goalDeadline": {
       "title": "{{name}} hedefi yaklaşıyor",
       "desc": "%{{percent}} tamamlandı, {{days}} gün kaldı"
+    },
+    "requiredMonthlySavings": {
+      "title": "{{name}} için aylık birikim",
+      "desc": "{{deadline}} tarihine yetişmek için ayda {{amount}} biriktir"
+    },
+    "monthlySavingsCheck": {
+      "titlePositive": "Aylık birikim hedefin iyi gidiyor",
+      "titleNegative": "Aylık birikim hedefinin gerisindesin",
+      "desc": "Bu ay {{actual}} · Hedef {{target}} · %{{diff}} fark"
     },
     "viewGoals": "Hedefleri gör"
   },

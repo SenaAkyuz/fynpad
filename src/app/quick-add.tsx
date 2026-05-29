@@ -28,7 +28,7 @@ import { toISODate } from '@/lib/format';
 import { quickAddSchema, type QuickAddForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
-import { radii, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -157,29 +157,6 @@ export default function QuickAddScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Abonelik tek editor'den yönetilir (subscription-edit). Quick Add'den giriş noktası. */}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.replace('/subscription-edit')}
-            style={({ pressed }) => [
-              styles.subEntry,
-              { backgroundColor: colors.surfaceContainerLow },
-              pressed && styles.subEntryPressed,
-            ]}
-          >
-            <View style={[styles.subEntryIcon, { backgroundColor: colors.primaryContainer }]}>
-              <Icon name="credit-card" size={20} color={colors.onPrimaryContainer} strokeWidth={2} />
-            </View>
-            <View style={styles.subEntryText}>
-              <Text variant="labelMd">{t('quickAdd.subscriptionEntry.title')}</Text>
-              <Text variant="labelSm" color="onSurfaceVariant">
-                {t('quickAdd.subscriptionEntry.subtitle')}
-              </Text>
-            </View>
-            <Icon name="chevron-right" size={20} color={colors.onSurfaceVariant} strokeWidth={2} />
-          </Pressable>
-          <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
-
           <Controller
             control={control}
             name="kind"
@@ -227,6 +204,12 @@ export default function QuickAddScreen() {
                     value={value}
                     onChange={onChange}
                     onAddPress={() => setShowCategoryModal(true)}
+                    onSubscriptionPress={() => {
+                      // "Abonelikler" kategorisi → Quick Add'i kapat, subscription-edit'i aç.
+                      // İki modal arası geçiş: router.replace modal→modal'da tutarsız → dismiss + push.
+                      router.dismiss();
+                      router.push('/subscription-edit');
+                    }}
                   />
                 )}
               />
@@ -333,32 +316,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.stackLg,
     gap: spacing.stackMd,
-  },
-  subEntry: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radii.lg,
-  },
-  subEntryPressed: {
-    opacity: 0.85,
-  },
-  subEntryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  subEntryText: {
-    flex: 1,
-    gap: 2,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginTop: -spacing.sm,
   },
   section: {
     gap: spacing.md,

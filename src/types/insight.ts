@@ -2,7 +2,9 @@ export type InsightKind =
   | 'budget_exceeded'
   | 'above_average_spending'
   | 'subscription_review'
-  | 'goal_deadline';
+  | 'goal_deadline'
+  | 'required_monthly_savings'
+  | 'monthly_savings_check';
 
 export type InsightSeverity = 'warning' | 'info' | 'suggestion';
 

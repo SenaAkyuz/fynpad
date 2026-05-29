@@ -8,12 +8,21 @@ import { radii, shadows, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Category, CategoryKind } from '@/types';
 
+/** Seed'deki "Abonelikler" kategorisinin i18n-bağımsız sabit name key'i (bkz. 0002 migration). */
+const SUBSCRIPTIONS_CATEGORY_NAME = 'dashboard.categories.subscriptions';
+
 export type CategoryPickerProps = {
   categories: Category[];
   kind: CategoryKind;
   value: string;
   onChange: (categoryId: string) => void;
   onAddPress: () => void;
+  /**
+   * Verilirse "Abonelikler" kategorisi normal seçim yerine bu callback'i tetikler (Quick Add'de
+   * subscription-edit modal'ını açmak için) ve sağ üstte ↗ rozeti gösterilir. Verilmezse abonelik
+   * kategorisi diğerleri gibi normal seçilir (transaction-edit / recurring / filtre ekranları).
+   */
+  onSubscriptionPress?: () => void;
 };
 
 /**
@@ -21,7 +30,14 @@ export type CategoryPickerProps = {
  * glow + dolu ikon kutusu. Son slot "+" (yeni kategori). Custom kategoriler
  * long-press ile silinebilir → işlemleri "Diğer"e taşınır. Default'lar silinemez.
  */
-export function CategoryPicker({ categories, kind, value, onChange, onAddPress }: CategoryPickerProps) {
+export function CategoryPicker({
+  categories,
+  kind,
+  value,
+  onChange,
+  onAddPress,
+  onSubscriptionPress,
+}: CategoryPickerProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const deleteCategory = useDeleteCategory();
@@ -59,14 +75,16 @@ export function CategoryPicker({ categories, kind, value, onChange, onAddPress }
   return (
     <View style={styles.grid}>
       {items.map((category) => {
-        const active = category.id === value;
+        // Abonelik kategorisi: callback verilmişse seçilmez, subscription-edit'i açan giriş noktasıdır.
+        const isSubEntry = !!onSubscriptionPress && category.name === SUBSCRIPTIONS_CATEGORY_NAME;
+        const active = !isSubEntry && category.id === value;
         return (
           <Pressable
             key={category.id}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             style={styles.cell}
-            onPress={() => onChange(category.id)}
+            onPress={() => (isSubEntry ? onSubscriptionPress!() : onChange(category.id))}
             onLongPress={() => onLongPress(category)}
           >
             <View
@@ -85,6 +103,11 @@ export function CategoryPicker({ categories, kind, value, onChange, onAddPress }
                 color={active ? colors.onPrimary : category.color}
                 strokeWidth={2}
               />
+              {isSubEntry ? (
+                <View style={[styles.entryBadge, { backgroundColor: colors.primaryContainer }]}>
+                  <Icon name="arrow-up-right" size={11} color={colors.onPrimaryContainer} strokeWidth={2.5} />
+                </View>
+              ) : null}
             </View>
             <Text
               variant="labelSm"
@@ -138,6 +161,16 @@ const styles = StyleSheet.create({
   },
   addBox: {
     borderStyle: 'dashed',
+  },
+  entryBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     textAlign: 'center',

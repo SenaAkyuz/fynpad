@@ -152,6 +152,55 @@ export async function subtractFromGoal(id: string, amount: number): Promise<Goal
   return updateGoal({ id, currentAmount: next });
 }
 
+/** Bir para birimindeki tüm hedeflerin birleşik ilerlemesi. */
+export type CurrencyTotal = {
+  currency: Currency;
+  currentAmount: number;
+  targetAmount: number;
+  /** 0-100, 100'de clamp */
+  percent: number;
+  goalCount: number;
+};
+
+export type TotalGoalProgress = {
+  /** Her para birimi için ayrı satır (conversion YOK — multi-currency güvenli). */
+  byCurrency: CurrencyTotal[];
+  isSingleCurrency: boolean;
+  totalGoals: number;
+  completedGoals: number;
+};
+
+/**
+ * Hedefleri para birimine göre gruplayıp her grubun toplam current/target + yüzdesini döner.
+ * Farklı para birimleri TOPLANMAZ (kur dönüşümü yok) — UI her birini ayrı gösterir.
+ */
+export function computeTotalGoalProgress(goals: Goal[]): TotalGoalProgress {
+  const groups = new Map<Currency, { current: number; target: number; count: number }>();
+
+  for (const g of goals) {
+    const group = groups.get(g.currency) ?? { current: 0, target: 0, count: 0 };
+    group.current += g.currentAmount;
+    group.target += g.targetAmount;
+    group.count += 1;
+    groups.set(g.currency, group);
+  }
+
+  const byCurrency: CurrencyTotal[] = Array.from(groups.entries()).map(([currency, g]) => ({
+    currency,
+    currentAmount: g.current,
+    targetAmount: g.target,
+    percent: g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0,
+    goalCount: g.count,
+  }));
+
+  return {
+    byCurrency,
+    isSingleCurrency: byCurrency.length === 1,
+    totalGoals: goals.length,
+    completedGoals: goals.filter((g) => g.completedAt !== null).length,
+  };
+}
+
 /** Hedef + türetilmiş ilerleme/durum. today date-only normalize edilir (off-by-one yok). */
 export function computeGoalProgress(goal: Goal, today: Date = new Date()): GoalProgress {
   const percent = goal.targetAmount > 0
