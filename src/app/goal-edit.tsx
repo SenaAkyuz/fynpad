@@ -88,6 +88,7 @@ function GoalEditForm({ editing }: { editing: Goal | null }) {
     defaultValues: editing
       ? {
           name: editing.name,
+          description: editing.description ?? '',
           iconKey: editing.iconKey ?? 'star',
           targetAmount: editing.targetAmount,
           currency: editing.currency,
@@ -96,6 +97,7 @@ function GoalEditForm({ editing }: { editing: Goal | null }) {
         }
       : {
           name: '',
+          description: '',
           iconKey: 'plane',
           targetAmount: 0,
           currency: profile?.defaultCurrency ?? 'TRY',
@@ -113,6 +115,7 @@ function GoalEditForm({ editing }: { editing: Goal | null }) {
   const onSubmit = async (values: GoalForm) => {
     const base = {
       name: values.name.trim(),
+      description: values.description?.trim() ? values.description.trim() : null,
       targetAmount: values.targetAmount,
       currency: values.currency,
       targetDate: values.targetDate ?? null,
@@ -245,6 +248,22 @@ function GoalEditForm({ editing }: { editing: Goal | null }) {
                 value={value}
                 onChangeText={onChange}
                 maxLength={100}
+              />
+            )}
+          />
+
+          {/* Açıklama (opsiyonel) */}
+          <Controller
+            control={control}
+            name="description"
+            render={({ field: { value, onChange } }) => (
+              <TextInput
+                label={t('goals.form.descriptionLabel')}
+                placeholder={t('goals.form.descriptionPlaceholder')}
+                value={value ?? ''}
+                onChangeText={onChange}
+                multiline
+                maxLength={200}
               />
             )}
           />

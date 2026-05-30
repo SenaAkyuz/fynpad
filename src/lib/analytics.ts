@@ -1,6 +1,6 @@
 import { toISODate } from '@/lib/format';
-import type { Profile } from '@/hooks/useProfile';
-import type { Currency, Locale, Period, Transaction } from '@/types';
+import { computeGoalProgress } from '@/lib/goals';
+import type { Currency, Goal, Locale, Period, Transaction } from '@/types';
 
 const intlLocale = (locale: Locale): string => (locale === 'tr' ? 'tr-TR' : 'en-US');
 
@@ -141,90 +141,86 @@ export function avgDailySpend(
 }
 
 /**
- * Aylık birikim hedefi ilerlemesi. "Fake bilgi yasak" gereği: actual yalnızca profilin
- * varsayılan para birimindeki bu-ayki işlemlerden hesaplanır (karışık para birimi TOPLANMAZ,
- * kur dönüşümü yok). Hedef farklı para birimindeyse kıyas anlamsız → comparable=false, percent=null.
+ * Otomatik aylık birikim hedefi (Part 14, tasarım revizyonu). Kullanıcı manuel hedef SET ETMEZ:
+ * gereken aylık birikim, son tarihi olan tamamlanmamış hedeflerin `monthlyNeeded` toplamından
+ * (para birimi başına grup) türetilir. Kur dönüşümü YOK — her para birimi ayrı tutulur.
  */
-export type MonthlySavingsProgress = {
-  hasTarget: boolean;
-  target: number | null;
-  targetCurrency: Currency | null;
-  /** Bu ay profilin varsayılan para birimindeki net birikim (gelir - gider). */
-  actual: number;
-  actualCurrency: Currency;
-  /** Hedef ve actual aynı para biriminde mi (kıyas anlamlı mı). */
-  comparable: boolean;
-  /** comparable ise actual/target * 100; değilse null. */
-  percent: number | null;
-  status: 'no-target' | 'mismatch' | 'over' | 'on-track' | 'close' | 'behind';
+export type MonthlySavingsRequired = {
+  /** Para birimi → o ay gereken toplam birikim. */
+  byCurrency: Map<Currency, number>;
+  /** Son tarihi olan, tamamlanmamış en az bir hedef var mı (kart/insight görünürlüğü). */
+  hasAnyDeadline: boolean;
 };
 
-export function computeMonthlySavingsProgress(
-  transactions: Transaction[],
-  profile: Profile,
+export function computeMonthlySavingsRequired(
+  goals: Goal[],
   today: Date = new Date()
-): MonthlySavingsProgress {
-  const profileCurrency = profile.defaultCurrency;
-  const target = profile.monthlySavingsTarget;
-  const targetCurrency = profile.monthlySavingsTargetCurrency;
+): MonthlySavingsRequired {
+  const byCurrency = new Map<Currency, number>();
+  let hasAnyDeadline = false;
 
-  // Bu ayın başı (yerel) → ISO; date-only karşılaştırma.
+  for (const g of goals) {
+    if (!g.targetDate || g.completedAt) continue;
+    hasAnyDeadline = true;
+
+    const progress = computeGoalProgress(g, today);
+    if (progress.monthlyNeeded === null || progress.monthlyNeeded <= 0) continue;
+
+    byCurrency.set(g.currency, (byCurrency.get(g.currency) ?? 0) + progress.monthlyNeeded);
+  }
+
+  return { byCurrency, hasAnyDeadline };
+}
+
+/** Bu ayın gerçek net birikimi (gelir − gider), para birimi başına. Kur dönüşümü yok. */
+export type MonthlyNetSavings = {
+  byCurrency: Map<Currency, number>;
+};
+
+export function computeMonthlyNetSavings(
+  transactions: Transaction[],
+  today: Date = new Date()
+): MonthlyNetSavings {
   const startOfMonthISO = toISODate(new Date(today.getFullYear(), today.getMonth(), 1));
+  const byCurrency = new Map<Currency, number>();
 
-  // actual: yalnızca profil para birimindeki bu-ayki işlemler (karışık birim toplanmaz).
-  let income = 0;
-  let expense = 0;
   for (const tx of transactions) {
-    if (tx.date < startOfMonthISO || tx.currency !== profileCurrency) continue;
-    if (tx.kind === 'income') income += tx.amount;
-    else expense += tx.amount;
+    if (tx.date < startOfMonthISO) continue;
+    const signed = tx.kind === 'income' ? tx.amount : -tx.amount;
+    byCurrency.set(tx.currency, (byCurrency.get(tx.currency) ?? 0) + signed);
   }
-  const actual = income - expense;
+  return { byCurrency };
+}
 
-  if (!target || !targetCurrency) {
-    return {
-      hasTarget: false,
-      target: null,
-      targetCurrency: null,
-      actual,
-      actualCurrency: profileCurrency,
-      comparable: false,
-      percent: null,
-      status: 'no-target',
-    };
+/** Gereken vs gerçek karşılaştırma (UI/insight için), yalnızca gereken birikimi olan para birimleri. */
+export type MonthlySavingsComparison = {
+  currency: Currency;
+  required: number;
+  actual: number;
+  /** (actual / required) * 100 */
+  percent: number;
+  status: 'over' | 'on-track' | 'behind';
+};
+
+export function compareMonthlySavings(
+  required: MonthlySavingsRequired,
+  actual: MonthlyNetSavings
+): MonthlySavingsComparison[] {
+  const results: MonthlySavingsComparison[] = [];
+
+  for (const [currency, requiredAmount] of required.byCurrency) {
+    if (requiredAmount <= 0) continue;
+    const actualAmount = actual.byCurrency.get(currency) ?? 0;
+    const percent = (actualAmount / requiredAmount) * 100;
+
+    let status: MonthlySavingsComparison['status'];
+    if (percent >= 100) status = 'over';
+    else if (percent >= 90) status = 'on-track';
+    else status = 'behind';
+
+    results.push({ currency, required: requiredAmount, actual: actualAmount, percent, status });
   }
-
-  const comparable = targetCurrency === profileCurrency;
-  if (!comparable) {
-    return {
-      hasTarget: true,
-      target,
-      targetCurrency,
-      actual,
-      actualCurrency: profileCurrency,
-      comparable: false,
-      percent: null,
-      status: 'mismatch',
-    };
-  }
-
-  const percent = (actual / target) * 100;
-  let status: MonthlySavingsProgress['status'];
-  if (percent >= 100) status = 'over';
-  else if (percent >= 90) status = 'on-track';
-  else if (percent >= 50) status = 'close';
-  else status = 'behind';
-
-  return {
-    hasTarget: true,
-    target,
-    targetCurrency,
-    actual,
-    actualCurrency: profileCurrency,
-    comparable: true,
-    percent,
-    status,
-  };
+  return results;
 }
 
 export type TopCategory = {

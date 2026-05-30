@@ -35,25 +35,19 @@
     "subtitle": "Track your savings goals",
     "addGoal": "New Goal",
     "totalProgress": {
-      "label": "Total Goal Progress",
-      "savedOf": "{{current}} saved"
+      "label": "Total Savings",
+      "ofTarget": "/ {{target}}"
     },
+    "newGoalCta": "New Goal",
     "completedCount": "{{completed}} / {{total}} completed",
     "monthlySavings": {
       "label": "Monthly Savings Goal",
-      "notSetCta": "Set a monthly savings goal",
       "thisMonth": "This month: {{actual}}",
-      "currencyMismatch": "Goal and spending are in different currencies, not compared",
       "status": {
         "over": "Exceeded",
         "on-track": "On track",
-        "close": "Getting close",
         "behind": "Behind"
-      },
-      "editTitle": "Monthly Savings Goal",
-      "editHint": "This month's net savings (income − expense) is compared with this goal.",
-      "amountLabel": "Monthly Target Amount",
-      "remove": "Remove Goal"
+      }
     },
     "savingsInsights": {
       "title": "Savings Insights"
@@ -67,11 +61,14 @@
     "noDeadline": "No deadline",
     "monthlyNeeded": "Save {{amount}} / month",
     "progressLabel": "{{current}} / {{target}}",
+    "savedAmount": "{{amount}} saved",
     "form": {
       "createTitle": "New Goal",
       "editTitle": "Edit Goal",
       "nameLabel": "Goal Name",
       "namePlaceholder": "e.g. Vacation, New phone",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "e.g. Downpayment for coastal estate",
       "iconLabel": "Icon",
       "targetLabel": "Target Amount",
       "currencyLabel": "Currency",
@@ -93,6 +90,7 @@
       "nameRequired": "Goal name is required",
       "amountRequired": "Target amount is required",
       "amountPositive": "Amount must be greater than 0",
+      "descriptionTooLong": "Description can be at most 200 characters",
       "saveFailed": "Could not save goal",
       "deleteFailed": "Could not delete goal"
     }
@@ -391,7 +389,7 @@
     "monthlySavingsCheck": {
       "titlePositive": "Your monthly savings goal is on track",
       "titleNegative": "You're behind your monthly savings goal",
-      "desc": "This month {{actual}} · Goal {{target}} · {{diff}}% off"
+      "desc": "This month {{actual}} net savings · Required {{required}} · {{diff}}% off"
     },
     "viewGoals": "View goals"
   },

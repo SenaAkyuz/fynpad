@@ -9,6 +9,7 @@ type GoalRow = {
   id: string;
   user_id: string;
   name: string;
+  description: string | null;
   target_amount: number | string; // numeric PostgREST'te string gelebilir
   current_amount: number | string;
   currency: Currency;
@@ -24,6 +25,7 @@ function rowToGoal(r: GoalRow): Goal {
     id: r.id,
     userId: r.user_id,
     name: r.name,
+    description: r.description ?? null,
     targetAmount: Number(r.target_amount),
     currentAmount: Number(r.current_amount),
     currency: r.currency,
@@ -71,6 +73,7 @@ export async function listGoals(): Promise<Goal[]> {
 
 export type GoalInput = {
   name: string;
+  description?: string | null;
   targetAmount: number;
   currency: Currency;
   targetDate?: string | null;
@@ -85,6 +88,7 @@ export async function createGoal(input: GoalInput): Promise<Goal> {
     .insert({
       user_id: userId,
       name: input.name,
+      description: input.description ?? null,
       target_amount: input.targetAmount,
       current_amount: input.currentAmount ?? 0,
       currency: input.currency,
@@ -101,6 +105,7 @@ export async function createGoal(input: GoalInput): Promise<Goal> {
 
 export type GoalPatch = Partial<{
   name: string;
+  description: string | null;
   targetAmount: number;
   currentAmount: number;
   currency: Currency;
@@ -113,6 +118,7 @@ export async function updateGoal(input: { id: string } & GoalPatch): Promise<Goa
   const { id, ...patch } = input;
   const dbPatch: Record<string, unknown> = {};
   if (patch.name !== undefined) dbPatch.name = patch.name;
+  if (patch.description !== undefined) dbPatch.description = patch.description;
   if (patch.targetAmount !== undefined) dbPatch.target_amount = patch.targetAmount;
   if (patch.currentAmount !== undefined) dbPatch.current_amount = patch.currentAmount;
   if (patch.currency !== undefined) dbPatch.currency = patch.currency;
@@ -230,4 +236,33 @@ export function computeGoalProgress(goal: Goal, today: Date = new Date()): GoalP
   }
 
   return { goal, percent, remaining, isCompleted, daysUntilDeadline, isUrgent, monthlyNeeded };
+}
+
+/** Hedefin tempo (pace) durumu — bar rengini sürer. 'no-pace': deadline yok ya da çok yeni. */
+export type ProgressColorTier = 'on-track' | 'behind' | 'ahead' | 'no-pace';
+
+/**
+ * Geçen zamanın beklediği ilerleme ile gerçek ilerlemeyi kıyaslar.
+ * Deadline yoksa, henüz kayda değer süre geçmemişse (ilk %5) ya da tamamlanmışsa nötr (no-pace/on-track).
+ * Conversion gerektirmez — tek hedefin kendi para biriminde oran karşılaştırması.
+ */
+export function computeProgressColorTier(goal: Goal, today: Date = new Date()): ProgressColorTier {
+  if (goal.completedAt != null) return 'on-track';
+  if (!goal.targetDate) return 'no-pace';
+
+  const actualProgress = goal.targetAmount > 0 ? goal.currentAmount / goal.targetAmount : 0;
+
+  const created = new Date(goal.createdAt).getTime();
+  const deadline = fromISODate(goal.targetDate).getTime();
+  const totalDuration = deadline - created;
+  const elapsedDuration = today.getTime() - created;
+
+  if (totalDuration <= 0 || elapsedDuration < 0) return 'no-pace';
+
+  const expectedProgress = Math.min(1, elapsedDuration / totalDuration);
+
+  // İlk dönemde (örn. ilk %5'lik süre) pace yargısı yapma — yanıltıcı kırmızı olmasın.
+  if (expectedProgress < 0.05) return 'no-pace';
+
+  return actualProgress >= expectedProgress ? 'on-track' : 'behind';
 }

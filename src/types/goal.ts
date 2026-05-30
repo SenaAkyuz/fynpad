@@ -9,6 +9,8 @@ export type Goal = {
   id: string;
   userId: string;
   name: string;
+  /** Opsiyonel kısa açıklama (<=200). Migration 0010. */
+  description: string | null;
   targetAmount: number;
   currentAmount: number;
   currency: Currency;

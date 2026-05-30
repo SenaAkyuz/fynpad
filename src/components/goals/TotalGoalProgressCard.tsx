@@ -11,8 +11,8 @@ import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Toplam Hedef İlerleme kartı (Part 14 ek). Tek para birimi → büyük hedef tutarı + biriken + bar.
- * Çoklu para birimi → her biri ayrı satır (kur dönüşümü yok, toplama yapılmaz).
+ * Toplam Birikim kartı (Part 14 ek, tasarım revizyonu). Tek para birimi → büyük rakam = TOPLAM BİRİKEN
+ * (saved), altında hedef bağlamı + bar. Çoklu para birimi → her biri ayrı satır (kur dönüşümü yok).
  */
 export function TotalGoalProgressCard() {
   const { t } = useTranslation();
@@ -22,18 +22,8 @@ export function TotalGoalProgressCard() {
 
   const progress = computeTotalGoalProgress(goals);
 
-  if (progress.totalGoals === 0) {
-    return (
-      <GlassCard style={styles.card}>
-        <Text variant="labelSm" color="onSurfaceVariant" style={styles.label}>
-          {t('goals.totalProgress.label')}
-        </Text>
-        <Text variant="bodyMd" color="onSurfaceVariant">
-          {t('goals.empty')}
-        </Text>
-      </GlassCard>
-    );
-  }
+  // Hiç hedef yokken kart görünmez (tasarım: yalnızca New Goal CTA + boş liste durumu kalır).
+  if (progress.totalGoals === 0) return null;
 
   const renderBar = (percent: number, height: number) => (
     <View style={[styles.track, { height, backgroundColor: colors.surfaceContainerHighest }]}>
@@ -53,10 +43,10 @@ export function TotalGoalProgressCard() {
         <Text variant="labelSm" color="onSurfaceVariant" style={styles.label}>
           {t('goals.totalProgress.label')}
         </Text>
-        <Text variant="headlineMd">{formatCurrency(c.targetAmount, c.currency, locale)}</Text>
+        <Text variant="headlineMd">{formatCurrency(c.currentAmount, c.currency, locale)}</Text>
         <Text variant="labelSm" color="onSurfaceVariant">
-          {t('goals.totalProgress.savedOf', {
-            current: formatCurrency(c.currentAmount, c.currency, locale),
+          {t('goals.totalProgress.ofTarget', {
+            target: formatCurrency(c.targetAmount, c.currency, locale),
           })}
         </Text>
         {renderBar(c.percent, 8)}

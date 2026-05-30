@@ -11,9 +11,6 @@ export type Profile = {
   fullName: string | null;
   defaultCurrency: Currency;
   locale: Locale;
-  /** Opsiyonel aylık birikim hedefi (migration 0009). Belirlenmemişse null. */
-  monthlySavingsTarget: number | null;
-  monthlySavingsTargetCurrency: Currency | null;
 };
 
 type ProfileRow = {
@@ -22,8 +19,6 @@ type ProfileRow = {
   full_name: string | null;
   default_currency: Currency;
   locale: Locale;
-  monthly_savings_target: number | string | null;
-  monthly_savings_target_currency: Currency | null;
 };
 
 function rowToProfile(r: ProfileRow): Profile {
@@ -33,18 +28,13 @@ function rowToProfile(r: ProfileRow): Profile {
     fullName: r.full_name,
     defaultCurrency: r.default_currency,
     locale: r.locale,
-    // numeric PostgREST'te string gelebilir → Number; null korunur.
-    monthlySavingsTarget: r.monthly_savings_target == null ? null : Number(r.monthly_savings_target),
-    monthlySavingsTargetCurrency: r.monthly_savings_target_currency,
   };
 }
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select(
-      'id, email, full_name, default_currency, locale, monthly_savings_target, monthly_savings_target_currency'
-    )
+    .select('id, email, full_name, default_currency, locale')
     .eq('id', userId)
     .maybeSingle();
   if (error) {
@@ -72,19 +62,12 @@ export function useUpdateProfile() {
         fullName: string;
         defaultCurrency: Currency;
         locale: Locale;
-        monthlySavingsTarget: number | null;
-        monthlySavingsTargetCurrency: Currency | null;
       }>
     ) => {
       const dbPatch: Record<string, unknown> = {};
       if (patch.fullName !== undefined) dbPatch.full_name = patch.fullName;
       if (patch.defaultCurrency !== undefined) dbPatch.default_currency = patch.defaultCurrency;
       if (patch.locale !== undefined) dbPatch.locale = patch.locale;
-      // null → hedefi kaldır (kolon nullable). İkisi birlikte set/clear edilir.
-      if (patch.monthlySavingsTarget !== undefined)
-        dbPatch.monthly_savings_target = patch.monthlySavingsTarget;
-      if (patch.monthlySavingsTargetCurrency !== undefined)
-        dbPatch.monthly_savings_target_currency = patch.monthlySavingsTargetCurrency;
       const { error } = await supabase.from('profiles').update(dbPatch).eq('id', userId as string);
       if (error) {
         throw error;

@@ -1,4 +1,8 @@
-import { computeMonthlySavingsProgress } from '@/lib/analytics';
+import {
+  compareMonthlySavings,
+  computeMonthlyNetSavings,
+  computeMonthlySavingsRequired,
+} from '@/lib/analytics';
 import { computeGoalProgress } from '@/lib/goals';
 import { formatAbsoluteDate, formatCurrency, fromISODate } from '@/lib/format';
 import i18n from '@/locales/i18n';
@@ -224,19 +228,21 @@ function ruleRequiredMonthlySavings(ctx: GoalInsightContext): Insight[] {
 }
 
 /**
- * Kural 6 — Aylık birikim hedefi kontrolü (Part 14 ek). Profilde hedef varsa, bu ayki gerçek net
- * birikim ile kıyaslar. Yalnızca aynı para biriminde anlamlı → mismatch'te insight ÜRETİLMEZ
- * (doğrulanamaz bilgi gösterilmez).
+ * Kural 6 — Aylık birikim kontrolü (Part 14, tasarım revizyonu). Kullanıcı manuel hedef SET ETMEZ:
+ * gereken aylık birikim hedeflerden otomatik hesaplanır, bu ayki gerçek net birikimle (gelir−gider)
+ * para birimi başına kıyaslanır. Son tarihli hedef yoksa insight üretilmez. Kur dönüşümü yok.
  */
 function ruleMonthlySavingsCheck(ctx: GoalInsightContext): Insight[] {
-  if (!ctx.profile || !ctx.profile.monthlySavingsTarget) return [];
-  const progress = computeMonthlySavingsProgress(ctx.transactions, ctx.profile, ctx.today);
-  if (!progress.hasTarget || !progress.comparable || progress.percent === null) return [];
+  const required = computeMonthlySavingsRequired(ctx.goals, ctx.today);
+  if (!required.hasAnyDeadline) return [];
 
-  const isPositive = progress.status === 'over' || progress.status === 'on-track';
-  return [
-    {
-      id: 'monthly-savings-check',
+  const actual = computeMonthlyNetSavings(ctx.transactions, ctx.today);
+  const comparisons = compareMonthlySavings(required, actual);
+
+  return comparisons.map((c): Insight => {
+    const isPositive = c.status === 'over' || c.status === 'on-track';
+    return {
+      id: `monthly-savings-check:${c.currency}`,
       kind: 'monthly_savings_check',
       severity: isPositive ? 'info' : 'warning',
       titleKey: isPositive
@@ -244,15 +250,15 @@ function ruleMonthlySavingsCheck(ctx: GoalInsightContext): Insight[] {
         : 'insights.monthlySavingsCheck.titleNegative',
       descKey: 'insights.monthlySavingsCheck.desc',
       descParams: {
-        actual: formatCurrency(progress.actual, progress.actualCurrency, ctx.locale),
-        target: formatCurrency(progress.target!, progress.targetCurrency!, ctx.locale),
-        diff: Math.abs(Math.round(progress.percent - 100)),
+        actual: formatCurrency(c.actual, c.currency, ctx.locale),
+        required: formatCurrency(c.required, c.currency, ctx.locale),
+        diff: Math.abs(c.percent - 100).toFixed(1),
       },
       actionLabelKey: 'insights.viewGoals',
       actionTarget: '/(tabs)/goals',
       iconName: isPositive ? 'check' : 'alert-triangle',
-    },
-  ];
+    };
+  });
 }
 
 /**

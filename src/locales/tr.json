@@ -35,25 +35,19 @@
     "subtitle": "Birikim hedeflerini takip et",
     "addGoal": "Yeni Hedef",
     "totalProgress": {
-      "label": "Toplam Hedef İlerleme",
-      "savedOf": "{{current}} biriktirildi"
+      "label": "Toplam Birikim",
+      "ofTarget": "/ {{target}}"
     },
+    "newGoalCta": "Yeni Hedef",
     "completedCount": "{{completed}} / {{total}} tamamlandı",
     "monthlySavings": {
       "label": "Aylık Birikim Hedefi",
-      "notSetCta": "Aylık birikim hedefi belirle",
       "thisMonth": "Bu ay: {{actual}}",
-      "currencyMismatch": "Hedef ve harcaman farklı para biriminde, kıyaslanmıyor",
       "status": {
         "over": "Hedefi aştı",
         "on-track": "Hedefte",
-        "close": "Hedefe yaklaşıyor",
         "behind": "Hedefin gerisinde"
-      },
-      "editTitle": "Aylık Birikim Hedefi",
-      "editHint": "Bu ay net birikimin (gelir − gider) bu hedefle kıyaslanır.",
-      "amountLabel": "Aylık Hedef Tutar",
-      "remove": "Hedefi Kaldır"
+      }
     },
     "savingsInsights": {
       "title": "Birikim Önerileri"
@@ -67,11 +61,14 @@
     "noDeadline": "Süre yok",
     "monthlyNeeded": "Aylık {{amount}} biriktir",
     "progressLabel": "{{current}} / {{target}}",
+    "savedAmount": "{{amount}} biriktirildi",
     "form": {
       "createTitle": "Yeni Hedef",
       "editTitle": "Hedefi Düzenle",
       "nameLabel": "Hedef Adı",
       "namePlaceholder": "Örn. Tatil, Yeni telefon",
+      "descriptionLabel": "Açıklama",
+      "descriptionPlaceholder": "Örn. Sahil evi için peşinat",
       "iconLabel": "İkon",
       "targetLabel": "Hedef Tutar",
       "currencyLabel": "Para Birimi",
@@ -93,6 +90,7 @@
       "nameRequired": "Hedef adı zorunlu",
       "amountRequired": "Hedef tutar zorunlu",
       "amountPositive": "Tutar 0'dan büyük olmalı",
+      "descriptionTooLong": "Açıklama en fazla 200 karakter olabilir",
       "saveFailed": "Hedef kaydedilemedi",
       "deleteFailed": "Hedef silinemedi"
     }
@@ -391,7 +389,7 @@
     "monthlySavingsCheck": {
       "titlePositive": "Aylık birikim hedefin iyi gidiyor",
       "titleNegative": "Aylık birikim hedefinin gerisindesin",
-      "desc": "Bu ay {{actual}} · Hedef {{target}} · %{{diff}} fark"
+      "desc": "Bu ay {{actual}} net birikim · Gereken {{required}} · %{{diff}} fark"
     },
     "viewGoals": "Hedefleri gör"
   },

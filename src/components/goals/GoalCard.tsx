@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { formatAbsoluteDate, formatCurrency } from '@/lib/format';
+import { computeProgressColorTier } from '@/lib/goals';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { GoalProgress, Locale } from '@/types';
@@ -25,7 +26,15 @@ export function GoalCard({ progress, locale, onPress }: GoalCardProps) {
   const { colors } = useTheme();
   const { goal, percent, isCompleted, isUrgent, daysUntilDeadline, monthlyNeeded } = progress;
 
-  const accent = isCompleted ? colors.secondary : isUrgent ? colors.tertiary : colors.primary;
+  // Pace-based renk: geride (tempo gerisinde) ya da urgent → Coral; tamamlandı → Emerald; aksi → primary.
+  const tier = computeProgressColorTier(goal);
+  const accent = isCompleted
+    ? colors.secondary
+    : isUrgent || tier === 'behind'
+      ? colors.tertiary
+      : tier === 'ahead'
+        ? colors.secondary
+        : colors.primary;
 
   // Son tarih meta metni: gelecek → "N gün kaldı", geçmiş → "N gün geçti".
   let deadlineText: string | null = null;
@@ -60,15 +69,19 @@ export function GoalCard({ progress, locale, onPress }: GoalCardProps) {
           )}
         </View>
 
-        <Text variant="headlineSm" numberOfLines={1} style={styles.name}>
+        <Text variant="headlineSm" numberOfLines={1} style={goal.description ? undefined : styles.name}>
           {goal.name}
         </Text>
+        {goal.description ? (
+          <Text variant="labelSm" color="onSurfaceVariant" numberOfLines={1} style={styles.description}>
+            {goal.description}
+          </Text>
+        ) : null}
 
         <View style={styles.amountRow}>
           <Text variant="labelMd" color="onSurfaceVariant" numberOfLines={1} style={styles.flex}>
-            {t('goals.progressLabel', {
-              current: formatCurrency(goal.currentAmount, goal.currency, locale),
-              target: formatCurrency(goal.targetAmount, goal.currency, locale),
+            {t('goals.savedAmount', {
+              amount: formatCurrency(goal.currentAmount, goal.currency, locale),
             })}
           </Text>
           <Text variant="labelMd" style={{ color: accent }}>
@@ -129,6 +142,10 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   name: {
+    marginBottom: spacing.md,
+  },
+  description: {
+    marginTop: 2,
     marginBottom: spacing.md,
   },
   amountRow: {

@@ -1,34 +1,43 @@
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { useProfile } from '@/hooks/useProfile';
+import { useGoals } from '@/hooks/useGoals';
 import { useTransactions } from '@/hooks/useTransactions';
-import { computeMonthlySavingsProgress, type MonthlySavingsProgress } from '@/lib/analytics';
+import {
+  compareMonthlySavings,
+  computeMonthlyNetSavings,
+  computeMonthlySavingsRequired,
+  type MonthlySavingsComparison,
+} from '@/lib/analytics';
 import { formatCurrency } from '@/lib/format';
 import { useAppStore } from '@/stores/useAppStore';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Aylık Birikim Hedefi kartı (Part 14 ek). Hedef yoksa kurulum CTA'sı; varsa hedef tutar + bu ayki
- * gerçek net birikim + durum. Hedef ile harcama farklı para birimindeyse kıyas yapılmaz, uyarı gösterilir.
+ * Aylık Birikim Hedefi kartı (Part 14, tasarım revizyonu). OTOMATIK hesap — kullanıcı set etmez,
+ * tıklanamaz (info-only). Gereken aylık birikim, son tarihli hedeflerin `monthlyNeeded` toplamından
+ * gelir; bu ayki gerçek net birikimle kıyaslanır. Son tarihli hedef yoksa kart görünmez.
+ * Kur dönüşümü YOK — her para birimi ayrı.
  */
 export function MonthlySavingsGoalCard() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const router = useRouter();
   const locale = useAppStore((s) => s.locale);
-  const { data: profile } = useProfile();
+  const { data: goals = [] } = useGoals();
   const { data: transactions = [] } = useTransactions();
 
-  if (!profile) return null;
+  const required = computeMonthlySavingsRequired(goals);
+  if (!required.hasAnyDeadline) return null;
 
-  const progress = computeMonthlySavingsProgress(transactions, profile);
-  const open = () => router.push('/monthly-savings-target');
+  const actual = computeMonthlyNetSavings(transactions);
+  const comparisons = compareMonthlySavings(required, actual);
+  if (comparisons.length === 0) return null;
+
+  const statusColor = (status: MonthlySavingsComparison['status']) =>
+    status === 'behind' ? colors.tertiary : colors.secondary;
 
   const label = (
     <Text variant="labelSm" color="primary" style={styles.label}>
@@ -36,68 +45,51 @@ export function MonthlySavingsGoalCard() {
     </Text>
   );
 
-  // Hedef yok → kurulum CTA
-  if (!progress.hasTarget) {
+  // Tek para birimi → tasarımdaki gibi tek büyük değer + durum satırı.
+  if (comparisons.length === 1) {
+    const c = comparisons[0];
+    const sign = c.percent >= 100 ? '+' : '-';
+    const diff = Math.abs(c.percent - 100).toFixed(1);
+
     return (
-      <Pressable style={styles.flex} accessibilityRole="button" onPress={open}>
-        <GlassCard style={styles.card}>
-          {label}
-          <View style={styles.ctaRow}>
-            <Icon name="plus" size={18} color={colors.primary} strokeWidth={2.5} />
-            <Text variant="labelMd" color="primary" style={styles.flex}>
-              {t('goals.monthlySavings.notSetCta')}
-            </Text>
-          </View>
-        </GlassCard>
-      </Pressable>
-    );
-  }
-
-  const statusColor: Record<MonthlySavingsProgress['status'], string> = {
-    over: colors.secondary,
-    'on-track': colors.secondary,
-    close: colors.primary,
-    behind: colors.tertiary,
-    mismatch: colors.onSurfaceVariant,
-    'no-target': colors.onSurfaceVariant,
-  };
-
-  return (
-    <Pressable style={styles.flex} accessibilityRole="button" onPress={open}>
       <GlassCard style={styles.card}>
         {label}
         <Text variant="headlineMd" color="primary">
-          {formatCurrency(progress.target!, progress.targetCurrency!, locale)}
+          {formatCurrency(c.required, c.currency, locale)}
         </Text>
+        <Text variant="labelMd" style={{ color: statusColor(c.status) }}>
+          {t(`goals.monthlySavings.status.${c.status}`)} ({sign}
+          {diff}%)
+        </Text>
+      </GlassCard>
+    );
+  }
 
-        {progress.comparable ? (
-          <>
-            <Text variant="labelSm" color="onSurfaceVariant">
-              {t('goals.monthlySavings.thisMonth', {
-                actual: formatCurrency(progress.actual, progress.actualCurrency, locale),
-              })}
-            </Text>
-            <Text variant="labelMd" style={{ color: statusColor[progress.status] }}>
-              {t(`goals.monthlySavings.status.${progress.status}`)} ({Math.round(progress.percent!)}%)
-            </Text>
-          </>
-        ) : (
-          <View style={styles.warningRow}>
-            <Icon name="alert-triangle" size={14} color={colors.onSurfaceVariant} strokeWidth={2} />
-            <Text variant="labelSm" color="onSurfaceVariant" style={styles.flex}>
-              {t('goals.monthlySavings.currencyMismatch')}
+  // Çoklu para birimi → her biri ayrı satır (toplama/dönüşüm yok).
+  return (
+    <GlassCard style={styles.card}>
+      {label}
+      {comparisons.map((c) => (
+        <View key={c.currency} style={styles.currencyRow}>
+          <View style={styles.currencyHead}>
+            <Text variant="labelMd">{formatCurrency(c.required, c.currency, locale)}</Text>
+            <Text variant="labelSm" style={{ color: statusColor(c.status) }}>
+              {Math.round(c.percent)}%
             </Text>
           </View>
-        )}
-      </GlassCard>
-    </Pressable>
+          <Text variant="labelSm" color="onSurfaceVariant">
+            {t('goals.monthlySavings.thisMonth', {
+              actual: formatCurrency(c.actual, c.currency, locale),
+            })}
+          </Text>
+        </View>
+      ))}
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   card: {
-    flex: 1,
     gap: spacing.xs,
   },
   label: {
@@ -105,16 +97,13 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.xs,
   },
-  ctaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
+  currencyRow: {
+    gap: 2,
+    marginTop: spacing.sm,
   },
-  warningRow: {
+  currencyHead: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
   },
 });

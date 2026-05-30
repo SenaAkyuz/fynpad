@@ -131,6 +131,7 @@ export type SubscriptionForm = z.infer<typeof subscriptionSchema>;
 /** Finansal hedef formu (Part 14, brief #13). */
 export const goalSchema = z.object({
   name: z.string().trim().min(1, 'goals.errors.nameRequired').max(100),
+  description: z.string().max(200, 'goals.errors.descriptionTooLong').nullable().optional(),
   iconKey: z.string().min(1),
   targetAmount: z
     .number({ message: 'goals.errors.amountRequired' })

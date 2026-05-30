@@ -54,6 +54,8 @@ export function GoalList({ onItemPress, onAddPress }: GoalListProps) {
     );
   }
 
+  // Ekleme girişi (dashed "Yeni Hedef" CTA) artık liste ÜSTÜNDE NewGoalCTACard ile sağlanıyor;
+  // burada tekrar etmeyiz — sadece kartları sıralarız.
   return (
     <View style={styles.list}>
       {goals.map((goal) => (
@@ -64,16 +66,6 @@ export function GoalList({ onItemPress, onAddPress }: GoalListProps) {
           onPress={() => onItemPress(goal)}
         />
       ))}
-
-      {/* Design: dashed "New Goal" kartı (özet grid'inde). Mobilde liste sonunda CTA. */}
-      <Pressable accessibilityRole="button" onPress={onAddPress}>
-        <View style={[styles.addCard, { borderColor: colors.outlineVariant }]}>
-          <Icon name="plus" size={20} color={colors.primary} strokeWidth={2.5} />
-          <Text variant="labelMd" color="primary">
-            {t('goals.addGoal')}
-          </Text>
-        </View>
-      </Pressable>
     </View>
   );
 }
@@ -100,15 +92,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
-  },
-  addCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.xl,
-    borderRadius: radii.xl,
-    borderWidth: 2,
-    borderStyle: 'dashed',
   },
 });
