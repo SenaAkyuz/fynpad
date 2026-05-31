@@ -42,6 +42,17 @@ function mapAuthError(error: unknown): string {
     return 'errors.auth.redirectNotAllowed';
   }
 
+  // OTP kodu geçersiz / süresi dolmuş (şifre sıfırlama kodu)
+  if (
+    code === 'otp_expired' ||
+    code === 'otp_disabled' ||
+    msg.includes('token has expired') ||
+    (msg.includes('token') && msg.includes('invalid')) ||
+    msg.includes('otp')
+  ) {
+    return 'errors.auth.otpExpiredOrInvalid';
+  }
+
   // E-posta zaten kayıtlı
   if (
     code === 'user_already_exists' ||
@@ -130,20 +141,50 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-export async function sendPasswordResetEmail(params: {
-  email: string;
-  redirectUrl: string;
-}): Promise<AuthResult> {
+/**
+ * Şifre sıfırlama OTP kodunu e-posta ile gönderir. Deep link (redirectTo) KULLANMAZ —
+ * e-posta template'i `{{ .Token }}` ile 6 haneli kod basar; kullanıcı kodu app'e girer.
+ */
+export async function sendPasswordResetEmail(params: { email: string }): Promise<AuthResult> {
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(params.email, {
-      redirectTo: params.redirectUrl,
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(params.email);
     if (error) {
       return fail('resetPasswordForEmail', error);
     }
     return { success: true };
   } catch (error) {
     return fail('resetPasswordForEmail', error);
+  }
+}
+
+/**
+ * OTP kodunu doğrular (recovery session açar) ve yeni şifreyi yazar. Tek adımda iki
+ * Supabase çağrısı: verifyOtp → updateUser. Deep link / PKCE gerekmez.
+ */
+export async function verifyPasswordResetOtp(params: {
+  email: string;
+  token: string;
+  newPassword: string;
+}): Promise<AuthResult> {
+  try {
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: params.email,
+      token: params.token,
+      type: 'recovery',
+    });
+    if (verifyError) {
+      return fail('verifyPasswordResetOtp', verifyError);
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: params.newPassword,
+    });
+    if (updateError) {
+      return fail('verifyPasswordResetOtp', updateError);
+    }
+    return { success: true };
+  } catch (error) {
+    return fail('verifyPasswordResetOtp', error);
   }
 }
 

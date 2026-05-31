@@ -423,13 +423,13 @@
     },
     "forgotPassword": {
       "title": "Forgot Password",
-      "subtitle": "Enter your email and we'll send a reset link",
+      "subtitle": "Enter your email and we'll send a reset code",
       "emailLabel": "Email",
       "emailPlaceholder": "example@email.com",
-      "submit": "Send Reset Link",
+      "submit": "Send Reset Code",
       "backToLogin": "Back to Sign In",
       "successTitle": "Check your email",
-      "successMessage": "We sent a reset link to {{email}}."
+      "successMessage": "We sent a reset code to {{email}}."
     },
     "resetPassword": {
       "title": "New Password",
@@ -441,6 +441,19 @@
       "submit": "Update Password",
       "invalidLink": "This link is invalid or has expired.",
       "requestNew": "Request new link"
+    },
+    "resetPasswordOtp": {
+      "title": "Reset Password",
+      "subtitle": "Enter the 6-digit code we sent to {{email}} and your new password.",
+      "codeLabel": "Reset Code",
+      "newPasswordLabel": "New Password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Re-enter your new password",
+      "submit": "Update Password",
+      "resend": "Resend code",
+      "resending": "Sending...",
+      "otpResent": "A new code has been sent"
     },
     "signOut": "Sign Out",
     "loggedInAs": "Logged in as {{email}}"
@@ -735,6 +748,7 @@
       "emailAlreadyInUse": "This email is already registered.",
       "weakPassword": "Password is too weak.",
       "rateLimitEmail": "Too many attempts. Please wait 1 hour and try again.",
+      "otpExpiredOrInvalid": "The code is invalid or has expired. Request a new one.",
       "redirectNotAllowed": "Redirect address not allowed. Check Supabase configuration.",
       "invalidEmail": "Please enter a valid email address.",
       "network": "Connection error. Check your internet.",
@@ -748,6 +762,7 @@
       "passwordNeedsLetter": "Password must contain at least one letter.",
       "passwordNeedsNumber": "Password must contain at least one number.",
       "passwordsDoNotMatch": "Passwords do not match.",
+      "otpInvalid": "The code must be 6 digits.",
       "recurringConfigIncomplete": "Recurrence settings are incomplete"
     }
   }

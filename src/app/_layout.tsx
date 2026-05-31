@@ -149,9 +149,12 @@ export default function RootLayout() {
     if (!ready) return;
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
-    // reset-password: recovery session açılır ama kullanıcı yeni şifreyi belirleyene
-    // kadar ekranda kalmalı — guard onu dashboard'a atmasın.
-    const onResetPassword = inAuthGroup && segments[1] === 'reset-password';
+    // reset-password-otp: verifyOtp recovery session açar ama kullanıcı yeni şifresini
+    // belirleyene (updateUser) kadar ekranda kalmalı — guard onu dashboard'a atmasın.
+    // reset-password (eski deep link) artık forgot-password'a redirect ediyor.
+    const onResetPassword =
+      inAuthGroup &&
+      (segments[1] === 'reset-password' || segments[1] === 'reset-password-otp');
     if (session && inAuthGroup && !onResetPassword) {
       router.replace('/(tabs)/dashboard');
     } else if (!session && inTabsGroup) {

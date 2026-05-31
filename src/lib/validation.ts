@@ -42,10 +42,23 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
+/** OTP tabanlı şifre sıfırlama: 6 haneli kod + yeni şifre (e-posta route param'dan gelir). */
+export const resetPasswordOtpSchema = z
+  .object({
+    token: z.string().regex(/^\d{6}$/, 'errors.validation.otpInvalid'),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'errors.validation.passwordsDoNotMatch',
+    path: ['confirmPassword'],
+  });
+
 export type LoginForm = z.infer<typeof loginSchema>;
 export type RegisterForm = z.infer<typeof registerSchema>;
 export type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
+export type ResetPasswordOtpForm = z.infer<typeof resetPasswordOtpSchema>;
 
 /** Tekrarlama yapılandırması (Part 6). Frequency'e göre ilgili gün alanı zorunlu. */
 export const recurringRuleSchema = z
