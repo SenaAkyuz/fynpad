@@ -121,7 +121,7 @@ export default function ResetPasswordOtpScreen() {
                   onChangeText={onChange}
                   onBlur={onBlur}
                   keyboardType="number-pad"
-                  maxLength={6}
+                  maxLength={10}
                   autoComplete="one-time-code"
                   textContentType="oneTimeCode"
                   error={errors.token?.message ? t(errors.token.message) : undefined}

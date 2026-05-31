@@ -444,7 +444,7 @@
     },
     "resetPasswordOtp": {
       "title": "Reset Password",
-      "subtitle": "Enter the 6-digit code we sent to {{email}} and your new password.",
+      "subtitle": "Enter the code we sent to {{email}} and your new password.",
       "codeLabel": "Reset Code",
       "newPasswordLabel": "New Password",
       "newPasswordPlaceholder": "At least 8 characters",
@@ -762,7 +762,7 @@
       "passwordNeedsLetter": "Password must contain at least one letter.",
       "passwordNeedsNumber": "Password must contain at least one number.",
       "passwordsDoNotMatch": "Passwords do not match.",
-      "otpInvalid": "The code must be 6 digits.",
+      "otpInvalid": "Enter a valid code.",
       "recurringConfigIncomplete": "Recurrence settings are incomplete"
     }
   }

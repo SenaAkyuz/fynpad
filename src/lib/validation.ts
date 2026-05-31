@@ -45,7 +45,9 @@ export const resetPasswordSchema = z
 /** OTP tabanlı şifre sıfırlama: 6 haneli kod + yeni şifre (e-posta route param'dan gelir). */
 export const resetPasswordOtpSchema = z
   .object({
-    token: z.string().regex(/^\d{6}$/, 'errors.validation.otpInvalid'),
+    // Supabase OTP uzunluğu projeye göre 6–10 hane olabilir (Dashboard ayarı). Sabit
+    // 6 yerine aralık kabul et ki konfigürasyon değişse de bozulmasın.
+    token: z.string().regex(/^\d{6,10}$/, 'errors.validation.otpInvalid'),
     password: passwordSchema,
     confirmPassword: z.string(),
   })

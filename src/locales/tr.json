@@ -444,7 +444,7 @@
     },
     "resetPasswordOtp": {
       "title": "Şifre Sıfırlama",
-      "subtitle": "{{email}} adresine gönderdiğimiz 6 haneli kodu ve yeni şifreni gir.",
+      "subtitle": "{{email}} adresine gönderdiğimiz kodu ve yeni şifreni gir.",
       "codeLabel": "Sıfırlama Kodu",
       "newPasswordLabel": "Yeni Şifre",
       "newPasswordPlaceholder": "En az 8 karakter",
@@ -762,7 +762,7 @@
       "passwordNeedsLetter": "Şifre en az bir harf içermeli.",
       "passwordNeedsNumber": "Şifre en az bir rakam içermeli.",
       "passwordsDoNotMatch": "Şifreler eşleşmiyor.",
-      "otpInvalid": "Kod 6 haneli olmalı.",
+      "otpInvalid": "Geçerli bir kod gir.",
       "recurringConfigIncomplete": "Tekrarlama ayarları eksik"
     }
   }
