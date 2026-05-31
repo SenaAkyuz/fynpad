@@ -55,8 +55,13 @@ export default function RegisterScreen() {
     setLoading(false);
     if (!res.success) {
       setFormError(t(res.errorKey));
+      return;
     }
-    // success → confirm-email kapalı, Supabase auto-login → root guard tabs'a yönlendirir
+    if (res.requiresVerification) {
+      // Email confirmation açık → 6 haneli kod ekranına yönlendir (e-postayı param geçir).
+      router.replace({ pathname: '/(auth)/verify-email-otp', params: { email: values.email } });
+    }
+    // requiresVerification false → confirm-email kapalı, auto-login → root guard tabs'a yönlendirir
   };
 
   return (

@@ -5,6 +5,14 @@ export type DefaultCurrency = 'TRY' | 'USD' | 'EUR';
 
 export type AuthResult = { success: true } | { success: false; errorKey: string };
 
+/**
+ * Kayıt sonucu. Email confirmation AÇIK ise signUp session döndürmez (requiresVerification:true)
+ * → kullanıcı 6 haneli kodla e-postasını doğrulamalı. KAPALI ise auto-login (requiresVerification:false).
+ */
+export type SignUpResult =
+  | { success: true; requiresVerification: boolean }
+  | { success: false; errorKey: string };
+
 type SupabaseLikeError = { code?: string; message?: string; status?: number } | null | undefined;
 
 /** Dev modda gerçek Supabase hatasını telefon console'una basar. */
@@ -63,6 +71,11 @@ function mapAuthError(error: unknown): string {
     return 'errors.auth.emailAlreadyInUse';
   }
 
+  // E-posta doğrulanmamış (confirm-email açıkken doğrulanmamış hesapla login denemesi)
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) {
+    return 'errors.auth.emailNotConfirmed';
+  }
+
   // Hatalı kimlik bilgisi
   if (code === 'invalid_credentials' || msg.includes('invalid login')) {
     return 'errors.auth.invalidCredentials';
@@ -97,7 +110,7 @@ export async function signUpWithEmail(params: {
   password: string;
   locale: Locale;
   defaultCurrency: DefaultCurrency;
-}): Promise<AuthResult> {
+}): Promise<SignUpResult> {
   const { email, password, locale, defaultCurrency } = params;
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -108,14 +121,49 @@ export async function signUpWithEmail(params: {
     if (error) {
       return fail('signUp', error);
     }
-    // Confirm-email kapalıyken, var olan bir e-posta için Supabase boş identities
-    // ile sahte bir user döndürür (enumeration koruması) → "already in use" say.
+    // Var olan bir e-posta için Supabase boş identities ile sahte bir user döndürür
+    // (enumeration koruması) → "already in use" say.
     if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
       return { success: false, errorKey: 'errors.auth.emailAlreadyInUse' };
     }
-    return { success: true };
+    // Email confirmation AÇIKken session null döner → kullanıcı OTP ile doğrulamalı.
+    // KAPALIyken auto-login (session dolu) → doğrudan dashboard.
+    return { success: true, requiresVerification: !data.session };
   } catch (error) {
     return fail('signUp', error);
+  }
+}
+
+/**
+ * Kayıt (signup) OTP kodunu doğrular → e-postayı onaylar ve full session açar.
+ * Şifre sıfırlamadaki verifyOtp ile paralel; type 'signup'.
+ */
+export async function verifySignupOtp(params: { email: string; token: string }): Promise<AuthResult> {
+  try {
+    const { error } = await supabase.auth.verifyOtp({
+      email: params.email,
+      token: params.token,
+      type: 'signup',
+    });
+    if (error) {
+      return fail('verifySignupOtp', error);
+    }
+    return { success: true };
+  } catch (error) {
+    return fail('verifySignupOtp', error);
+  }
+}
+
+/** Kayıt doğrulama (signup) OTP kodunu yeniden e-posta ile gönderir. */
+export async function resendSignupOtp(params: { email: string }): Promise<AuthResult> {
+  try {
+    const { error } = await supabase.auth.resend({ type: 'signup', email: params.email });
+    if (error) {
+      return fail('resendSignupOtp', error);
+    }
+    return { success: true };
+  } catch (error) {
+    return fail('resendSignupOtp', error);
   }
 }
 

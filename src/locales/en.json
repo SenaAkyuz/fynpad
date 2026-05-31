@@ -456,7 +456,16 @@
       "otpResent": "A new code has been sent"
     },
     "signOut": "Sign Out",
-    "loggedInAs": "Logged in as {{email}}"
+    "loggedInAs": "Logged in as {{email}}",
+    "verifyEmailOtp": {
+      "title": "Verify Your Email",
+      "subtitle": "Enter the 6-digit code sent to {{email}}.",
+      "codeLabel": "Verification Code",
+      "submit": "Verify",
+      "resend": "Resend Code",
+      "resending": "Sending…",
+      "otpResent": "A new code has been sent."
+    }
   },
   "lock": {
     "title": "FynPad",
@@ -752,7 +761,8 @@
       "redirectNotAllowed": "Redirect address not allowed. Check Supabase configuration.",
       "invalidEmail": "Please enter a valid email address.",
       "network": "Connection error. Check your internet.",
-      "unknown": "Something went wrong. Please try again."
+      "unknown": "Something went wrong. Please try again.",
+      "emailNotConfirmed": "Please verify your email address first."
     },
     "validation": {
       "emailInvalid": "Enter a valid email.",

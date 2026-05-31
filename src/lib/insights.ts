@@ -266,11 +266,11 @@ function ruleMonthlySavingsCheck(ctx: GoalInsightContext): Insight[] {
  * (warning > info > suggestion), en fazla 5 gösterilir.
  */
 export function generateInsights(ctx: GenerateContext): Insight[] {
+  // Analytics yalnızca harcama/bütçe odaklı insight'ları gösterir. Hedef/birikim
+  // insight'ları (deadline, gereken aylık birikim, aylık birikim kontrolü) Goals
+  // ekranına aittir (generateGoalInsights) — burada tekrar gösterilmezler.
   const insights: Insight[] = [
     ...ruleBudgetExceeded(ctx),
-    ...ruleGoalDeadline(ctx),
-    ...ruleMonthlySavingsCheck(ctx),
-    ...ruleRequiredMonthlySavings(ctx),
     ...ruleAboveAverageSpending(ctx),
     ...ruleSubscriptionReview(ctx),
   ];

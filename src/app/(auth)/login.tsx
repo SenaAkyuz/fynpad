@@ -18,7 +18,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
-import { signInWithEmail } from '@/lib/auth';
+import { resendSignupOtp, signInWithEmail } from '@/lib/auth';
 import { loginSchema, type LoginForm } from '@/lib/validation';
 import { useNetworkStore } from '@/stores/useNetworkStore';
 import { spacing } from '@/theme/tokens';
@@ -43,10 +43,19 @@ export default function LoginScreen() {
     setFormError('');
     setLoading(true);
     const res = await signInWithEmail(values);
-    setLoading(false);
     if (!res.success) {
+      // E-posta doğrulanmamışsa: yeni kod gönder + doğrulama ekranına yönlendir.
+      if (res.errorKey === 'errors.auth.emailNotConfirmed') {
+        await resendSignupOtp({ email: values.email });
+        setLoading(false);
+        router.replace({ pathname: '/(auth)/verify-email-otp', params: { email: values.email } });
+        return;
+      }
+      setLoading(false);
       setFormError(t(res.errorKey));
+      return;
     }
+    setLoading(false);
     // success → root layout auth guard yönlendirir
   };
 

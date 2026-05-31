@@ -56,6 +56,13 @@ export const resetPasswordOtpSchema = z
     path: ['confirmPassword'],
   });
 
+/** Kayıt (signup) e-posta doğrulama: yalnızca 6–10 haneli OTP kodu (şifre kayıtta belirlendi). */
+export const verifyEmailOtpSchema = z.object({
+  token: z.string().regex(/^\d{6,10}$/, 'errors.validation.otpInvalid'),
+});
+
+export type VerifyEmailOtpForm = z.infer<typeof verifyEmailOtpSchema>;
+
 export type LoginForm = z.infer<typeof loginSchema>;
 export type RegisterForm = z.infer<typeof registerSchema>;
 export type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
