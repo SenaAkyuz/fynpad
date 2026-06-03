@@ -18,10 +18,7 @@
     "customRange": {
       "title": "Tarih Aralığı Seç",
       "from": "Başlangıç",
-      "to": "Bitiş",
-      "thisMonth": "Bu Ay",
-      "last30Days": "Son 30 Gün",
-      "last90Days": "Son 90 Gün"
+      "to": "Bitiş"
     }
   },
   "welcome": {

@@ -4,7 +4,6 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { DateRow } from '@/components/quick-add/DateRow';
 import { Text } from '@/components/ui/Text';
-import { toISODate } from '@/lib/format';
 import { useAppStore } from '@/stores/useAppStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -19,21 +18,9 @@ export type CustomRangePickerModalProps = {
   onConfirm: (start: string, end: string) => void;
 };
 
-/** Bugün baz alınarak hızlı preset aralıkları üretir ('YYYY-MM-DD'). */
-function thisMonthRange(): [string, string] {
-  const now = new Date();
-  return [toISODate(new Date(now.getFullYear(), now.getMonth(), 1)), toISODate(now)];
-}
-function lastNDaysRange(n: number): [string, string] {
-  const now = new Date();
-  const from = new Date(now);
-  from.setDate(from.getDate() - n);
-  return [toISODate(from), toISODate(now)];
-}
-
 /**
  * Özel tarih aralığı seçici (bottom sheet). Mevcut DateRow + native DateTimePicker'ı
- * yeniden kullanır; iki tarih + hızlı preset'ler. Onayda start>end ise üst katman
+ * yeniden kullanır; başlangıç + bitiş tarihi. Onayda start>end ise üst katman
  * (makeCustomPeriod) takas eder.
  */
 export function CustomRangePickerModal({
@@ -57,18 +44,6 @@ export function CustomRangePickerModal({
       setEnd(initialEnd);
     }
   }, [visible, initialStart, initialEnd]);
-
-  const presets: { key: string; range: () => [string, string] }[] = [
-    { key: 'thisMonth', range: thisMonthRange },
-    { key: 'last30Days', range: () => lastNDaysRange(30) },
-    { key: 'last90Days', range: () => lastNDaysRange(90) },
-  ];
-
-  const applyPreset = (range: () => [string, string]) => {
-    const [s, e] = range();
-    setStart(s);
-    setEnd(e);
-  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -95,21 +70,6 @@ export function CustomRangePickerModal({
               label={t('period.customRange.to')}
               minimumDate={start}
             />
-          </View>
-
-          <View style={styles.presets}>
-            {presets.map((p) => (
-              <Pressable
-                key={p.key}
-                accessibilityRole="button"
-                onPress={() => applyPreset(p.range)}
-                style={[styles.preset, { backgroundColor: colors.surfaceContainerHigh }]}
-              >
-                <Text variant="labelSm" color="onSurfaceVariant">
-                  {t(`period.customRange.${p.key}`)}
-                </Text>
-              </Pressable>
-            ))}
           </View>
 
           <View style={styles.actions}>
@@ -156,16 +116,6 @@ const styles = StyleSheet.create({
   },
   rows: {
     gap: spacing.sm,
-  },
-  presets: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  preset: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radii.full,
   },
   actions: {
     flexDirection: 'row',

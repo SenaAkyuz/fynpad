@@ -35,7 +35,7 @@ import {
   useUpdateGoal,
 } from '@/hooks/useGoals';
 import { useProfile } from '@/hooks/useProfile';
-import { currencySymbol, formatCurrency, toISODate } from '@/lib/format';
+import { formatCurrency, toISODate } from '@/lib/format';
 import { goalSchema, type GoalForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
@@ -402,20 +402,6 @@ function GoalEditForm({ editing }: { editing: Goal | null }) {
                 currency={currency}
                 locale={locale}
               />
-              {adjust?.mode === 'add' ? (
-                <View style={styles.quickRow}>
-                  {[100, 500, 1000].map((v) => (
-                    <Pressable
-                      key={v}
-                      accessibilityRole="button"
-                      onPress={() => setAdjust((prev) => (prev ? { ...prev, amount: v } : prev))}
-                      style={[styles.quickChip, { backgroundColor: colors.surfaceContainerHigh }]}
-                    >
-                      <Text variant="labelSm">{`+${currencySymbol(currency)}${v}`}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
               <View style={styles.dialogActions}>
                 <Button
                   label={t('goals.form.deleteCancel')}
@@ -486,17 +472,6 @@ const styles = StyleSheet.create({
   dialogSub: {
     textAlign: 'center',
     marginTop: spacing.xs,
-  },
-  quickRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  quickChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radii.full,
   },
   dialogActions: {
     flexDirection: 'row',

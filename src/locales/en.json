@@ -18,10 +18,7 @@
     "customRange": {
       "title": "Select Date Range",
       "from": "From",
-      "to": "To",
-      "thisMonth": "This Month",
-      "last30Days": "Last 30 Days",
-      "last90Days": "Last 90 Days"
+      "to": "To"
     }
   },
   "welcome": {
