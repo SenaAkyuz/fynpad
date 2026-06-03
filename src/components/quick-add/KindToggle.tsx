@@ -17,7 +17,7 @@ const PAD = 4;
 /**
  * Quick Add kind seçici (design: segmented control). Brief 7.3 gereği aktif segment
  * semantik renkli: Gelir → yeşil (secondary), Gider → kırmızı (tertiary).
- * Transfer v1.2'ye ertelendi → disabled + kilit + "Yakında" rozeti (submit edilmez).
+ * Transfer v1.2'ye ertelendi → disabled + kilit ikonu (submit edilmez).
  */
 export function KindToggle({ value, onChange }: KindToggleProps) {
   const { t } = useTranslation();
@@ -55,11 +55,6 @@ export function KindToggle({ value, onChange }: KindToggleProps) {
         <Text variant="labelMd" color="onSurfaceVariant" numberOfLines={1} style={styles.transferLabel}>
           {t('quickAdd.kindTransfer')}
         </Text>
-        <View style={[styles.soonBadge, { backgroundColor: colors.surfaceContainerHighest }]}>
-          <Text variant="labelSm" color="onSurfaceVariant">
-            {t('quickAdd.kindTransferSoon')}
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -86,10 +81,5 @@ const styles = StyleSheet.create({
   },
   transferLabel: {
     flexShrink: 1,
-  },
-  soonBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 1,
-    borderRadius: radii.full,
   },
 });

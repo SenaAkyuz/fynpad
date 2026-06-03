@@ -172,7 +172,6 @@
     "kindIncome": "Income",
     "kindExpense": "Expense",
     "kindTransfer": "Transfer",
-    "kindTransferSoon": "Soon",
     "amount": "Amount",
     "amountPlaceholder": "0.00",
     "category": "Category",

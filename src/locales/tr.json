@@ -172,7 +172,6 @@
     "kindIncome": "Gelir",
     "kindExpense": "Gider",
     "kindTransfer": "Transfer",
-    "kindTransferSoon": "Yakında",
     "amount": "Tutar",
     "amountPlaceholder": "0,00",
     "category": "Kategori",
