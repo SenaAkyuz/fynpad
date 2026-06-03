@@ -78,6 +78,10 @@
     "monthlyNeeded": "Aylık {{amount}} biriktir",
     "progressLabel": "{{current}} / {{target}}",
     "savedAmount": "{{amount}} biriktirildi",
+    "remaining": "{{amount}} daha biriktirilmesi gerek",
+    "addSavings": {
+      "subtitle": "Hedefe ulaşman için {{remaining}} kaldı"
+    },
     "form": {
       "createTitle": "Yeni Hedef",
       "editTitle": "Hedefi Düzenle",
@@ -731,6 +735,9 @@
     "consentSuffix": "'nı kabul ediyorum."
   },
   "errors": {
+    "auth": {
+      "sessionExpired": "Oturumun süresi doldu, tekrar giriş yap"
+    },
     "profile": {
       "updateFailed": "Profil güncellenemedi"
     },

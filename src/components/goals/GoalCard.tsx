@@ -50,6 +50,9 @@ export function GoalCard({ progress, locale, onPress }: GoalCardProps) {
       ? t('goals.monthlyNeeded', { amount: formatCurrency(monthlyNeeded, goal.currency, locale) })
       : null;
 
+  // Manuel birikim UX: hedefe ne kadar kaldığını net göster (mental disconnect'i azaltır).
+  const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
+
   return (
     <Pressable accessibilityRole="button" onPress={onPress}>
       <GlassCard glow={isUrgent}>
@@ -92,6 +95,12 @@ export function GoalCard({ progress, locale, onPress }: GoalCardProps) {
         <View style={[styles.track, { backgroundColor: colors.surfaceContainerHighest }]}>
           <View style={[styles.fill, { width: `${Math.min(percent, 100)}%`, backgroundColor: accent }]} />
         </View>
+
+        {!isCompleted && remaining > 0 ? (
+          <Text variant="labelSm" color="onSurfaceVariant" style={styles.remaining}>
+            {t('goals.remaining', { amount: formatCurrency(remaining, goal.currency, locale) })}
+          </Text>
+        ) : null}
 
         <View style={styles.footer}>
           {isCompleted ? (
@@ -163,6 +172,9 @@ const styles = StyleSheet.create({
   fill: {
     height: '100%',
     borderRadius: radii.full,
+  },
+  remaining: {
+    marginTop: spacing.sm,
   },
   footer: {
     marginTop: spacing.md,

@@ -185,7 +185,26 @@ export async function signInWithEmail(params: {
   }
 }
 
+/**
+ * Kullanıcı kaynaklı (kasıtlı) çıkışları, refresh token'ın istemsiz sonlanmasından
+ * ayırt etmek için bayrak. Kasıtlı çıkışta "oturum süresi doldu" bildirimi GÖSTERİLMEZ.
+ */
+let intentionalSignOut = false;
+
+/** Kasıtlı bir signOut'tan hemen önce çağrılır (supabase.auth.signOut'u doğrudan çağıran yerler için). */
+export function markIntentionalSignOut(): void {
+  intentionalSignOut = true;
+}
+
+/** Bayrağı okuyup sıfırlar — SIGNED_OUT listener'ında bildirim gösterilip gösterilmeyeceğini belirler. */
+export function consumeIntentionalSignOut(): boolean {
+  const wasIntentional = intentionalSignOut;
+  intentionalSignOut = false;
+  return wasIntentional;
+}
+
 export async function signOut(): Promise<void> {
+  intentionalSignOut = true;
   await supabase.auth.signOut();
 }
 

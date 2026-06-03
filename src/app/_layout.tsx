@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '@/locales/i18n';
 import { LockScreen } from '@/components/screens/LockScreen';
+import { Toast } from '@/components/ui/Toast';
 import { useAppLifecycle } from '@/hooks/useAppLifecycle';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
@@ -22,11 +23,13 @@ import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStat
 import { rescheduleAll } from '@/lib/notifications';
 import { registerMutationDefaults } from '@/lib/offlineMutations';
 import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
+import { consumeIntentionalSignOut } from '@/lib/auth';
 import { processRecurringRules } from '@/lib/recurring';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLockStore } from '@/stores/useLockStore';
+import { useToastStore } from '@/stores/useToastStore';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
 void SplashScreen.preventAutoHideAsync();
@@ -113,8 +116,15 @@ export default function RootLayout() {
       setSession(data.session);
       setInitialized();
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      const hadSession = useAuthStore.getState().session != null;
       setSession(nextSession);
+      // Refresh token geçersiz/expired olduğunda Supabase otomatik SIGNED_OUT yayar.
+      // Kullanıcı kendisi çıkış yapmadıysa (kasıtlı bayrağı yok) bu istemsiz bir oturum
+      // sonlanmasıdır → kullanıcıyı bilgilendir. Guard zaten login'e yönlendirir.
+      if (event === 'SIGNED_OUT' && hadSession && !consumeIntentionalSignOut()) {
+        useToastStore.getState().show('errors.auth.sessionExpired', 'info');
+      }
     });
     return () => {
       mounted = false;
@@ -268,6 +278,7 @@ export default function RootLayout() {
               </Stack>
               {session ? <NotificationsBootstrap /> : null}
               {showLock ? <LockScreen /> : null}
+              <Toast />
             </View>
           </ThemeProvider>
         </PersistQueryClientProvider>

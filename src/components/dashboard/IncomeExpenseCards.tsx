@@ -1,11 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import {
-  SPARKLINE_EXPENSE,
-  SPARKLINE_INCOME,
-  Sparkline,
-} from '@/components/dashboard/Sparkline';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -15,7 +10,7 @@ import { useTheme } from '@/theme/useTheme';
 import type { TextColor } from '@/components/ui/Text';
 import type { Currency, Locale } from '@/types';
 
-type Money = { label: string; amount: number; color: TextColor; icon: IconName; iconColor: string; path: string };
+type Money = { label: string; amount: number; color: TextColor; icon: IconName; iconColor: string };
 
 export type IncomeExpenseCardsProps = {
   income: number;
@@ -39,7 +34,6 @@ export function IncomeExpenseCards({ income, expense, currency, locale }: Income
       color: 'secondary',
       icon: 'arrow-down',
       iconColor: colors.secondary,
-      path: SPARKLINE_INCOME,
     },
     {
       label: t('dashboard.expense'),
@@ -47,14 +41,13 @@ export function IncomeExpenseCards({ income, expense, currency, locale }: Income
       color: 'tertiary',
       icon: 'arrow-up',
       iconColor: colors.tertiary,
-      path: SPARKLINE_EXPENSE,
     },
   ];
 
   return (
     <View style={styles.stack}>
       {cards.map((c) => (
-        <GlassCard key={c.label} style={styles.card}>
+        <GlassCard key={c.label}>
           <View style={styles.header}>
             <Text variant="labelMd" color="onSurfaceVariant">
               {c.label}
@@ -64,9 +57,6 @@ export function IncomeExpenseCards({ income, expense, currency, locale }: Income
           <Text variant="headlineMd" color={c.color} style={styles.amount}>
             {formatCurrency(c.amount, currency, locale)}
           </Text>
-          <View style={styles.spark}>
-            <Sparkline d={c.path} color={c.iconColor} />
-          </View>
         </GlassCard>
       ))}
     </View>
@@ -77,9 +67,6 @@ const styles = StyleSheet.create({
   stack: {
     gap: spacing.stackSm,
   },
-  card: {
-    minHeight: 150,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -87,8 +74,5 @@ const styles = StyleSheet.create({
   },
   amount: {
     marginTop: spacing.xs,
-  },
-  spark: {
-    marginTop: spacing.lg,
   },
 });

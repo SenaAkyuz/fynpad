@@ -1,3 +1,4 @@
+import { markIntentionalSignOut } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -11,5 +12,7 @@ export async function deleteAccount(): Promise<void> {
     throw error;
   }
   // User artık yok — kalan session'ı temizle (onAuthStateChange guard'ı tetikler).
+  // Kasıtlı çıkış: "oturum süresi doldu" bildirimi tetiklenmesin.
+  markIntentionalSignOut();
   await supabase.auth.signOut();
 }

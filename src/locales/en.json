@@ -78,6 +78,10 @@
     "monthlyNeeded": "Save {{amount}} / month",
     "progressLabel": "{{current}} / {{target}}",
     "savedAmount": "{{amount}} saved",
+    "remaining": "{{amount}} more to save",
+    "addSavings": {
+      "subtitle": "{{remaining}} left to reach your goal"
+    },
     "form": {
       "createTitle": "New Goal",
       "editTitle": "Edit Goal",
@@ -731,6 +735,9 @@
     "consentSuffix": "."
   },
   "errors": {
+    "auth": {
+      "sessionExpired": "Your session has expired, please log in again"
+    },
     "profile": {
       "updateFailed": "Couldn't update profile"
     },
