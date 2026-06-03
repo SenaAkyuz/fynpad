@@ -9,6 +9,7 @@ import { CashFlowChart } from '@/components/analytics/CashFlowChart';
 import { NetSavingsCard } from '@/components/analytics/NetSavingsCard';
 import { TopCategoriesList } from '@/components/analytics/TopCategoriesList';
 import { InsightsList } from '@/components/insights/InsightsList';
+import { PeriodSelector } from '@/components/PeriodSelector';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
@@ -25,13 +26,15 @@ import {
   type ExpenseType,
 } from '@/lib/analytics';
 import { computeBudgetStatus, startOfMonthISO } from '@/lib/budgets';
+import { getPeriodRange } from '@/lib/period';
 import { getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
+import { usePeriodStore } from '@/stores/usePeriodStore';
 import { spacing } from '@/theme/tokens';
-import type { BudgetStatus, Currency, Period } from '@/types';
+import type { BudgetStatus, Currency } from '@/types';
 
 /**
- * Detaylı Analitik (Part 8, brief 4.5). Period selector (G/H/A/Y) tüm metrikleri günceller:
+ * Detaylı Analitik (Part 8, brief 4.5). Takvim-bazlı dönem seçici (Gün/Ay/Yıl/Özel) tüm metrikleri günceller:
  * cash flow grafiği + net birikim + ortalama günlük harcama + en çok harcanan kategoriler +
  * kategori bütçeleri ("Over by $X" uyarılı). Tasarım: advanced_analytics_*.html.
  */
@@ -40,10 +43,11 @@ export default function AnalyticsScreen() {
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
 
-  const [period, setPeriod] = useState<Period>('month');
+  const filter = usePeriodStore((s) => s.filter);
   const [expenseType, setExpenseType] = useState<ExpenseType>('all');
 
-  const { data: transactions = [], isLoading } = useTransactions({ period });
+  const range = useMemo(() => getPeriodRange(filter), [filter]);
+  const { data: transactions = [], isLoading } = useTransactions(range);
   const { data: categories = [] } = useCategories();
   const { data: profile } = useProfile();
   const { data: budgets = [] } = useBudgets();
@@ -61,12 +65,12 @@ export default function AnalyticsScreen() {
     [transactions, expenseType]
   );
   const cashFlow = useMemo(
-    () => cashFlowSeries(transactions, period, locale, expenseType),
-    [transactions, period, locale, expenseType]
+    () => cashFlowSeries(transactions, filter, locale, expenseType),
+    [transactions, filter, locale, expenseType]
   );
   const avgDaily = useMemo(
-    () => avgDailySpend(transactions, period, expenseType),
-    [transactions, period, expenseType]
+    () => avgDailySpend(transactions, filter, expenseType),
+    [transactions, filter, expenseType]
   );
   const topCats = useMemo(
     () => topCategories(transactions, 5, expenseType),
@@ -80,12 +84,7 @@ export default function AnalyticsScreen() {
   const savingsRate = totals.income > 0 && totals.net > 0 ? totals.net / totals.income : null;
   const hasTransactions = transactions.length > 0;
 
-  const periodOptions: SegmentOption[] = [
-    { value: 'day', label: t('dashboard.period.day') },
-    { value: 'week', label: t('dashboard.period.week') },
-    { value: 'month', label: t('dashboard.period.month') },
-    { value: 'year', label: t('dashboard.period.year') },
-  ];
+  const trendKey = filter.type === 'custom' ? 'custom' : filter.type;
 
   const expenseTypeOptions: SegmentOption[] = [
     { value: 'all', label: t('analytics.expenseTypeFilter.all') },
@@ -118,11 +117,7 @@ export default function AnalyticsScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.selectors}>
-          <SegmentedControl
-            options={periodOptions}
-            value={period}
-            onChange={(v) => setPeriod(v as Period)}
-          />
+          <PeriodSelector />
           <SegmentedControl
             options={expenseTypeOptions}
             value={expenseType}
@@ -151,7 +146,7 @@ export default function AnalyticsScreen() {
               value={avgDaily}
               currency={currency}
               locale={locale}
-              periodLabel={t(`dashboard.trend.${period}`)}
+              periodLabel={t(`dashboard.trend.${trendKey}`)}
             />
 
             <View style={styles.section}>

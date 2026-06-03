@@ -6,9 +6,9 @@ import {
   listTransactions,
   updateTransaction,
 } from '@/lib/transactions';
-import type { Period, Transaction } from '@/types';
+import type { Transaction } from '@/types';
 
-type ListParams = { period?: Period; from?: string; to?: string };
+type ListParams = { from?: string; to?: string };
 
 export const transactionsKey = ['transactions'] as const;
 

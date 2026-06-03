@@ -1,6 +1,5 @@
-import { toISODate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
-import type { Category, CategoryKind, Currency, Period, Transaction } from '@/types';
+import type { Category, CategoryKind, Currency, Transaction } from '@/types';
 
 /** DB satırı (snake_case) → app tipi (camelCase). */
 type TransactionRow = {
@@ -42,19 +41,8 @@ async function requireUserId(): Promise<string> {
   return userId;
 }
 
-const PERIOD_DAYS: Record<Period, number> = { day: 0, week: 7, month: 30, year: 365 };
-
-/** Seçili dönemin başlangıç/bitiş tarihleri ('YYYY-MM-DD', current_date temelli). */
-export function periodRange(period: Period): { from: string; to: string } {
-  const now = new Date();
-  const from = new Date(now);
-  from.setDate(from.getDate() - PERIOD_DAYS[period]);
-  return { from: toISODate(from), to: toISODate(now) };
-}
-
 /** user_id RLS ile filtrelenir. order: date desc, created_at desc. */
 export async function listTransactions(params?: {
-  period?: Period;
   from?: string;
   to?: string;
 }): Promise<Transaction[]> {
@@ -62,8 +50,6 @@ export async function listTransactions(params?: {
 
   if (params?.from) {
     query = query.gte('date', params.from);
-  } else if (params?.period) {
-    query = query.gte('date', periodRange(params.period).from);
   }
   if (params?.to) {
     query = query.lte('date', params.to);

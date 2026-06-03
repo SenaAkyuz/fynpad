@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -8,29 +8,33 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { IncomeExpenseCards } from '@/components/dashboard/IncomeExpenseCards';
 import { RecentTransactionsList } from '@/components/dashboard/RecentTransactionsList';
 import { TotalBalanceCard } from '@/components/dashboard/TotalBalanceCard';
+import { PeriodSelector } from '@/components/PeriodSelector';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Icon } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
-import { SegmentedControl, type SegmentOption } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
+import { getPeriodRange } from '@/lib/period';
 import { getBreakdown, getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
+import { usePeriodStore } from '@/stores/usePeriodStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import type { Currency, Period } from '@/types';
+import type { Currency } from '@/types';
 
 export default function DashboardScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
-  const [period, setPeriod] = useState<Period>('month');
+  const filter = usePeriodStore((s) => s.filter);
+
+  const range = useMemo(() => getPeriodRange(filter), [filter]);
 
   const { data: categories = [] } = useCategories();
-  const { data: transactions = [], isLoading } = useTransactions({ period });
+  const { data: transactions = [], isLoading } = useTransactions(range);
   const { data: profile } = useProfile();
 
   const currency: Currency = profile?.defaultCurrency ?? 'TRY';
@@ -42,12 +46,7 @@ export default function DashboardScreen() {
   const trendPercent = totals.income > 0 ? (totals.net / totals.income) * 100 : 0;
   const hasTransactions = transactions.length > 0;
 
-  const periodOptions: SegmentOption[] = [
-    { value: 'day', label: t('dashboard.period.day') },
-    { value: 'week', label: t('dashboard.period.week') },
-    { value: 'month', label: t('dashboard.period.month') },
-    { value: 'year', label: t('dashboard.period.year') },
-  ];
+  const trendKey = filter.type === 'custom' ? 'custom' : filter.type;
 
   return (
     <Screen edges={['top']}>
@@ -61,14 +60,10 @@ export default function DashboardScreen() {
           currency={currency}
           locale={locale}
           trendPercent={trendPercent}
-          trendLabel={t(`dashboard.trend.${period}`)}
+          trendLabel={t(`dashboard.trend.${trendKey}`)}
         />
 
-        <SegmentedControl
-          options={periodOptions}
-          value={period}
-          onChange={(v) => setPeriod(v as Period)}
-        />
+        <PeriodSelector />
 
         <IncomeExpenseCards
           income={totals.income}

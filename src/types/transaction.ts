@@ -40,8 +40,6 @@ export type Transaction = {
   updatedAt: string;
 };
 
-export type Period = 'day' | 'week' | 'month' | 'year';
-
 export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 /**

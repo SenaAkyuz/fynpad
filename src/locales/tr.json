@@ -2,11 +2,27 @@
   "common": {
     "save": "Kaydet",
     "cancel": "Vazgeç",
+    "apply": "Uygula",
     "delete": "Sil",
     "offline": "Çevrimdışı — değişiklikler bağlantı gelince senkronize olacak",
     "syncing": "{{count}} işlem senkronize ediliyor...",
     "queuedOffline": "{{count}} işlem senkronize bekleniyor",
     "offlineSavedSyncLater": "Çevrimdışısın — kayıt online olunca gönderilecek"
+  },
+  "period": {
+    "goToCurrent": {
+      "day": "Bugüne dön",
+      "month": "Bu aya dön",
+      "year": "Bu yıla dön"
+    },
+    "customRange": {
+      "title": "Tarih Aralığı Seç",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "thisMonth": "Bu Ay",
+      "last30Days": "Son 30 Gün",
+      "last90Days": "Son 90 Gün"
+    }
   },
   "welcome": {
     "title": "FynPad",
@@ -106,15 +122,15 @@
     "noTransactions": "Bu dönemde işlem yok",
     "period": {
       "day": "Gün",
-      "week": "Hafta",
       "month": "Ay",
-      "year": "Yıl"
+      "year": "Yıl",
+      "custom": "Özel"
     },
     "trend": {
       "day": "bugün",
-      "week": "bu hafta",
       "month": "bu ay",
-      "year": "bu yıl"
+      "year": "bu yıl",
+      "custom": "bu dönem"
     },
     "categories": {
       "salary": "Maaş",

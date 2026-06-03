@@ -1,11 +1,12 @@
-import { toISODate } from '@/lib/format';
+import { fromISODate, toISODate } from '@/lib/format';
 import { computeGoalProgress } from '@/lib/goals';
-import type { Currency, Goal, Locale, Period, Transaction } from '@/types';
+import { getPeriodRange, periodDayCount } from '@/lib/period';
+import type { Currency, Goal, Locale, Transaction } from '@/types';
+import type { PeriodFilter } from '@/types/period';
 
 const intlLocale = (locale: Locale): string => (locale === 'tr' ? 'tr-TR' : 'en-US');
 
-/** Period başına gün sayısı (avg daily spend için). day=1 (0'a bölme olmasın). */
-const PERIOD_DAYS: Record<Period, number> = { day: 1, week: 7, month: 30, year: 365 };
+const MS_DAY = 86_400_000;
 
 /**
  * Gider tipi filtresi (brief 4.3): sabit = recurringRuleId dolu (kira/abonelik/taksit),
@@ -40,36 +41,39 @@ export type CashFlowBucket = {
   date: string;
 };
 
-function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
 /**
- * Period'a göre gelir/gider zaman serisi. Transaction'lar tarih-bazlı (saat yok), bu yüzden:
- *   day:   tek gün (bugün)
- *   week:  son 7 gün (günlük)
- *   month: son 30 gün (günlük)
- *   year:  son 12 ay (aylık)
- * transactions zaten period'a göre filtrelenmiş gelir; burada bucket'lara dağıtılır.
+ * Takvim dönemine göre gelir/gider zaman serisi (rolling-window DEĞİL). Bucket granülaritesi:
+ *   day                  → tek gün (1 bucket)
+ *   month                → ayın günleri (28-31 bucket, gün numarası etiketi)
+ *   year / >31 gün custom→ aylık bucket (kısa ay etiketi)
+ *   ≤31 gün custom       → günlük bucket
+ * transactions zaten döneme göre filtrelenmiş gelir; burada bucket'lara dağıtılır.
  */
 export function cashFlowSeries(
   transactions: Transaction[],
-  period: Period,
+  filter: PeriodFilter,
   locale: Locale = 'tr',
   expenseType: ExpenseType = 'all'
 ): { buckets: CashFlowBucket[] } {
   transactions = filterByExpenseType(transactions, expenseType);
-  const today = startOfDay(new Date());
+  const { from, to } = getPeriodRange(filter);
+  const start = fromISODate(from);
+  const end = fromISODate(to);
+  const totalDays = Math.round((end.getTime() - start.getTime()) / MS_DAY) + 1;
 
-  if (period === 'year') {
+  const monthly = filter.type === 'year' || totalDays > 31;
+
+  if (monthly) {
     const monthFmt = new Intl.DateTimeFormat(intlLocale(locale), { month: 'short' });
     const months: { key: string; label: string }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+    while (cursor <= lastMonth) {
       months.push({
-        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-        label: monthFmt.format(d),
+        key: `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`,
+        label: monthFmt.format(cursor),
       });
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
     }
     const agg = new Map<string, { income: number; expense: number }>();
     months.forEach((m) => agg.set(m.key, { income: 0, expense: 0 }));
@@ -85,17 +89,12 @@ export function cashFlowSeries(
     };
   }
 
-  // Günlük bucket'lar: day=1, week=7, month=30
-  const days = PERIOD_DAYS[period] === 1 ? 1 : period === 'week' ? 7 : 30;
-  const weekdayFmt = new Intl.DateTimeFormat(intlLocale(locale), { weekday: 'short' });
+  // Günlük bucket'lar (gün numarası etiketi).
   const list: { iso: string; label: string }[] = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-    list.push({
-      iso: toISODate(d),
-      // ay görünümünde gün numarası, aksi halde kısa hafta günü
-      label: period === 'month' ? String(d.getDate()) : weekdayFmt.format(d),
-    });
+  let day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  while (day <= end) {
+    list.push({ iso: toISODate(day), label: String(day.getDate()) });
+    day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
   }
   const agg = new Map<string, { income: number; expense: number }>();
   list.forEach((x) => agg.set(x.iso, { income: 0, expense: 0 }));
@@ -126,10 +125,10 @@ export function netSavings(
   return income - expense;
 }
 
-/** Ortalama günlük harcama: toplam gider / period gün sayısı. */
+/** Ortalama günlük harcama: toplam gider / dönemdeki takvim gün sayısı. */
 export function avgDailySpend(
   transactions: Transaction[],
-  period: Period,
+  filter: PeriodFilter,
   expenseType: ExpenseType = 'all'
 ): number {
   transactions = filterByExpenseType(transactions, expenseType);
@@ -137,7 +136,7 @@ export function avgDailySpend(
   for (const tx of transactions) {
     if (tx.kind === 'expense') expense += tx.amount;
   }
-  return expense / PERIOD_DAYS[period];
+  return expense / periodDayCount(filter);
 }
 
 /**

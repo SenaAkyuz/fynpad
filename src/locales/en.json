@@ -2,11 +2,27 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "apply": "Apply",
     "delete": "Delete",
     "offline": "Offline — changes will sync when reconnected",
     "syncing": "Syncing {{count}} change(s)...",
     "queuedOffline": "{{count}} change(s) queued for sync",
     "offlineSavedSyncLater": "You're offline — saved and will sync when online"
+  },
+  "period": {
+    "goToCurrent": {
+      "day": "Back to today",
+      "month": "Back to this month",
+      "year": "Back to this year"
+    },
+    "customRange": {
+      "title": "Select Date Range",
+      "from": "From",
+      "to": "To",
+      "thisMonth": "This Month",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days"
+    }
   },
   "welcome": {
     "title": "FynPad",
@@ -106,15 +122,15 @@
     "noTransactions": "No transactions in this period",
     "period": {
       "day": "Day",
-      "week": "Week",
       "month": "Month",
-      "year": "Year"
+      "year": "Year",
+      "custom": "Custom"
     },
     "trend": {
       "day": "today",
-      "week": "this week",
       "month": "this month",
-      "year": "this year"
+      "year": "this year",
+      "custom": "this period"
     },
     "categories": {
       "salary": "Salary",
