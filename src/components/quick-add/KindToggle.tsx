@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -17,7 +16,6 @@ const PAD = 4;
 /**
  * Quick Add kind seçici (design: segmented control). Brief 7.3 gereği aktif segment
  * semantik renkli: Gelir → yeşil (secondary), Gider → kırmızı (tertiary).
- * Transfer v1.2'ye ertelendi → disabled + kilit ikonu (submit edilmez).
  */
 export function KindToggle({ value, onChange }: KindToggleProps) {
   const { t } = useTranslation();
@@ -44,18 +42,6 @@ export function KindToggle({ value, onChange }: KindToggleProps) {
     <View style={[styles.track, { backgroundColor: colors.surfaceContainer }]}>
       {segment('income', t('quickAdd.kindIncome'), colors.secondary, colors.onSecondary)}
       {segment('expense', t('quickAdd.kindExpense'), colors.tertiary, colors.onTertiary)}
-
-      {/* Transfer — disabled (Part v1.2). no-op. */}
-      <View
-        accessibilityState={{ disabled: true }}
-        style={[styles.segment, styles.transfer]}
-        pointerEvents="none"
-      >
-        <Icon name="lock" size={14} color={colors.onSurfaceVariant} strokeWidth={2} />
-        <Text variant="labelMd" color="onSurfaceVariant" numberOfLines={1} style={styles.transferLabel}>
-          {t('quickAdd.kindTransfer')}
-        </Text>
-      </View>
     </View>
   );
 }
@@ -75,11 +61,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-  },
-  transfer: {
-    opacity: 0.5,
-  },
-  transferLabel: {
-    flexShrink: 1,
   },
 });
