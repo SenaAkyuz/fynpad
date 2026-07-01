@@ -1,8 +1,7 @@
 import { Text as RNText, type TextProps as RNTextProps } from 'react-native';
 
-import { typography, type TypographyVariant } from '@/theme/tokens';
+import { typography, type TypographyVariant, type ThemeColors } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import type { ThemeColors } from '@/theme/tokens';
 
 export type TextColor = keyof ThemeColors;
 

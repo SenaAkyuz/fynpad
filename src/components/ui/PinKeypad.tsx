@@ -126,7 +126,6 @@ function BiometricIcon() {
 }
 
 function DeleteIcon() {
-  const { colors } = useTheme();
   return (
     <Text variant="headlineSm" color="onSurfaceVariant" style={styles.delete}>
       {'⌫'}

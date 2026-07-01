@@ -34,7 +34,7 @@ export function LockScreen() {
 
   const [entered, setEntered] = useState('');
   const [error, setError] = useState(false);
-  const [attempts, setAttempts] = useState(0);
+  const [, setAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [bioAvailable, setBioAvailable] = useState(false);

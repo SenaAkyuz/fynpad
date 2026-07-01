@@ -44,7 +44,7 @@ export default function TransactionEditScreen() {
     );
   }
 
-  return <TransactionEditForm transaction={transaction} />;
+  return <TransactionEditFormView transaction={transaction} />;
 }
 
 function NotFound() {
@@ -61,7 +61,7 @@ function NotFound() {
   );
 }
 
-function TransactionEditForm({ transaction }: { transaction: Transaction }) {
+function TransactionEditFormView({ transaction }: { transaction: Transaction }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const router = useRouter();

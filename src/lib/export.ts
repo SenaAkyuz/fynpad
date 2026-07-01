@@ -187,7 +187,7 @@ function writeCacheFile(filename: string, content: string): string {
  * Brief 5 madde 2. DB değişmez; sadece okuma + dosya üretimi.
  */
 export async function exportTransactions(params: ExportParams): Promise<void> {
-  const { from, to, format, locale, t } = params;
+  const { from, to, format, t } = params;
 
   if (!(await Sharing.isAvailableAsync())) {
     throw new ExportError('SHARING_UNAVAILABLE');
