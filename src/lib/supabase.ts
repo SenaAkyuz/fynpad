@@ -10,9 +10,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase env vars missing. Check .env file.');
 }
 
+const memoryStorage = {
+  getItem: (_key: string) => Promise.resolve(null),
+  setItem: (_key: string, _value: string) => Promise.resolve(),
+  removeItem: (_key: string) => Promise.resolve(),
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: typeof window === 'undefined' ? memoryStorage : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

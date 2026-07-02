@@ -25,6 +25,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useCreateRecurringRule } from '@/hooks/useRecurringRules';
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { toISODate } from '@/lib/format';
+import { maybeShowInterstitial } from '@/lib/interstitialAd';
 import { quickAddSchema, type QuickAddForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
@@ -131,6 +132,11 @@ export default function QuickAddScreen() {
     try {
       await (isRecurring ? runRecurring() : runTransaction());
       router.back();
+      // Reklam yalnızca düz işlem eklemede (recurring kural değil) tetiklenir; frequency
+      // cap (her 3 işlem + min 90 sn) interstitialAd servisinde kontrol edilir. Web'de no-op.
+      if (!isRecurring) {
+        void maybeShowInterstitial();
+      }
     } catch {
       setFormError(
         values.recurring ? t('errors.recurring.createFailed') : t('errors.transaction.createFailed')

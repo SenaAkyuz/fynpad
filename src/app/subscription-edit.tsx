@@ -2,7 +2,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from 'react-native';
 
 import { ServiceIconPicker } from '@/components/subscriptions/ServiceIconPicker';
 import { AmountInput } from '@/components/quick-add/AmountInput';
@@ -10,7 +20,6 @@ import { CurrencyRow } from '@/components/quick-add/CurrencyRow';
 import { DateRow } from '@/components/quick-add/DateRow';
 import { NoteInput } from '@/components/quick-add/NoteInput';
 import { Button } from '@/components/ui/Button';
-import { ErrorText } from '@/components/ui/ErrorText';
 import { Icon } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
 import { Spinner } from '@/components/ui/Spinner';
@@ -149,7 +158,13 @@ function SubscriptionEditForm({
     if (mode !== 'edit') {
       const granted = await requestPermissions();
       if (!granted) {
-        Alert.alert(t('subscriptions.permissions.denied'));
+        Alert.alert(t('subscriptions.permissions.denied'), undefined, [
+          { text: t('settings.signOutCancel'), style: 'cancel' },
+          {
+            text: t('subscriptions.permissions.openSettings'),
+            onPress: () => void Linking.openSettings(),
+          },
+        ]);
       }
     }
 

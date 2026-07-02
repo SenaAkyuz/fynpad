@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,7 +19,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
-import { signUpWithEmail } from '@/lib/auth';
+import { getGoogleOAuthUrl, signInWithGoogle, signUpWithEmail } from '@/lib/auth';
 import { registerSchema, type RegisterForm } from '@/lib/validation';
 import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
@@ -32,6 +32,8 @@ export default function RegisterScreen() {
   const isOnline = useNetworkStore((s) => s.isOnline);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleOAuthUrl, setGoogleOAuthUrl] = useState('');
   const [accepted, setAccepted] = useState(false);
 
   const {
@@ -42,6 +44,19 @@ export default function RegisterScreen() {
     resolver: zodResolver(registerSchema),
     defaultValues: { email: '', password: '', confirmPassword: '' },
   });
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    let active = true;
+    void getGoogleOAuthUrl().then((res) => {
+      if (active && res.success) {
+        setGoogleOAuthUrl(res.url);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const onSubmit = async (values: RegisterForm) => {
     setFormError('');
@@ -62,6 +77,20 @@ export default function RegisterScreen() {
       router.replace({ pathname: '/(auth)/verify-email-otp', params: { email: values.email } });
     }
     // requiresVerification false → confirm-email kapalı, auto-login → root guard tabs'a yönlendirir
+  };
+
+  const onGoogleSignIn = async () => {
+    setFormError('');
+    if (Platform.OS === 'web' && googleOAuthUrl) {
+      window.location.href = googleOAuthUrl;
+      return;
+    }
+    setGoogleLoading(true);
+    const res = await signInWithGoogle();
+    setGoogleLoading(false);
+    if (!res.success) {
+      setFormError(t(res.errorKey));
+    }
   };
 
   return (
@@ -199,9 +228,27 @@ export default function RegisterScreen() {
             <Button
               label={t('auth.register.submit')}
               loading={loading}
-              disabled={!accepted || !isOnline}
+              disabled={!accepted || !isOnline || googleLoading}
               onPress={handleSubmit(onSubmit)}
               style={styles.submit}
+            />
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text variant="labelSm" color="onSurfaceVariant">
+                {t('auth.or')}
+              </Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Button
+              label={t('auth.continueWithGoogle')}
+              variant="secondary"
+              href={Platform.OS === 'web' ? googleOAuthUrl : undefined}
+              loading={googleLoading}
+              disabled={!isOnline || loading}
+              onPress={onGoogleSignIn}
+              style={styles.googleButton}
             />
           </GlassCard>
 
@@ -270,6 +317,20 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   submit: {
+    marginTop: spacing.lg,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#cbc3d7',
+  },
+  googleButton: {
     marginTop: spacing.lg,
   },
   offlineHint: {

@@ -2,7 +2,9 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AdBanner } from '@/components/ads/AdBanner';
 import { AvgDailySpendCard } from '@/components/analytics/AvgDailySpendCard';
 import { BudgetList } from '@/components/analytics/BudgetList';
 import { CashFlowChart } from '@/components/analytics/CashFlowChart';
@@ -41,6 +43,7 @@ import type { BudgetStatus, Currency } from '@/types';
 export default function AnalyticsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const locale = useAppStore((s) => s.locale);
 
   const filter = usePeriodStore((s) => s.filter);
@@ -172,6 +175,11 @@ export default function AnalyticsScreen() {
         {/* Strategic Insights — tasarımda analytics'in son section'ı (brief 5/3). */}
         <InsightsList />
       </ScrollView>
+
+      {/* Banner: tab bar'ın üstünde sabit (scroll dışında). */}
+      <View style={[styles.adBanner, { bottom: insets.bottom + 80 }]} pointerEvents="box-none">
+        <AdBanner />
+      </View>
     </Screen>
   );
 }
@@ -189,8 +197,14 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.containerMargin,
     paddingTop: spacing.sm,
-    paddingBottom: 120,
+    paddingBottom: 190, // banner + floating tab bar için ekstra pay
     gap: spacing.stackMd,
+  },
+  adBanner: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   selectors: {
     gap: spacing.md,

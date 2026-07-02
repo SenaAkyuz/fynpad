@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,7 +18,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
-import { resendSignupOtp, signInWithEmail } from '@/lib/auth';
+import { getGoogleOAuthUrl, resendSignupOtp, signInWithEmail, signInWithGoogle } from '@/lib/auth';
 import { loginSchema, type LoginForm } from '@/lib/validation';
 import { useNetworkStore } from '@/stores/useNetworkStore';
 import { spacing } from '@/theme/tokens';
@@ -29,6 +29,8 @@ export default function LoginScreen() {
   const isOnline = useNetworkStore((s) => s.isOnline);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleOAuthUrl, setGoogleOAuthUrl] = useState('');
 
   const {
     control,
@@ -38,6 +40,19 @@ export default function LoginScreen() {
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    let active = true;
+    void getGoogleOAuthUrl().then((res) => {
+      if (active && res.success) {
+        setGoogleOAuthUrl(res.url);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const onSubmit = async (values: LoginForm) => {
     setFormError('');
@@ -57,6 +72,20 @@ export default function LoginScreen() {
     }
     setLoading(false);
     // success → root layout auth guard yönlendirir
+  };
+
+  const onGoogleSignIn = async () => {
+    setFormError('');
+    if (Platform.OS === 'web' && googleOAuthUrl) {
+      window.location.href = googleOAuthUrl;
+      return;
+    }
+    setGoogleLoading(true);
+    const res = await signInWithGoogle();
+    setGoogleLoading(false);
+    if (!res.success) {
+      setFormError(t(res.errorKey));
+    }
   };
 
   return (
@@ -148,9 +177,27 @@ export default function LoginScreen() {
             <Button
               label={t('auth.login.submit')}
               loading={loading}
-              disabled={!isOnline}
+              disabled={!isOnline || googleLoading}
               onPress={handleSubmit(onSubmit)}
               style={styles.submit}
+            />
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text variant="labelSm" color="onSurfaceVariant">
+                {t('auth.or')}
+              </Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Button
+              label={t('auth.continueWithGoogle')}
+              variant="secondary"
+              href={Platform.OS === 'web' ? googleOAuthUrl : undefined}
+              loading={googleLoading}
+              disabled={!isOnline || loading}
+              onPress={onGoogleSignIn}
+              style={styles.googleButton}
             />
           </GlassCard>
 
@@ -208,6 +255,20 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: spacing.xl,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#cbc3d7',
+  },
+  googleButton: {
+    marginTop: spacing.lg,
   },
   offlineHint: {
     marginTop: spacing.lg,

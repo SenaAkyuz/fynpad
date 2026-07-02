@@ -330,6 +330,13 @@
       "deleteFailed": "Abonelik silinemedi"
     }
   },
+  "notifications": {
+    "dailyChannel": "Günlük Hatırlatmalar",
+    "dailyMorningTitle": "Bugünün harcamalarını yakalayalım",
+    "dailyMorningBody": "Kahveni alırken FynPad'e hızlıca bir göz at.",
+    "dailyEveningTitle": "Bugünün harcamalarını kaydettin mi?",
+    "dailyEveningBody": "Günü kapatmadan küçük notları eklemek yarının bütçesini netleştirir."
+  },
   "analytics": {
     "title": "Analiz",
     "subtitle": "Finansal akışına dair içgörüler",
@@ -411,6 +418,8 @@
   },
   "auth": {
     "offlineLoginUnavailable": "Giriş için internet bağlantısı gerekli",
+    "or": "veya",
+    "continueWithGoogle": "Google ile devam et",
     "login": {
       "title": "Tekrar Hoş Geldin",
       "subtitle": "Hesabına giriş yap",
@@ -523,6 +532,7 @@
       "profile": "Profil",
       "preferences": "Tercihler",
       "security": "Güvenlik",
+      "notifications": "Bildirimler",
       "data": "Veri",
       "about": "Hakkında",
       "account": "Hesap"
@@ -545,6 +555,10 @@
     "biometric": "Biyometrik",
     "biometricRequiresLock": "Önce cihaz kilidi açılmalı",
     "biometricUnavailable": "Önce telefon ayarlarından parmak izi veya yüz tanıma kur.",
+    "dailyExpenseReminders": "Günlük harcama hatırlatmaları",
+    "dailyExpenseRemindersHint": "Her gün 10:00 ve 20:00'de kısa bir kontrol bildirimi gönderir.",
+    "notificationPermissionDeniedTitle": "Bildirim izni kapalı",
+    "notificationPermissionDeniedMessage": "Günlük hatırlatmaları kullanmak için cihaz ayarlarından FynPad bildirimlerine izin vermen gerekiyor.",
     "categories": "Kategoriler",
     "categoriesSubtitle": "{{defaults}} varsayılan + {{custom}} özel",
     "recurringTransactions": "Tekrarlayan İşlemler",
@@ -658,15 +672,15 @@
     "sections": {
       "collected": {
         "title": "1. Topladığımız Veriler",
-        "body": "E-posta adresiniz, hesap doğrulama ve oturum açma için. Eklediğiniz finansal kayıtlar (gelir, gider, kategori, tarih, miktar, not). Cihaz dili ve tema tercihi. Uygulama içinde tanımladığınız bütçe limitleri ve abonelik bilgileri. Biyometrik veri veya PIN kodunuz cihazınızda yerel olarak saklanır — sunucularımıza GÖNDERİLMEZ."
+        "body": "E-posta adresiniz, hesap doğrulama ve oturum açma için. Google ile giriş yaptığınızda Google hesabınızdan adınız, e-posta adresiniz, profil fotoğrafınız ve Google kullanıcı kimliğiniz alınabilir. Eklediğiniz finansal kayıtlar (gelir, gider, kategori, tarih, miktar, not). Cihaz dili ve tema tercihi. Uygulama içinde tanımladığınız bütçe limitleri ve abonelik bilgileri. Biyometrik veri veya PIN kodunuz cihazınızda yerel olarak saklanır — sunucularımıza GÖNDERİLMEZ."
       },
       "purpose": {
         "title": "2. Verilerin Kullanım Amacı",
-        "body": "Hesabınızı yönetmek, finansal kayıtlarınızı saklayıp size göstermek, analitik ve bütçe karşılaştırması sunmak için. Verilerinizi pazarlama veya üçüncü taraf reklamcılık için KULLANMIYORUZ."
+        "body": "Hesabınızı oluşturmak, Google veya e-posta ile oturum açmanızı sağlamak, profilinizi yönetmek, finansal kayıtlarınızı saklayıp size göstermek, analitik ve bütçe karşılaştırması sunmak için. Verilerinizi pazarlama veya üçüncü taraf reklamcılık için KULLANMIYORUZ."
       },
       "thirdParty": {
         "title": "3. Üçüncü Taraf İşleyiciler",
-        "body": "Veri tabanı ve kimlik doğrulama: Supabase Inc. (ABD). E-posta gönderimi: Supabase üzerinden Resend (kayıt onayı, şifre sıfırlama). Bu sağlayıcılar veri işleyici sıfatıyla kendi gizlilik politikalarına tabidir."
+        "body": "Veri tabanı ve kimlik doğrulama: Supabase Inc. (ABD). Google ile giriş: Google LLC. E-posta gönderimi: Supabase üzerinden Resend (kayıt onayı, şifre sıfırlama). Bu sağlayıcılar veri işleyici veya kimlik sağlayıcı sıfatıyla kendi gizlilik politikalarına tabidir."
       },
       "rights": {
         "title": "4. Haklarınız",
@@ -780,6 +794,7 @@
       "redirectNotAllowed": "Yönlendirme adresi izinli değil. Supabase konfigürasyonunu kontrol et.",
       "invalidEmail": "Geçerli bir e-posta adresi gir.",
       "network": "Bağlantı hatası. İnternetini kontrol et.",
+      "oauthCancelled": "Google girişi iptal edildi.",
       "unknown": "Bir şeyler ters gitti. Tekrar dene.",
       "emailNotConfirmed": "Önce e-posta adresini doğrulaman gerek."
     },

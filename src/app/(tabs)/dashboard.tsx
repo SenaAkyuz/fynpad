@@ -2,7 +2,9 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AdBanner } from '@/components/ads/AdBanner';
 import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { IncomeExpenseCards } from '@/components/dashboard/IncomeExpenseCards';
@@ -28,6 +30,7 @@ import type { Currency } from '@/types';
 export default function DashboardScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const locale = useAppStore((s) => s.locale);
   const filter = usePeriodStore((s) => s.filter);
 
@@ -89,6 +92,11 @@ export default function DashboardScreen() {
           <DashboardEmptyState onAdd={() => router.push('/quick-add')} />
         )}
       </ScrollView>
+
+      {/* Banner: tab bar'ın üstünde sabit (scroll dışında). */}
+      <View style={[styles.adBanner, { bottom: insets.bottom + 80 }]} pointerEvents="box-none">
+        <AdBanner />
+      </View>
     </Screen>
   );
 }
@@ -122,8 +130,14 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.containerMargin,
     paddingTop: spacing.base,
-    paddingBottom: 120,
+    paddingBottom: 190, // banner + floating tab bar için ekstra pay
     gap: spacing.stackMd,
+  },
+  adBanner: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   loading: {
     paddingVertical: spacing.stackLg,

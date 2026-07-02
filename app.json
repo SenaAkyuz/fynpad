@@ -36,7 +36,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -67,6 +68,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#6b38d4"
         }
       ],
@@ -78,6 +80,14 @@
             "enableShrinkResourcesInReleaseBuilds": true,
             "extraProguardRules": "-keep class com.facebook.react.** { *; }\n-keep class com.facebook.hermes.** { *; }\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.worklets.** { *; }\n-keep class expo.modules.** { *; }\n-keep class org.webkit.androidjsc.** { *; }\n-keep class okhttp3.** { *; }\n-keep interface okhttp3.** { *; }\n-dontwarn okhttp3.**\n-keepattributes SourceFile,LineNumberTable\n-keepclasseswithmembernames class * {\n    native <methods>;\n}"
           }
+        }
+      ],
+      "expo-web-browser",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-5759922022739187~8300988384",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
     ],

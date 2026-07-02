@@ -4,12 +4,14 @@ import '@/lib/logbox';
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
+import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import mobileAds from 'react-native-google-mobile-ads';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '@/locales/i18n';
@@ -20,10 +22,11 @@ import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
 import { fontMap } from '@/lib/fonts';
 import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStatus';
-import { rescheduleAll } from '@/lib/notifications';
+import { rescheduleAll, syncDailyExpenseReminders } from '@/lib/notifications';
+import { initInterstitial } from '@/lib/interstitialAd';
 import { registerMutationDefaults } from '@/lib/offlineMutations';
 import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
-import { consumeIntentionalSignOut } from '@/lib/auth';
+import { completeOAuthCallback, consumeIntentionalSignOut, hasOAuthCallbackParams } from '@/lib/auth';
 import { processRecurringRules } from '@/lib/recurring';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/stores/useAppStore';
@@ -76,6 +79,7 @@ function NotificationsBootstrap() {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontMap);
   const hydrated = useAppStore((s) => s.hydrated);
+  const dailyExpenseRemindersEnabled = useAppStore((s) => s.dailyExpenseRemindersEnabled);
 
   const initialized = useAuthStore((s) => s.initialized);
   const session = useAuthStore((s) => s.session);
@@ -108,14 +112,40 @@ export default function RootLayout() {
     return () => stopNetworkMonitoring();
   }, []);
 
+  // AdMob: SDK'yı başlat + ilk interstitial'ı önden yükle. Web'de no-op (native modül yok).
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+    void mobileAds().initialize();
+    initInterstitial();
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) {
+      void syncDailyExpenseReminders(dailyExpenseRemindersEnabled);
+    }
+  }, [dailyExpenseRemindersEnabled, hydrated]);
+
   // Supabase session'ı yükle + değişiklikleri dinle.
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    void (async () => {
+      const initialUrl = await Linking.getInitialURL();
+      if (Platform.OS !== 'web' && initialUrl && hasOAuthCallbackParams(initialUrl)) {
+        const res = await completeOAuthCallback(initialUrl);
+        if (res.success) {
+          router.replace('/(tabs)/dashboard');
+        } else {
+          useToastStore.getState().show(res.errorKey, 'error');
+          router.replace('/(auth)/login');
+        }
+      }
+      const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(data.session);
       setInitialized();
-    });
+    })();
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       const hadSession = useAuthStore.getState().session != null;
       setSession(nextSession);
@@ -130,7 +160,7 @@ export default function RootLayout() {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, [setSession, setInitialized]);
+  }, [router, setSession, setInitialized]);
 
   useEffect(() => {
     if (ready) {
@@ -202,6 +232,7 @@ export default function RootLayout() {
             <View style={{ flex: 1 }}>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
+                <Stack.Screen name="auth/callback" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="pin-setup" />

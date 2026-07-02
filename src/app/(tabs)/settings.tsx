@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { PreferencePicker, type PreferenceOption } from '@/components/settings/PreferencePicker';
 import { ProfileCard } from '@/components/settings/ProfileCard';
@@ -17,6 +17,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
+import { cancelDailyExpenseReminders, scheduleDailyExpenseReminders } from '@/lib/notifications';
 import { clearPin } from '@/lib/pin';
 import { useAppStore, type Locale, type ThemeMode } from '@/stores/useAppStore';
 import { useLockStore } from '@/stores/useLockStore';
@@ -65,12 +66,26 @@ export default function SettingsScreen() {
   ];
 
   const onSignOut = () => {
+    const confirmSignOut = () => {
+      void (async () => {
+        await signOut();
+        router.replace('/(auth)/login');
+      })();
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('settings.signOutConfirmTitle'))) {
+        confirmSignOut();
+      }
+      return;
+    }
+
     Alert.alert(t('settings.signOutConfirmTitle'), undefined, [
       { text: t('settings.signOutCancel'), style: 'cancel' },
       {
         text: t('settings.signOutConfirmAction'),
         style: 'destructive',
-        onPress: () => void signOut(),
+        onPress: confirmSignOut,
       },
     ]);
   };
@@ -115,6 +130,8 @@ export default function SettingsScreen() {
         </SettingsSection>
 
         <SecuritySection />
+
+        <NotificationsSection />
 
         <SettingsSection title={t('settings.sections.data')}>
           <SettingsRow
@@ -206,6 +223,52 @@ export default function SettingsScreen() {
         onClose={() => setPicker(null)}
       />
     </Screen>
+  );
+}
+
+function NotificationsSection() {
+  const { t } = useTranslation();
+  const enabled = useAppStore((s) => s.dailyExpenseRemindersEnabled);
+  const setEnabled = useAppStore((s) => s.setDailyExpenseRemindersEnabled);
+
+  const onToggleDailyReminders = (next: boolean) => {
+    void (async () => {
+      if (!next) {
+        setEnabled(false);
+        await cancelDailyExpenseReminders();
+        return;
+      }
+
+      const scheduled = await scheduleDailyExpenseReminders();
+      if (!scheduled) {
+        Alert.alert(
+          t('settings.notificationPermissionDeniedTitle'),
+          t('settings.notificationPermissionDeniedMessage'),
+          [
+            { text: t('settings.signOutCancel'), style: 'cancel' },
+            {
+              text: t('subscriptions.permissions.openSettings'),
+              onPress: () => void Linking.openSettings(),
+            },
+          ]
+        );
+        setEnabled(false);
+        return;
+      }
+      setEnabled(true);
+    })();
+  };
+
+  return (
+    <SettingsSection title={t('settings.sections.notifications')}>
+      <SettingsToggle
+        icon="bell"
+        label={t('settings.dailyExpenseReminders')}
+        value={enabled}
+        onValueChange={onToggleDailyReminders}
+        hint={t('settings.dailyExpenseRemindersHint')}
+      />
+    </SettingsSection>
   );
 }
 

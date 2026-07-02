@@ -1,5 +1,10 @@
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
+
 import { supabase } from '@/lib/supabase';
 import type { Locale } from '@/stores/useAppStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export type DefaultCurrency = 'TRY' | 'USD' | 'EUR';
 
@@ -14,6 +19,18 @@ export type SignUpResult =
   | { success: false; errorKey: string };
 
 type SupabaseLikeError = { code?: string; message?: string; status?: number } | null | undefined;
+
+function getOAuthCallbackParam(url: string, name: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const queryValue = parsed.searchParams.get(name);
+    if (queryValue) return queryValue;
+    const hashParams = new URLSearchParams(parsed.hash.replace(/^#/, ''));
+    return hashParams.get(name);
+  } catch {
+    return null;
+  }
+}
 
 /** Dev modda gerçek Supabase hatasını telefon console'una basar. */
 function logAuthError(context: string, error: unknown): void {
@@ -185,6 +202,110 @@ export async function signInWithEmail(params: {
   }
 }
 
+export async function getGoogleOAuthUrl(): Promise<
+  { success: true; url: string } | { success: false; errorKey: string }
+> {
+  try {
+    const redirectTo = Linking.createURL('auth/callback');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+    if (error) {
+      return fail('getGoogleOAuthUrl', error);
+    }
+    if (!data.url) {
+      return { success: false, errorKey: 'errors.auth.unknown' };
+    }
+    return { success: true, url: data.url };
+  } catch (error) {
+    return fail('getGoogleOAuthUrl', error);
+  }
+}
+
+export async function signInWithGoogle(): Promise<AuthResult> {
+  try {
+    const redirectTo = Linking.createURL('auth/callback');
+    if (Platform.OS === 'web') {
+      const res = await getGoogleOAuthUrl();
+      if (!res.success) return res;
+      window.location.assign(res.url);
+      return { success: true };
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+    if (error) {
+      return fail('signInWithGoogle', error);
+    }
+    if (!data.url) {
+      return { success: false, errorKey: 'errors.auth.unknown' };
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== 'success') {
+      return { success: false, errorKey: 'errors.auth.oauthCancelled' };
+    }
+
+    const providerError = getOAuthCallbackParam(result.url, 'error_description');
+    if (providerError) {
+      return fail('signInWithGoogle.provider', { message: providerError });
+    }
+
+    const code = getOAuthCallbackParam(result.url, 'code');
+    if (!code) {
+      return { success: false, errorKey: 'errors.auth.unknown' };
+    }
+
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError) {
+      return fail('signInWithGoogle.exchangeCodeForSession', exchangeError);
+    }
+    return { success: true };
+  } catch (error) {
+    return fail('signInWithGoogle', error);
+  }
+}
+
+export function hasOAuthCallbackParams(url: string): boolean {
+  return !!(
+    getOAuthCallbackParam(url, 'code') ||
+    getOAuthCallbackParam(url, 'error') ||
+    getOAuthCallbackParam(url, 'error_description')
+  );
+}
+
+export async function completeOAuthCallback(url: string): Promise<AuthResult> {
+  try {
+    const providerError =
+      getOAuthCallbackParam(url, 'error_description') ?? getOAuthCallbackParam(url, 'error');
+    if (providerError) {
+      return fail('completeOAuthCallback.provider', { message: providerError });
+    }
+
+    const code = getOAuthCallbackParam(url, 'code');
+    if (!code) {
+      return { success: false, errorKey: 'errors.auth.unknown' };
+    }
+
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return fail('completeOAuthCallback.exchangeCodeForSession', error);
+    }
+    return { success: true };
+  } catch (error) {
+    return fail('completeOAuthCallback', error);
+  }
+}
+
 /**
  * Kullanıcı kaynaklı (kasıtlı) çıkışları, refresh token'ın istemsiz sonlanmasından
  * ayırt etmek için bayrak. Kasıtlı çıkışta "oturum süresi doldu" bildirimi GÖSTERİLMEZ.
@@ -206,6 +327,7 @@ export function consumeIntentionalSignOut(): boolean {
 export async function signOut(): Promise<void> {
   intentionalSignOut = true;
   await supabase.auth.signOut();
+  useAuthStore.getState().setSession(null);
 }
 
 /**

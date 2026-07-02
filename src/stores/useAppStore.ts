@@ -10,10 +10,12 @@ export type Locale = 'tr' | 'en';
 export type AppState = {
   themeMode: ThemeMode;
   locale: Locale;
+  dailyExpenseRemindersEnabled: boolean;
   /** persist rehydrate tamamlandı mı (splash'i tutmak için) */
   hydrated: boolean;
   setThemeMode: (mode: ThemeMode) => void;
   setLocale: (locale: Locale) => void;
+  setDailyExpenseRemindersEnabled: (enabled: boolean) => void;
 };
 
 export const useAppStore = create<AppState>()(
@@ -21,17 +23,24 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       themeMode: 'light',
       locale: (i18n.language as Locale) ?? 'en',
+      dailyExpenseRemindersEnabled: false,
       hydrated: false,
       setThemeMode: (themeMode) => set({ themeMode }),
       setLocale: (locale) => {
         set({ locale });
         void i18n.changeLanguage(locale);
       },
+      setDailyExpenseRemindersEnabled: (dailyExpenseRemindersEnabled) =>
+        set({ dailyExpenseRemindersEnabled }),
     }),
     {
       name: 'app', // SecureStore key → fynpad.app
       storage: createJSONStorage(() => storage),
-      partialize: (state) => ({ themeMode: state.themeMode, locale: state.locale }),
+      partialize: (state) => ({
+        themeMode: state.themeMode,
+        locale: state.locale,
+        dailyExpenseRemindersEnabled: state.dailyExpenseRemindersEnabled,
+      }),
       onRehydrateStorage: () => (state) => {
         // restore edilen dili i18n'e uygula, sonra hydrated işaretle
         if (state?.locale) {

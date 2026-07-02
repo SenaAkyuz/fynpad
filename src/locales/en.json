@@ -330,6 +330,13 @@
       "deleteFailed": "Couldn't delete the subscription"
     }
   },
+  "notifications": {
+    "dailyChannel": "Daily Reminders",
+    "dailyMorningTitle": "Let's keep today's spending in view",
+    "dailyMorningBody": "Take a quick look at FynPad while your day gets moving.",
+    "dailyEveningTitle": "Did you log today's spending?",
+    "dailyEveningBody": "A quick check before the day ends keeps tomorrow's budget clearer."
+  },
   "analytics": {
     "title": "Analytics",
     "subtitle": "Insights into your financial flow",
@@ -411,6 +418,8 @@
   },
   "auth": {
     "offlineLoginUnavailable": "Internet connection required to sign in",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
     "login": {
       "title": "Welcome Back",
       "subtitle": "Sign in to your account",
@@ -523,6 +532,7 @@
       "profile": "Profile",
       "preferences": "Preferences",
       "security": "Security",
+      "notifications": "Notifications",
       "data": "Data",
       "about": "About",
       "account": "Account"
@@ -545,6 +555,10 @@
     "biometric": "Biometrics",
     "biometricRequiresLock": "Enable App Lock first",
     "biometricUnavailable": "Set up fingerprint or face recognition in phone settings first.",
+    "dailyExpenseReminders": "Daily spending reminders",
+    "dailyExpenseRemindersHint": "Sends a quick check-in every day at 10:00 and 20:00.",
+    "notificationPermissionDeniedTitle": "Notifications are off",
+    "notificationPermissionDeniedMessage": "Enable FynPad notifications in device settings to use daily reminders.",
     "categories": "Categories",
     "categoriesSubtitle": "{{defaults}} default + {{custom}} custom",
     "recurringTransactions": "Recurring Transactions",
@@ -658,15 +672,15 @@
     "sections": {
       "collected": {
         "title": "1. Data We Collect",
-        "body": "Your email address, for account verification and sign-in. The financial records you add (income, expense, category, date, amount, note). Your device language and theme preference. The budget limits and subscription details you define in the app. Your biometric data or PIN code is stored locally on your device — it is NOT sent to our servers."
+        "body": "Your email address, for account verification and sign-in. When you sign in with Google, we may receive your name, email address, profile photo and Google user ID from your Google account. The financial records you add (income, expense, category, date, amount, note). Your device language and theme preference. The budget limits and subscription details you define in the app. Your biometric data or PIN code is stored locally on your device — it is NOT sent to our servers."
       },
       "purpose": {
         "title": "2. How We Use Data",
-        "body": "To manage your account, store and display your financial records, and provide analytics and budget comparisons. We do NOT use your data for marketing or third-party advertising."
+        "body": "To create your account, let you sign in with Google or email, manage your profile, store and display your financial records, and provide analytics and budget comparisons. We do NOT use your data for marketing or third-party advertising."
       },
       "thirdParty": {
         "title": "3. Third-Party Processors",
-        "body": "Database and authentication: Supabase Inc. (USA). Email delivery: Resend via Supabase (sign-up confirmation, password reset). These providers act as data processors and are subject to their own privacy policies."
+        "body": "Database and authentication: Supabase Inc. (USA). Google sign-in: Google LLC. Email delivery: Resend via Supabase (sign-up confirmation, password reset). These providers act as data processors or identity providers and are subject to their own privacy policies."
       },
       "rights": {
         "title": "4. Your Rights",
@@ -780,6 +794,7 @@
       "redirectNotAllowed": "Redirect address not allowed. Check Supabase configuration.",
       "invalidEmail": "Please enter a valid email address.",
       "network": "Connection error. Check your internet.",
+      "oauthCancelled": "Google sign-in was cancelled.",
       "unknown": "Something went wrong. Please try again.",
       "emailNotConfirmed": "Please verify your email address first."
     },

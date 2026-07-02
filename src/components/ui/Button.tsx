@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
+import { createElement } from 'react';
+import { Platform, Pressable, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
 
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
@@ -12,6 +13,7 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   variant?: ButtonVariant;
   /** loading'de Spinner gösterir + devre dışı bırakır */
   loading?: boolean;
+  href?: string;
   style?: ViewStyle;
 };
 
@@ -23,6 +25,7 @@ export function Button({
   label,
   variant = 'primary',
   loading = false,
+  href,
   style,
   disabled,
   ...rest
@@ -30,6 +33,45 @@ export function Button({
   const { colors } = useTheme();
   const isPrimary = variant === 'primary';
   const isDisabled = disabled || loading;
+  const buttonStyle = [
+    styles.base,
+    isPrimary
+      ? { backgroundColor: colors.primary, ...shadows.primaryGlow, shadowColor: colors.primary }
+      : { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline },
+    isDisabled && styles.disabled,
+    style,
+  ];
+
+  if (Platform.OS === 'web' && href && !isDisabled) {
+    const labelColor = isPrimary ? colors.onPrimary : colors.primary;
+    return createElement(
+      'a',
+      {
+        href,
+        role: 'button',
+        style: {
+          ...StyleSheet.flatten(buttonStyle),
+          boxSizing: 'border-box',
+          cursor: 'pointer',
+          display: 'flex',
+          borderStyle: isPrimary ? undefined : 'solid',
+          textDecoration: 'none',
+        },
+      },
+      createElement(
+        'span',
+        {
+          style: {
+            color: labelColor,
+            fontSize: 16,
+            fontWeight: 600,
+            lineHeight: '24px',
+          },
+        },
+        label
+      )
+    );
+  }
 
   return (
     <Pressable
@@ -37,13 +79,8 @@ export function Button({
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       style={({ pressed }) => [
-        styles.base,
-        isPrimary
-          ? { backgroundColor: colors.primary, ...shadows.primaryGlow, shadowColor: colors.primary }
-          : { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline },
+        ...buttonStyle,
         pressed && styles.pressed,
-        isDisabled && styles.disabled,
-        style,
       ]}
       {...rest}
     >

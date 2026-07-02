@@ -8,12 +8,30 @@ import { useAppStore } from '@/stores/useAppStore';
 import type { Subscription } from '@/types';
 
 const ID_PREFIX = 'fynpad.sub.';
+const DAILY_ID_PREFIX = 'fynpad.daily.';
 /** Android bildirim kanalı (yenilenme hatırlatmaları). */
 const CHANNEL_ID = 'subscription-renewals';
+const DAILY_CHANNEL_ID = 'daily-expense-reminders';
 /** Yenilenmeden kaç gün önce hatırlat (brief 4.4: 2-3 gün önce). */
 const DAYS_BEFORE = 2;
 /** Hatırlatma saati (yerel). */
 const REMIND_HOUR = 9;
+const DAILY_REMINDERS = [
+  {
+    id: 'morning',
+    hour: 10,
+    minute: 0,
+    titleKey: 'notifications.dailyMorningTitle',
+    bodyKey: 'notifications.dailyMorningBody',
+  },
+  {
+    id: 'evening',
+    hour: 20,
+    minute: 0,
+    titleKey: 'notifications.dailyEveningTitle',
+    bodyKey: 'notifications.dailyEveningBody',
+  },
+] as const;
 
 /** Bildirim izni iste; verildi mi döner. İlk subscription oluşturulurken çağrılır. */
 export async function requestPermissions(): Promise<boolean> {
@@ -47,6 +65,71 @@ async function ensureAndroidChannel(): Promise<void> {
 }
 
 /** Aboneliğin sonraki N yenilenme tarihini hesapla (en yakından başlayarak). */
+async function ensureDailyReminderChannel(): Promise<void> {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  await Notifications.setNotificationChannelAsync(DAILY_CHANNEL_ID, {
+    name: i18n.t('notifications.dailyChannel'),
+    importance: Notifications.AndroidImportance.DEFAULT,
+    vibrationPattern: [0, 200, 150, 200],
+  });
+}
+
+export async function cancelDailyExpenseReminders(): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      all
+        .filter((n) => n.identifier.startsWith(DAILY_ID_PREFIX))
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
+    );
+  } catch {
+    /* sessiz */
+  }
+}
+
+export async function scheduleDailyExpenseReminders(): Promise<boolean> {
+  const granted = await requestPermissions();
+  if (!granted) {
+    return false;
+  }
+
+  await cancelDailyExpenseReminders();
+  await ensureDailyReminderChannel();
+
+  await Promise.all(
+    DAILY_REMINDERS.map((reminder) =>
+      Notifications.scheduleNotificationAsync({
+        identifier: `${DAILY_ID_PREFIX}${reminder.id}`,
+        content: {
+          title: i18n.t(reminder.titleKey),
+          body: i18n.t(reminder.bodyKey),
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: reminder.hour,
+          minute: reminder.minute,
+          channelId: DAILY_CHANNEL_ID,
+        },
+      })
+    )
+  );
+  return true;
+}
+
+export async function syncDailyExpenseReminders(enabled: boolean): Promise<void> {
+  if (enabled) {
+    const perm = await Notifications.getPermissionsAsync();
+    if (!perm.granted) {
+      return;
+    }
+    await scheduleDailyExpenseReminders();
+    return;
+  }
+  await cancelDailyExpenseReminders();
+}
+
 function upcomingRenewals(sub: Subscription, count: number): string[] {
   const dates: string[] = [];
   let cursor = new Date();
