@@ -702,7 +702,7 @@
         "body": "We may update this policy from time to time. We will notify you of significant changes via an in-app notice."
       }
     },
-    "contact": "For questions: <contact-email-here>"
+    "contact": "For questions: info@theordino.com"
   },
   "terms": {
     "title": "Terms of Service",
@@ -738,7 +738,7 @@
         "body": "These terms are governed by the laws of the Republic of Türkiye. Disputes will be resolved in the Istanbul Courts."
       }
     },
-    "contact": "Contact: <contact-email-here>"
+    "contact": "Contact: info@theordino.com"
   },
   "signUp": {
     "consentPrefix": "By signing up, I agree to the ",

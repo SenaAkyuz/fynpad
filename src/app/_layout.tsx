@@ -102,10 +102,13 @@ export default function RootLayout() {
   const ready =
     (fontsLoaded || !!fontError) && hydrated && initialized && lockInitialized;
 
-  // SecureStore'dan kilit durumunu oku (lockEnabled true ise isLocked=true ile başlar).
+  // Kilit ayarları KULLANICIYA ÖZEL: auth çözüldükten sonra oturumdaki kullanıcının kilidini
+  // oku. Oturum yoksa/hesap değişince yeniden hydrate → başka hesabın PIN'i istenmez.
+  const lockUserId = session?.user?.id ?? null;
   useEffect(() => {
-    void hydrateLock();
-  }, [hydrateLock]);
+    if (!initialized) return;
+    void hydrateLock(lockUserId);
+  }, [initialized, lockUserId, hydrateLock]);
 
   // Arka plana düşünce kilitle (kilit açık + oturum varsa).
   useAppLifecycle();

@@ -1,17 +1,25 @@
 import * as Crypto from 'expo-crypto';
 
 import { storage } from '@/lib/storage';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 /**
  * PIN saklama/doğrulama yardımcıları.
  *
  * PIN asla düz metin yazılmaz — cihaza özel rastgele salt + SHA-256 hash tutulur.
- * SecureStore key'leri `storage` wrapper'ı ile `fynpad.` prefixlenir:
- *   fynpad.lock.pinHash, fynpad.lock.pinSalt
+ * PIN KULLANICIYA ÖZELDİR: key'ler oturumdaki user id ile ayrılır, böylece bir hesabın
+ * PIN'i başka bir hesapta İSTENMEZ. SecureStore key'leri `storage` wrapper'ı ile `fynpad.`
+ * prefixlenir:
+ *   fynpad.lock.pinHash.<userId>, fynpad.lock.pinSalt.<userId>
  */
 
-const KEY_HASH = 'lock.pinHash';
-const KEY_SALT = 'lock.pinSalt';
+const hashKey = (userId: string) => `lock.pinHash.${userId}`;
+const saltKey = (userId: string) => `lock.pinSalt.${userId}`;
+
+/** Oturumdaki kullanıcının id'si (PIN key'lerini ayırmak için). Yoksa null. */
+function currentUserId(): string | null {
+  return useAuthStore.getState().session?.user?.id ?? null;
+}
 
 /** PIN biçim kuralı: tam 6 hane, sadece rakam. */
 export const PIN_LENGTH = 6;
@@ -33,30 +41,23 @@ export async function hashPin(pin: string, salt: string): Promise<string> {
   });
 }
 
-/** Kayıtlı salt'ı döndürür; yoksa 16 byte üretip yazar. */
-export async function getOrCreateSalt(): Promise<string> {
-  const existing = await storage.getItem(KEY_SALT);
-  if (existing) {
-    return existing;
-  }
-  const salt = toHex(Crypto.getRandomBytes(16));
-  await storage.setItem(KEY_SALT, salt);
-  return salt;
-}
-
-/** Yeni PIN tanımlar: taze salt üretir, hash'ler, ikisini de yazar. */
+/** Yeni PIN tanımlar (oturumdaki kullanıcı için): taze salt üretir, hash'ler, ikisini de yazar. */
 export async function setPin(pin: string): Promise<void> {
+  const userId = currentUserId();
+  if (!userId) return;
   const salt = toHex(Crypto.getRandomBytes(16));
   const hash = await hashPin(pin, salt);
-  await storage.setItem(KEY_SALT, salt);
-  await storage.setItem(KEY_HASH, hash);
+  await storage.setItem(saltKey(userId), salt);
+  await storage.setItem(hashKey(userId), hash);
 }
 
-/** Verilen PIN kayıtlı hash ile eşleşiyor mu? */
+/** Verilen PIN, oturumdaki kullanıcının kayıtlı hash'i ile eşleşiyor mu? */
 export async function verifyPin(pin: string): Promise<boolean> {
+  const userId = currentUserId();
+  if (!userId) return false;
   const [salt, storedHash] = await Promise.all([
-    storage.getItem(KEY_SALT),
-    storage.getItem(KEY_HASH),
+    storage.getItem(saltKey(userId)),
+    storage.getItem(hashKey(userId)),
   ]);
   if (!salt || !storedHash) {
     return false;
@@ -65,13 +66,17 @@ export async function verifyPin(pin: string): Promise<boolean> {
   return hash === storedHash;
 }
 
-/** PIN'i (hash + salt) siler — lock disable veya logout sırasında. */
+/** Oturumdaki kullanıcının PIN'ini (hash + salt) siler — lock disable sırasında. */
 export async function clearPin(): Promise<void> {
-  await Promise.all([storage.removeItem(KEY_HASH), storage.removeItem(KEY_SALT)]);
+  const userId = currentUserId();
+  if (!userId) return;
+  await Promise.all([storage.removeItem(hashKey(userId)), storage.removeItem(saltKey(userId))]);
 }
 
-/** Cihazda tanımlı bir PIN var mı? */
+/** Oturumdaki kullanıcının tanımlı bir PIN'i var mı? */
 export async function isPinSet(): Promise<boolean> {
-  const hash = await storage.getItem(KEY_HASH);
+  const userId = currentUserId();
+  if (!userId) return false;
+  const hash = await storage.getItem(hashKey(userId));
   return !!hash;
 }

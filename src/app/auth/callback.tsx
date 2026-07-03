@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
@@ -10,19 +10,19 @@ import { useToastStore } from '@/stores/useToastStore';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * OAuth callback ekranı. İki yoldan tetiklenebilir:
- *  - Web: signInWithGoogle full-page redirect yapar → Google buraya ?code=... ile döner (session YOK,
- *    bu ekran code'u exchange eder).
- *  - Native: signInWithGoogle içindeki openAuthSessionAsync redirect'i zaten yakalayıp exchange EDER
- *    (session VAR). Aynı deep link expo-router'ı buraya da yönlendirir → burada code'u TEKRAR exchange
- *    etmek "code already used" hatasına ve yanlış "something went wrong" toast'ına yol açardı.
- *
- * Bu yüzden önce session'a bakılır: zaten kuruluysa sessizce dashboard'a gidilir (çift exchange yok).
+ * OAuth callback ekranı. Platforma göre farklı çalışır:
+ *  - Web: signInWithGoogle full-page redirect yapar → Google buraya ?code=... ile döner ve session
+ *    YOK → burada code exchange edilir.
+ *  - Native: signInWithGoogle içindeki openAuthSessionAsync redirect'i ZATEN yakalayıp exchange EDER.
+ *    Aynı deep link expo-router'ı buraya da yönlendirir (spurious echo). Burada code'u TEKRAR exchange
+ *    etmek PKCE code_verifier'ı tüketilmiş olduğu için "pkce_code_verifier_not_found" hatasına ve
+ *    yanlış toast'a yol açar → native'de HİÇ exchange etme, sadece session'ın gelmesini bekle.
  */
 export default function AuthCallbackScreen() {
   const router = useRouter();
   const theme = useTheme();
   const setSession = useAuthStore((s) => s.setSession);
+  const session = useAuthStore((s) => s.session);
   const params = useLocalSearchParams<{ code?: string; error?: string; error_description?: string }>();
 
   const code = typeof params.code === 'string' ? params.code : undefined;
@@ -30,14 +30,27 @@ export default function AuthCallbackScreen() {
     (typeof params.error_description === 'string' ? params.error_description : undefined) ??
     (typeof params.error === 'string' ? params.error : undefined);
 
+  // Session gelir gelmez (native'de openAuthSessionAsync, web'de exchange sonrası) dashboard'a git.
+  useEffect(() => {
+    if (session) {
+      router.replace('/(tabs)/dashboard');
+    }
+  }, [session, router]);
+
   useEffect(() => {
     let mounted = true;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
 
     void (async () => {
-      const { supabase } = await import('@/lib/supabase');
+      // Provider hatası (kullanıcı izni reddetti vb.) → login'e dön + bilgilendir.
+      if (providerError) {
+        if (!mounted) return;
+        useToastStore.getState().show('errors.auth.unknown', 'error');
+        router.replace('/(auth)/login');
+        return;
+      }
 
-      // 1) Session zaten kuruluysa (native openAuthSessionAsync exchange'i yaptı) → sessizce dashboard.
-      //    Aynı code'u tekrar exchange etmeye çalışıp hata göstermeyi önler.
+      const { supabase } = await import('@/lib/supabase');
       const existing =
         useAuthStore.getState().session ?? (await supabase.auth.getSession()).data.session;
       if (existing) {
@@ -47,36 +60,32 @@ export default function AuthCallbackScreen() {
         return;
       }
 
-      // 2) Provider hatası (kullanıcı izni reddetti vb.) → login'e dön + bilgilendir.
-      if (providerError) {
+      // WEB: full-page redirect → session yok, code'u burada exchange et.
+      if (Platform.OS === 'web' && code) {
+        const res = await completeOAuthCallback(`fynpad://auth/callback?code=${encodeURIComponent(code)}`);
         if (!mounted) return;
-        useToastStore.getState().show('errors.auth.unknown', 'error');
-        router.replace('/(auth)/login');
+        if (res.success) {
+          const { data } = await supabase.auth.getSession();
+          setSession(data.session); // session gelince yukarıdaki effect dashboard'a alır
+        } else {
+          useToastStore.getState().show(res.errorKey, 'error');
+          router.replace('/(auth)/login');
+        }
         return;
       }
 
-      // 3) Session de code de yoksa: ekran spurious tetiklendi → sessizce login'e dön (hata gösterme).
-      if (!code) {
-        if (!mounted) return;
-        router.replace('/(auth)/login');
-        return;
-      }
-
-      // 4) Gerçek callback: session yok ama code var (web full-page redirect) → exchange et.
-      const res = await completeOAuthCallback(`fynpad://auth/callback?code=${encodeURIComponent(code)}`);
-      if (!mounted) return;
-      if (res.success) {
-        const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-        router.replace('/(tabs)/dashboard');
-      } else {
-        useToastStore.getState().show(res.errorKey, 'error');
-        router.replace('/(auth)/login');
-      }
+      // NATIVE: exchange YAPMA — openAuthSessionAsync (signInWithGoogle) hallediyor; session'ın
+      // set edilmesini bekle (yukarıdaki effect yönlendirir). Makul süre gelmezse login'e dön.
+      timeout = setTimeout(() => {
+        if (mounted && !useAuthStore.getState().session) {
+          router.replace('/(auth)/login');
+        }
+      }, 5000);
     })();
 
     return () => {
       mounted = false;
+      if (timeout) clearTimeout(timeout);
     };
   }, [router, setSession, code, providerError]);
 
