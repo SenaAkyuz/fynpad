@@ -576,6 +576,8 @@
     "deleteAccount": "Delete Account",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
+    "adPreferences": "Ad Preferences",
+    "adPreferencesUnavailable": "Ad preferences are not available right now.",
     "lockDisableConfirmTitle": "Turn off lock",
     "lockDisableConfirmMessage": "Are you sure you want to turn off device lock?",
     "lockDisableConfirmAction": "Turn off",

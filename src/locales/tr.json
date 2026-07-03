@@ -576,6 +576,8 @@
     "deleteAccount": "Hesabı Sil",
     "privacyPolicy": "Gizlilik Politikası",
     "termsOfService": "Kullanım Koşulları",
+    "adPreferences": "Reklam Tercihleri",
+    "adPreferencesUnavailable": "Reklam tercihleri şu anda kullanılamıyor.",
     "lockDisableConfirmTitle": "Kilidi kapat",
     "lockDisableConfirmMessage": "Cihaz kilidini kapatmak istediğine emin misin?",
     "lockDisableConfirmAction": "Kapat",

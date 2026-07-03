@@ -19,3 +19,18 @@ export async function requestConsent(): Promise<void> {
     // Consent alınamasa bile akışı bloklama.
   }
 }
+
+/**
+ * Kullanıcının reklam/veri tercihlerini yeniden düzenleyebilmesi için UMP "privacy options"
+ * formunu gösterir (Ayarlar → Reklam Tercihleri). Form yalnızca consent gereken bölgelerde
+ * (EU/UK) kullanılabilir; kullanılamıyorsa `false` döner ve arayan bir mesaj gösterebilir.
+ */
+export async function showAdPrivacyOptions(): Promise<boolean> {
+  try {
+    await AdsConsent.showPrivacyOptionsForm();
+    return true;
+  } catch (e) {
+    if (__DEV__) console.log('[FynPad/ads] privacy options error:', e);
+    return false;
+  }
+}

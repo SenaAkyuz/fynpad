@@ -15,6 +15,7 @@ import { SyncStatusIndicator } from '@/components/ui/SyncStatusIndicator';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
 import { cancelDailyExpenseReminders, scheduleDailyExpenseReminders } from '@/lib/notifications';
@@ -64,6 +65,15 @@ export default function SettingsScreen() {
     { value: 'light', label: t('settings.themeLight') },
     { value: 'dark', label: t('settings.themeDark') },
   ];
+
+  const onAdPreferences = () => {
+    void (async () => {
+      const shown = await showAdPrivacyOptions();
+      if (!shown) {
+        Alert.alert(t('settings.adPreferencesUnavailable'));
+      }
+    })();
+  };
 
   const onSignOut = () => {
     const confirmSignOut = () => {
@@ -170,6 +180,13 @@ export default function SettingsScreen() {
             label={t('settings.termsOfService')}
             onPress={() => router.push('/terms')}
           />
+          {Platform.OS !== 'web' && (
+            <SettingsRow
+              icon="settings"
+              label={t('settings.adPreferences')}
+              onPress={onAdPreferences}
+            />
+          )}
           <SettingsRow icon="info" label={t('settings.version')} value={version} showChevron={false} />
         </SettingsSection>
 
