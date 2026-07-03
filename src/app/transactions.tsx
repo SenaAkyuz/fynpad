@@ -191,6 +191,11 @@ export default function TransactionsScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
+          // Sanallaştırma pencereleri: liste büyüdükçe (yüzlerce işlem) yalnızca görünür alan +
+          // küçük bir tampon render edilir → bellek ve ilk render sabit kalır, akıcılık korunur.
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={9}
           renderSectionHeader={({ section }) => (
             <Text variant="labelMd" color="onSurfaceVariant" style={styles.sectionHeader}>
               {section.title}

@@ -8,7 +8,14 @@ import { useAuthStore } from '@/stores/useAuthStore';
 
 export type DefaultCurrency = 'TRY' | 'USD' | 'EUR';
 
-export type AuthResult = { success: true } | { success: false; errorKey: string };
+/**
+ * Auth işlem sonucu. `cancelled` yalnızca kullanıcı OAuth tarayıcısını kendisi kapattığında
+ * (dismiss/cancel) true olur → çağıran taraf bunu gerçek bir hata gibi GÖSTERMEMELİ, sessizce
+ * geçmeli. Session'a/navigasyona dokunulmaz (kullanıcı neredeyse orada kalır).
+ */
+export type AuthResult =
+  | { success: true }
+  | { success: false; errorKey: string; cancelled?: boolean };
 
 /**
  * Kayıt sonucu. Email confirmation AÇIK ise signUp session döndürmez (requiresVerification:true)
@@ -212,6 +219,7 @@ export async function getGoogleOAuthUrl(): Promise<
       options: {
         redirectTo,
         skipBrowserRedirect: true,
+        queryParams: { prompt: 'select_account' },
       },
     });
     if (error) {
@@ -229,6 +237,7 @@ export async function getGoogleOAuthUrl(): Promise<
 export async function signInWithGoogle(): Promise<AuthResult> {
   try {
     const redirectTo = Linking.createURL('auth/callback');
+
     if (Platform.OS === 'web') {
       const res = await getGoogleOAuthUrl();
       if (!res.success) return res;
@@ -241,6 +250,7 @@ export async function signInWithGoogle(): Promise<AuthResult> {
       options: {
         redirectTo,
         skipBrowserRedirect: true,
+        queryParams: { prompt: 'select_account' },
       },
     });
     if (error) {
@@ -251,8 +261,10 @@ export async function signInWithGoogle(): Promise<AuthResult> {
     }
 
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    // dismiss/cancel/locked → kullanıcı akışı kendisi kesti. Gerçek hata değil: session'a
+    // ve navigasyona DOKUNMA, çağıran taraf sessizce geçsin (cancelled:true).
     if (result.type !== 'success') {
-      return { success: false, errorKey: 'errors.auth.oauthCancelled' };
+      return { success: false, errorKey: 'errors.auth.oauthCancelled', cancelled: true };
     }
 
     const providerError = getOAuthCallbackParam(result.url, 'error_description');
@@ -294,6 +306,14 @@ export async function completeOAuthCallback(url: string): Promise<AuthResult> {
     const code = getOAuthCallbackParam(url, 'code');
     if (!code) {
       return { success: false, errorKey: 'errors.auth.unknown' };
+    }
+
+    // Idempotent: openAuthSessionAsync veya paralel bir handler code'u zaten exchange edip session
+    // açtıysa TEKRAR exchange etme — "code already used" hatası + yanlış "something went wrong"
+    // toast'ı yerine başarı say (session zaten var).
+    const { data: existing } = await supabase.auth.getSession();
+    if (existing.session) {
+      return { success: true };
     }
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);

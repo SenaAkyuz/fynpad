@@ -7,7 +7,10 @@
     "offline": "Çevrimdışı — değişiklikler bağlantı gelince senkronize olacak",
     "syncing": "{{count}} işlem senkronize ediliyor...",
     "queuedOffline": "{{count}} işlem senkronize bekleniyor",
-    "offlineSavedSyncLater": "Çevrimdışısın — kayıt online olunca gönderilecek"
+    "offlineSavedSyncLater": "Çevrimdışısın — kayıt online olunca gönderilecek",
+    "errorTitle": "Bir şeyler ters gitti",
+    "errorMessage": "Beklenmeyen bir hata oluştu. Tekrar deneyebilirsin.",
+    "errorRetry": "Tekrar dene"
   },
   "period": {
     "goToCurrent": {

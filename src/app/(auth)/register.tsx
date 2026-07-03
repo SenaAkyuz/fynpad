@@ -88,7 +88,8 @@ export default function RegisterScreen() {
     setGoogleLoading(true);
     const res = await signInWithGoogle();
     setGoogleLoading(false);
-    if (!res.success) {
+    // Kullanıcı tarayıcıyı kendisi kapattıysa (cancelled) hata gösterme — sessizce kayıt ekranında kal.
+    if (!res.success && !res.cancelled) {
       setFormError(t(res.errorKey));
     }
   };

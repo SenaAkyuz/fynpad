@@ -1,3 +1,6 @@
+// crypto polyfill (getRandomValues + subtle.digest) — Supabase PKCE s256 için. En üstte kalmalı.
+import '@/lib/cryptoPolyfill';
+
 // LogBox suppress — diğer TÜM import'lardan ÖNCE (özellikle expo-notifications'tan önce)
 // çalışmalı; detay için bkz. lib/logbox.ts. Bu import en üstte kalmalı.
 import '@/lib/logbox';
@@ -16,6 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '@/locales/i18n';
 import { LockScreen } from '@/components/screens/LockScreen';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { Toast } from '@/components/ui/Toast';
 import { useAppLifecycle } from '@/hooks/useAppLifecycle';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
@@ -113,12 +117,17 @@ export default function RootLayout() {
   }, []);
 
   // AdMob: SDK'yı başlat + ilk interstitial'ı önden yükle. Web'de no-op (native modül yok).
+  // Native modül eksik/başlatma patlarsa uygulamanın açılışını engellememeli (try/catch).
   useEffect(() => {
     if (Platform.OS === 'web') {
       return;
     }
-    void mobileAds().initialize();
-    initInterstitial();
+    try {
+      void mobileAds().initialize();
+      initInterstitial();
+    } catch (e) {
+      if (__DEV__) console.warn('[FynPad] AdMob init skipped:', e);
+    }
   }, []);
 
   useEffect(() => {
@@ -230,6 +239,7 @@ export default function RootLayout() {
         >
           <ThemeProvider>
             <View style={{ flex: 1 }}>
+              <ErrorBoundary>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="auth/callback" />
@@ -307,6 +317,7 @@ export default function RootLayout() {
                   }}
                 />
               </Stack>
+              </ErrorBoundary>
               {session ? <NotificationsBootstrap /> : null}
               {showLock ? <LockScreen /> : null}
               <Toast />

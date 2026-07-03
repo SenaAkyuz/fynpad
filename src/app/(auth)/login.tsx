@@ -83,7 +83,8 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     const res = await signInWithGoogle();
     setGoogleLoading(false);
-    if (!res.success) {
+    // Kullanıcı tarayıcıyı kendisi kapattıysa (cancelled) hata gösterme — sessizce login'de kal.
+    if (!res.success && !res.cancelled) {
       setFormError(t(res.errorKey));
     }
   };

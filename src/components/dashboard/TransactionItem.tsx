@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -21,7 +22,7 @@ export type TransactionItemProps = {
  * İşlem satırı (design): nötr kare ikon + başlık (note) + altsatır (kategori • tarih) + tutar.
  * Income secondary (+), expense tertiary (-). onPress verilirse satır Pressable olur.
  */
-export function TransactionItem({ transaction, category, locale, onPress }: TransactionItemProps) {
+function TransactionItemBase({ transaction, category, locale, onPress }: TransactionItemProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -79,6 +80,13 @@ export function TransactionItem({ transaction, category, locale, onPress }: Tran
 
   return <View style={[styles.card, cardColors]}>{inner}</View>;
 }
+
+/**
+ * memo: uzun listelerde (SectionList) parent yeniden render olduğunda, prop'ları değişmeyen
+ * satırların yeniden render edilmesini önler. transaction/category referansları React Query
+ * cache'inden stabil geldiği için etkili olur.
+ */
+export const TransactionItem = memo(TransactionItemBase);
 
 const styles = StyleSheet.create({
   card: {

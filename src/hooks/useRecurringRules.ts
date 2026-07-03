@@ -8,10 +8,10 @@ import {
   updateRecurringRule,
   type RecurringRulePatch,
 } from '@/lib/recurring';
-import { subscriptionsKey } from '@/hooks/useSubscriptions';
+import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { transactionsKey } from '@/hooks/useTransactions';
 
-export const recurringRulesKey = ['recurring-rules'] as const;
+export { recurringRulesKey };
 
 export function useRecurringRules() {
   return useQuery({

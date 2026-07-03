@@ -14,10 +14,10 @@ import {
   updateSubscription,
   type SubscriptionPatch,
 } from '@/lib/subscriptions';
-import { recurringRulesKey } from '@/hooks/useRecurringRules';
+import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import type { Subscription } from '@/types';
 
-export const subscriptionsKey = ['subscriptions'] as const;
+export { subscriptionsKey };
 
 export function useSubscriptions() {
   return useQuery({

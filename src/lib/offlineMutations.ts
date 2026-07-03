@@ -3,8 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { budgetsKey } from '@/hooks/useBudgets';
 import { categoriesKey } from '@/hooks/useCategories';
 import { goalsKey } from '@/hooks/useGoals';
-import { recurringRulesKey } from '@/hooks/useRecurringRules';
-import { subscriptionsKey } from '@/hooks/useSubscriptions';
+import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { transactionsKey } from '@/hooks/useTransactions';
 import {
   createCategory,

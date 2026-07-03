@@ -7,7 +7,10 @@
     "offline": "Offline — changes will sync when reconnected",
     "syncing": "Syncing {{count}} change(s)...",
     "queuedOffline": "{{count}} change(s) queued for sync",
-    "offlineSavedSyncLater": "You're offline — saved and will sync when online"
+    "offlineSavedSyncLater": "You're offline — saved and will sync when online",
+    "errorTitle": "Something went wrong",
+    "errorMessage": "An unexpected error occurred. You can try again.",
+    "errorRetry": "Try again"
   },
   "period": {
     "goToCurrent": {
