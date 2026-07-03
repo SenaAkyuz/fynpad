@@ -279,6 +279,10 @@ export async function signInWithGoogle(): Promise<AuthResult> {
 
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     if (exchangeError) {
+      // Yarış: callback ekranı aynı code'u önce exchange ettiyse burada verifier tükenmiş olur
+      // ama session VARDIR → hata sayma, başarı dön.
+      const { data: after } = await supabase.auth.getSession();
+      if (after.session) return { success: true };
       return fail('signInWithGoogle.exchangeCodeForSession', exchangeError);
     }
     return { success: true };
@@ -318,6 +322,12 @@ export async function completeOAuthCallback(url: string): Promise<AuthResult> {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
+      // Yarış: signInWithGoogle aynı code'u önce exchange ettiyse verifier tükenmiş olur ama
+      // session VARDIR → hata gösterme, başarı say.
+      const { data: after } = await supabase.auth.getSession();
+      if (after.session) {
+        return { success: true };
+      }
       return fail('completeOAuthCallback.exchangeCodeForSession', error);
     }
     return { success: true };
