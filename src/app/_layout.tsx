@@ -24,6 +24,7 @@ import { Toast } from '@/components/ui/Toast';
 import { useAppLifecycle } from '@/hooks/useAppLifecycle';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
+import { requestConsent } from '@/lib/adsConsent';
 import { fontMap } from '@/lib/fonts';
 import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStatus';
 import { rescheduleAll, syncDailyExpenseReminders } from '@/lib/notifications';
@@ -119,18 +120,21 @@ export default function RootLayout() {
     return () => stopNetworkMonitoring();
   }, []);
 
-  // AdMob: SDK'yı başlat + ilk interstitial'ı önden yükle. Web'de no-op (native modül yok).
+  // AdMob: önce EU/UK consent (UMP), sonra SDK init + ilk interstitial. Web'de no-op (native yok).
   // Native modül eksik/başlatma patlarsa uygulamanın açılışını engellememeli (try/catch).
   useEffect(() => {
     if (Platform.OS === 'web') {
       return;
     }
-    try {
-      void mobileAds().initialize();
-      initInterstitial();
-    } catch (e) {
-      if (__DEV__) console.warn('[FynPad] AdMob init skipped:', e);
-    }
+    void (async () => {
+      try {
+        await requestConsent(); // EU/UK'de consent formu; Türkiye'de no-op
+        await mobileAds().initialize();
+        initInterstitial();
+      } catch (e) {
+        if (__DEV__) console.warn('[FynPad] AdMob init skipped:', e);
+      }
+    })();
   }, []);
 
   useEffect(() => {
