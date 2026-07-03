@@ -675,15 +675,15 @@
     "sections": {
       "collected": {
         "title": "1. Data We Collect",
-        "body": "Your email address, for account verification and sign-in. When you sign in with Google, we may receive your name, email address, profile photo and Google user ID from your Google account. The financial records you add (income, expense, category, date, amount, note). Your device language and theme preference. The budget limits and subscription details you define in the app. Your biometric data or PIN code is stored locally on your device — it is NOT sent to our servers."
+        "body": "Your email address, for account verification and sign-in. When you sign in with Google, we may receive your name, email address, profile photo and Google user ID from your Google account. The financial records you add (income, expense, category, date, amount, note). Your device language and theme preference. The budget limits and subscription details you define in the app. Your biometric data or PIN code is stored locally on your device — it is NOT sent to our servers. For in-app ads, Google AdMob may process your device advertising ID, approximate location and ad interaction data."
       },
       "purpose": {
         "title": "2. How We Use Data",
-        "body": "To create your account, let you sign in with Google or email, manage your profile, store and display your financial records, and provide analytics and budget comparisons. We do NOT use your data for marketing or third-party advertising."
+        "body": "To create your account, let you sign in with Google or email, manage your profile, store and display your financial records, and provide analytics and budget comparisons. To keep the app free, we show in-app ads via Google AdMob. We do NOT share your FINANCIAL records (income, expenses, transaction data) with third parties for marketing or advertising; ads operate through the device advertising ID and do not access your financial data."
       },
       "thirdParty": {
         "title": "3. Third-Party Processors",
-        "body": "Database and authentication: Supabase Inc. (USA). Google sign-in: Google LLC. Email delivery: Resend via Supabase (sign-up confirmation, password reset). These providers act as data processors or identity providers and are subject to their own privacy policies."
+        "body": "Database and authentication: Supabase Inc. (USA). Google sign-in: Google LLC. Email delivery: Resend via Supabase (sign-up confirmation, password reset). Advertising: Google AdMob (Google LLC) — serves in-app ads and may use your device advertising ID. These providers act as data processors, ad networks or identity providers and are subject to their own privacy policies."
       },
       "rights": {
         "title": "4. Your Rights",

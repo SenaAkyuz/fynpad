@@ -675,15 +675,15 @@
     "sections": {
       "collected": {
         "title": "1. Topladığımız Veriler",
-        "body": "E-posta adresiniz, hesap doğrulama ve oturum açma için. Google ile giriş yaptığınızda Google hesabınızdan adınız, e-posta adresiniz, profil fotoğrafınız ve Google kullanıcı kimliğiniz alınabilir. Eklediğiniz finansal kayıtlar (gelir, gider, kategori, tarih, miktar, not). Cihaz dili ve tema tercihi. Uygulama içinde tanımladığınız bütçe limitleri ve abonelik bilgileri. Biyometrik veri veya PIN kodunuz cihazınızda yerel olarak saklanır — sunucularımıza GÖNDERİLMEZ."
+        "body": "E-posta adresiniz, hesap doğrulama ve oturum açma için. Google ile giriş yaptığınızda Google hesabınızdan adınız, e-posta adresiniz, profil fotoğrafınız ve Google kullanıcı kimliğiniz alınabilir. Eklediğiniz finansal kayıtlar (gelir, gider, kategori, tarih, miktar, not). Cihaz dili ve tema tercihi. Uygulama içinde tanımladığınız bütçe limitleri ve abonelik bilgileri. Biyometrik veri veya PIN kodunuz cihazınızda yerel olarak saklanır — sunucularımıza GÖNDERİLMEZ. Uygulama içi reklamlar için Google AdMob, cihazınızın reklam kimliğini (advertising ID), yaklaşık konum ve reklam etkileşim verilerini işleyebilir."
       },
       "purpose": {
         "title": "2. Verilerin Kullanım Amacı",
-        "body": "Hesabınızı oluşturmak, Google veya e-posta ile oturum açmanızı sağlamak, profilinizi yönetmek, finansal kayıtlarınızı saklayıp size göstermek, analitik ve bütçe karşılaştırması sunmak için. Verilerinizi pazarlama veya üçüncü taraf reklamcılık için KULLANMIYORUZ."
+        "body": "Hesabınızı oluşturmak, Google veya e-posta ile oturum açmanızı sağlamak, profilinizi yönetmek, finansal kayıtlarınızı saklayıp size göstermek, analitik ve bütçe karşılaştırması sunmak için. Uygulamayı ücretsiz sunabilmek adına Google AdMob aracılığıyla uygulama içinde reklam gösteririz. FİNANSAL kayıtlarınızı (gelir, gider, işlem verileri) pazarlama veya reklam amacıyla üçüncü taraflarla PAYLAŞMAYIZ; reklamlar cihaz reklam kimliği üzerinden çalışır, finansal verilerinize erişmez."
       },
       "thirdParty": {
         "title": "3. Üçüncü Taraf İşleyiciler",
-        "body": "Veri tabanı ve kimlik doğrulama: Supabase Inc. (ABD). Google ile giriş: Google LLC. E-posta gönderimi: Supabase üzerinden Resend (kayıt onayı, şifre sıfırlama). Bu sağlayıcılar veri işleyici veya kimlik sağlayıcı sıfatıyla kendi gizlilik politikalarına tabidir."
+        "body": "Veri tabanı ve kimlik doğrulama: Supabase Inc. (ABD). Google ile giriş: Google LLC. E-posta gönderimi: Supabase üzerinden Resend (kayıt onayı, şifre sıfırlama). Reklam: Google AdMob (Google LLC) — uygulama içi reklamları sunar ve cihazınızın reklam kimliğini kullanabilir. Bu sağlayıcılar veri işleyici, reklam ağı veya kimlik sağlayıcı sıfatıyla kendi gizlilik politikalarına tabidir."
       },
       "rights": {
         "title": "4. Haklarınız",
