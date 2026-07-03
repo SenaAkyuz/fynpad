@@ -25,6 +25,11 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+
+# local debug screenshots
+fynpad-tablet-*.png
+tablet-*.png
 
 # macOS
 .DS_Store
