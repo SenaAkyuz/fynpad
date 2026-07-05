@@ -255,6 +255,7 @@ export default function RootLayout() {
                 <Stack.Screen name="pin-setup" />
                 <Stack.Screen name="recurring-rules" />
                 <Stack.Screen name="transactions" />
+                <Stack.Screen name="reminders" />
                 <Stack.Screen name="categories" />
                 <Stack.Screen name="subscriptions" />
                 <Stack.Screen name="privacy" />
@@ -269,6 +270,14 @@ export default function RootLayout() {
                 />
                 <Stack.Screen
                   name="profile-edit"
+                  options={{
+                    presentation: 'modal',
+                    headerShown: false,
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
+                  name="set-password"
                   options={{
                     presentation: 'modal',
                     headerShown: false,

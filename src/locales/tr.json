@@ -335,10 +335,18 @@
   },
   "notifications": {
     "dailyChannel": "Günlük Hatırlatmalar",
-    "dailyMorningTitle": "Bugünün harcamalarını yakalayalım",
-    "dailyMorningBody": "Kahveni alırken FynPad'e hızlıca bir göz at.",
-    "dailyEveningTitle": "Bugünün harcamalarını kaydettin mi?",
-    "dailyEveningBody": "Günü kapatmadan küçük notları eklemek yarının bütçesini netleştirir."
+    "dailyMorningTitle": "FynPad",
+    "dailyMorningBody": "Harcamalarını eklemeyi unutma.",
+    "dailyEveningTitle": "FynPad",
+    "dailyEveningBody": "Bugünkü hareketlerini kaydettin mi?"
+  },
+  "reminders": {
+    "title": "Hatırlatmalar",
+    "intro": "Sana günde iki kez, uygulamana dönüp harcamalarını kaydetmen için hatırlatma gönderiyoruz.",
+    "toggleLabel": "Günlük hatırlatmalar",
+    "toggleHint": "İstediğin zaman buradan kapatabilirsin.",
+    "enabledToast": "Bildirimler açıldı.",
+    "permissionDenied": "Bildirim izni verilmedi. Cihaz ayarlarından açabilirsin."
   },
   "analytics": {
     "title": "Analiz",
@@ -578,6 +586,8 @@
     "termsOfService": "Kullanım Koşulları",
     "adPreferences": "Reklam Tercihleri",
     "adPreferencesUnavailable": "Reklam tercihleri şu anda kullanılamıyor.",
+    "setPassword": "Şifre Oluştur",
+    "changePassword": "Şifre Değiştir",
     "lockDisableConfirmTitle": "Kilidi kapat",
     "lockDisableConfirmMessage": "Cihaz kilidini kapatmak istediğine emin misin?",
     "lockDisableConfirmAction": "Kapat",
@@ -591,6 +601,19 @@
     "namePlaceholder": "İsmin (opsiyonel)",
     "save": "Kaydet",
     "cancel": "İptal"
+  },
+  "setPassword": {
+    "createTitle": "Şifre Oluştur",
+    "changeTitle": "Şifre Değiştir",
+    "createSubtitle": "Hesabına bir şifre belirle; böylece Google'ın yanı sıra e-posta ve şifrenle de giriş yapabilirsin.",
+    "changeSubtitle": "Hesabın için yeni bir şifre belirle.",
+    "passwordLabel": "Yeni Şifre",
+    "passwordPlaceholder": "En az 8 karakter",
+    "confirmPasswordLabel": "Yeni Şifre (Tekrar)",
+    "confirmPasswordPlaceholder": "Yeni şifreni tekrar gir",
+    "submit": "Kaydet",
+    "createSuccess": "Şifren oluşturuldu. Artık e-posta ve şifre ile de giriş yapabilirsin.",
+    "changeSuccess": "Şifren güncellendi."
   },
   "transactionEdit": {
     "title": "İşlemi Düzenle",
@@ -791,7 +814,7 @@
       "deleteFailed": "Kural silinemedi."
     },
     "auth": {
-      "invalidCredentials": "E-posta veya şifre hatalı.",
+      "invalidCredentials": "E-posta veya şifre hatalı. Bu hesabı Google ile oluşturduysan 'Google ile Giriş Yap' seçeneğini kullan.",
       "emailAlreadyInUse": "Bu e-posta zaten kayıtlı.",
       "weakPassword": "Şifre çok zayıf.",
       "rateLimitEmail": "Çok fazla deneme yaptın. Lütfen 1 saat bekle ve tekrar dene.",

@@ -33,6 +33,24 @@ const DAILY_REMINDERS = [
   },
 ] as const;
 
+/** Bildirim izni ŞU AN verili mi (istek yapmaz). Zil ikonu davranışını belirler. */
+export async function getNotificationPermission(): Promise<boolean> {
+  try {
+    const { granted } = await Notifications.getPermissionsAsync();
+    return granted;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * İzni ister; verilirse günde 2 sabit hatırlatmayı (prefix-güvenli) zamanlar. Zil ikonuna
+ * ilk basışta çağrılır. Return: izin verildi (ve zamanlandı) mı.
+ */
+export async function requestAndScheduleReminders(): Promise<boolean> {
+  return scheduleDailyExpenseReminders();
+}
+
 /** Bildirim izni iste; verildi mi döner. İlk subscription oluşturulurken çağrılır. */
 export async function requestPermissions(): Promise<boolean> {
   try {

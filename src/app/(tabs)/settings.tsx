@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { PreferencePicker, type PreferenceOption } from '@/components/settings/PreferencePicker';
 import { ProfileCard } from '@/components/settings/ProfileCard';
@@ -18,9 +18,9 @@ import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
-import { cancelDailyExpenseReminders, scheduleDailyExpenseReminders } from '@/lib/notifications';
 import { clearPin } from '@/lib/pin';
 import { useAppStore, type Locale, type ThemeMode } from '@/stores/useAppStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useLockStore } from '@/stores/useLockStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -44,6 +44,11 @@ export default function SettingsScreen() {
   const { data: profile } = useProfile();
   const { data: categories = [] } = useCategories();
   const updateProfile = useUpdateProfile();
+
+  const session = useAuthStore((s) => s.session);
+  // 'email' identity varsa hesabın zaten bir şifresi vardır → "Şifre Değiştir".
+  // Yoksa (yalnızca Google OAuth) hesabın şifresi yok → "Şifre Oluştur".
+  const hasPassword = session?.user?.identities?.some((i) => i.provider === 'email') ?? false;
 
   const [picker, setPicker] = useState<PickerKind>(null);
 
@@ -141,8 +146,6 @@ export default function SettingsScreen() {
 
         <SecuritySection />
 
-        <NotificationsSection />
-
         <SettingsSection title={t('settings.sections.data')}>
           <SettingsRow
             icon="tag"
@@ -188,6 +191,19 @@ export default function SettingsScreen() {
             />
           )}
           <SettingsRow icon="info" label={t('settings.version')} value={version} showChevron={false} />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.sections.account')}>
+          <SettingsRow
+            icon="key"
+            label={hasPassword ? t('settings.changePassword') : t('settings.setPassword')}
+            onPress={() =>
+              router.push({
+                pathname: '/set-password',
+                params: { mode: hasPassword ? 'change' : 'create' },
+              })
+            }
+          />
         </SettingsSection>
 
         <Pressable
@@ -240,52 +256,6 @@ export default function SettingsScreen() {
         onClose={() => setPicker(null)}
       />
     </Screen>
-  );
-}
-
-function NotificationsSection() {
-  const { t } = useTranslation();
-  const enabled = useAppStore((s) => s.dailyExpenseRemindersEnabled);
-  const setEnabled = useAppStore((s) => s.setDailyExpenseRemindersEnabled);
-
-  const onToggleDailyReminders = (next: boolean) => {
-    void (async () => {
-      if (!next) {
-        setEnabled(false);
-        await cancelDailyExpenseReminders();
-        return;
-      }
-
-      const scheduled = await scheduleDailyExpenseReminders();
-      if (!scheduled) {
-        Alert.alert(
-          t('settings.notificationPermissionDeniedTitle'),
-          t('settings.notificationPermissionDeniedMessage'),
-          [
-            { text: t('settings.signOutCancel'), style: 'cancel' },
-            {
-              text: t('subscriptions.permissions.openSettings'),
-              onPress: () => void Linking.openSettings(),
-            },
-          ]
-        );
-        setEnabled(false);
-        return;
-      }
-      setEnabled(true);
-    })();
-  };
-
-  return (
-    <SettingsSection title={t('settings.sections.notifications')}>
-      <SettingsToggle
-        icon="bell"
-        label={t('settings.dailyExpenseReminders')}
-        value={enabled}
-        onValueChange={onToggleDailyReminders}
-        hint={t('settings.dailyExpenseRemindersHint')}
-      />
-    </SettingsSection>
   );
 }
 

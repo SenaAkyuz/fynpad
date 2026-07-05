@@ -1,22 +1,45 @@
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { useProfile } from '@/hooks/useProfile';
+import { getNotificationPermission, requestAndScheduleReminders } from '@/lib/notifications';
+import { useAppStore } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useToastStore } from '@/stores/useToastStore';
 import { useTheme } from '@/theme/useTheme';
 
 /**
  * Üst bar (design): sol avatar (initials), ortada FynPad wordmark, sağda bildirim zili.
- * Greeting yok (design'da yok). Notification no-op (sonraki part).
+ * Zil davranışı izin-tabanlı: izin YOKKEN bas → sistem izin dialog'u + zamanla; izin VARKEN
+ * bas → Hatırlatmalar ekranı. Saat/detay kullanıcıya gösterilmez.
  */
 export function DashboardHeader() {
   const { colors } = useTheme();
+  const router = useRouter();
   const email = useAuthStore((s) => s.user?.email ?? '');
   const { data: profile } = useProfile();
   // profile.full_name varsa onu, yoksa email'in @ öncesini kullan (brief 8.7)
   const displayName = profile?.fullName?.trim() || email.split('@')[0] || 'F';
   const initial = (displayName.trim()[0] ?? 'F').toUpperCase();
+
+  const onBellPress = () => {
+    void (async () => {
+      // İzin varsa doğrudan Hatırlatmalar ekranı; yoksa izin iste + (verilirse) zamanla.
+      if (await getNotificationPermission()) {
+        router.push('/reminders');
+        return;
+      }
+      const granted = await requestAndScheduleReminders();
+      if (granted) {
+        useAppStore.getState().setDailyExpenseRemindersEnabled(true);
+        useToastStore.getState().show('reminders.enabledToast', 'success');
+      } else {
+        useToastStore.getState().show('reminders.permissionDenied', 'info');
+      }
+    })();
+  };
 
   return (
     <View style={styles.row}>
@@ -30,7 +53,12 @@ export function DashboardHeader() {
         FynPad
       </Text>
 
-      <Pressable accessibilityRole="button" hitSlop={8} style={styles.bell}>
+      <Pressable
+        accessibilityRole="button"
+        hitSlop={8}
+        style={styles.bell}
+        onPress={onBellPress}
+      >
         <Icon name="bell" size={24} color={colors.primary} strokeWidth={2} />
       </Pressable>
     </View>

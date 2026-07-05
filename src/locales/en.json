@@ -335,10 +335,18 @@
   },
   "notifications": {
     "dailyChannel": "Daily Reminders",
-    "dailyMorningTitle": "Let's keep today's spending in view",
-    "dailyMorningBody": "Take a quick look at FynPad while your day gets moving.",
-    "dailyEveningTitle": "Did you log today's spending?",
-    "dailyEveningBody": "A quick check before the day ends keeps tomorrow's budget clearer."
+    "dailyMorningTitle": "FynPad",
+    "dailyMorningBody": "Don't forget to log your expenses.",
+    "dailyEveningTitle": "FynPad",
+    "dailyEveningBody": "Did you track today's activity?"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "intro": "We send you two daily reminders to check back in and log your spending.",
+    "toggleLabel": "Daily reminders",
+    "toggleHint": "You can turn these off here anytime.",
+    "enabledToast": "Notifications enabled.",
+    "permissionDenied": "Notification permission denied. You can enable it in your device settings."
   },
   "analytics": {
     "title": "Analytics",
@@ -578,6 +586,8 @@
     "termsOfService": "Terms of Service",
     "adPreferences": "Ad Preferences",
     "adPreferencesUnavailable": "Ad preferences are not available right now.",
+    "setPassword": "Set Password",
+    "changePassword": "Change Password",
     "lockDisableConfirmTitle": "Turn off lock",
     "lockDisableConfirmMessage": "Are you sure you want to turn off device lock?",
     "lockDisableConfirmAction": "Turn off",
@@ -591,6 +601,19 @@
     "namePlaceholder": "Your name (optional)",
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "setPassword": {
+    "createTitle": "Set Password",
+    "changeTitle": "Change Password",
+    "createSubtitle": "Set a password for your account so you can sign in with email and password in addition to Google.",
+    "changeSubtitle": "Choose a new password for your account.",
+    "passwordLabel": "New Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmPasswordLabel": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Re-enter your new password",
+    "submit": "Save",
+    "createSuccess": "Your password has been set. You can now also sign in with email and password.",
+    "changeSuccess": "Your password has been updated."
   },
   "transactionEdit": {
     "title": "Edit Transaction",
@@ -791,7 +814,7 @@
       "deleteFailed": "Couldn't delete the rule."
     },
     "auth": {
-      "invalidCredentials": "Invalid email or password.",
+      "invalidCredentials": "Invalid email or password. If you created this account with Google, please use 'Sign in with Google'.",
       "emailAlreadyInUse": "This email is already registered.",
       "weakPassword": "Password is too weak.",
       "rateLimitEmail": "Too many attempts. Please wait 1 hour and try again.",

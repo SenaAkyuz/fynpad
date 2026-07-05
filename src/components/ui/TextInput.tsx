@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { ErrorText } from '@/components/ui/ErrorText';
+import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -95,7 +96,12 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(function TextIn
             onPress={() => setHidden((h) => !h)}
             style={styles.rightIcon}
           >
-            <Text variant="bodyMd">{hidden ? '👁' : '🙈'}</Text>
+            <Icon
+              name={hidden ? 'eye' : 'eye-off'}
+              size={20}
+              color={colors.onSurfaceVariant}
+              strokeWidth={2}
+            />
           </Pressable>
         ) : rightIcon ? (
           <View style={styles.rightIcon}>{rightIcon}</View>
