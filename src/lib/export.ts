@@ -36,19 +36,34 @@ function categoryName(tx: Transaction, byId: Map<string, Category>, t: Translate
   return cat ? t(cat.name) : t('dashboard.categories.other');
 }
 
-/** RFC 4180: virgül/çift tırnak/yeni satır içeren alanları tırnakla, iç tırnağı ikiye katla. */
-function csvCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
+/** RFC 4180: ayraç/çift tırnak/yeni satır içeren alanları tırnakla, iç tırnağı ikiye katla. */
+function csvCell(value: string, delimiter: string): string {
+  if (value.includes(delimiter) || /["\n\r]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
 }
 
+/**
+ * Excel, CSV'yi Windows'un liste ayırıcısına göre sütunlara böler: tr-TR'de ';', en-US'te ','.
+ * Ondalık ayraç da aynı locale'i izlemeli — tr-TR'de '.' binlik ayırıcı sayıldığı için
+ * "150.75" tutarı 15075 veya düz metin olarak okunur.
+ */
+function csvSyntax(locale: Locale): { delimiter: string; amount: (value: number) => string } {
+  if (locale === 'tr') {
+    return { delimiter: ';', amount: (v) => v.toFixed(2).replace('.', ',') };
+  }
+  return { delimiter: ',', amount: (v) => v.toFixed(2) };
+}
+
 function buildCsv(
   transactions: Transaction[],
   byId: Map<string, Category>,
-  t: Translate
+  t: Translate,
+  locale: Locale
 ): string {
+  const { delimiter, amount } = csvSyntax(locale);
+
   const header = [
     t('export.columns.date'),
     t('export.columns.kind'),
@@ -63,13 +78,15 @@ function buildCsv(
     tx.date,
     tx.kind === 'income' ? t('export.kindIncome') : t('export.kindExpense'),
     categoryName(tx, byId, t),
-    tx.amount.toFixed(2),
+    amount(tx.amount),
     tx.currency,
     tx.note ?? '',
     tx.recurringRuleId ? t('export.yes') : t('export.no'),
   ]);
 
-  return [header, ...rows].map((cols) => cols.map(csvCell).join(',')).join('\r\n');
+  return [header, ...rows]
+    .map((cols) => cols.map((col) => csvCell(col, delimiter)).join(delimiter))
+    .join('\r\n');
 }
 
 function escapeHtml(value: string): string {
@@ -187,7 +204,7 @@ function writeCacheFile(filename: string, content: string): string {
  * Brief 5 madde 2. DB değişmez; sadece okuma + dosya üretimi.
  */
 export async function exportTransactions(params: ExportParams): Promise<void> {
-  const { from, to, format, t } = params;
+  const { from, to, format, locale, t } = params;
 
   if (!(await Sharing.isAvailableAsync())) {
     throw new ExportError('SHARING_UNAVAILABLE');
@@ -207,7 +224,7 @@ export async function exportTransactions(params: ExportParams): Promise<void> {
 
   if (format === 'csv') {
     // Excel'in TR karakterlerini UTF-8 okuması için BOM ekle.
-    const csv = '﻿' + buildCsv(transactions, byId, t);
+    const csv = '﻿' + buildCsv(transactions, byId, t, locale);
     const uri = writeCacheFile(`${base}.csv`, csv);
     await Sharing.shareAsync(uri, {
       mimeType: 'text/csv',

@@ -7,14 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "fynpad",
     "userInterfaceStyle": "automatic",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/7ba18be2-8775-4724-b5d4-81257a289ad8"
-    },
     "ios": {
-      "icon": "./assets/expo.icon",
       "supportsTablet": false,
       "bundleIdentifier": "com.ordino.fynpad",
       "buildNumber": "1",
@@ -28,7 +21,7 @@
     "android": {
       "package": "com.ordino.fynpad",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#7C3AED",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"

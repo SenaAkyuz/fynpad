@@ -1,6 +1,7 @@
 import type { Currency, Locale } from '@/types';
 
-const intlLocale = (locale: Locale): string => (locale === 'tr' ? 'tr-TR' : 'en-US');
+/** Uygulama locale'i → Intl/ECMA-402 etiketi. Büyük-küçük harf dönüşümü de bunu kullanmalı. */
+export const intlLocale = (locale: Locale): string => (locale === 'tr' ? 'tr-TR' : 'en-US');
 
 /**
  * Locale-aware para formatı.

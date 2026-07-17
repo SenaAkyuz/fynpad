@@ -10,6 +10,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { deleteAccount } from '@/lib/account';
+import { intlLocale } from '@/lib/format';
+import { useAppStore } from '@/stores/useAppStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -32,12 +34,17 @@ export default function DeleteAccountScreen() {
   const keyword = t('deleteAccount.confirmKeyword');
   const points = t('deleteAccount.warningPoints', { returnObjects: true }) as unknown as string[];
   const isOnline = useNetworkStore((s) => s.isOnline);
+  const locale = useAppStore((s) => s.locale);
 
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const matches = confirmText.trim().toLocaleUpperCase() === keyword.toLocaleUpperCase();
+  // Onay kelimesi tr'de "SİL". Argümansız toLocaleUpperCase() cihazın locale'ini kullanır:
+  // cihaz Türkçe değilse "sil" → "SIL" olur ve "SİL" ile eşleşmez, kullanıcı hesabını silemez.
+  // Karşılaştırma, cihazın değil uygulamanın diline göre yapılmalı.
+  const upper = (value: string) => value.toLocaleUpperCase(intlLocale(locale));
+  const matches = upper(confirmText.trim()) === upper(keyword);
   // Hesap silme offline yapılamaz: auth + hard delete RPC ister, queue'ya alınamaz/alınmamalı.
   const canSubmit = matches && !submitting && isOnline;
 
