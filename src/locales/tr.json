@@ -123,6 +123,7 @@
     "recentTransactions": "Son İşlemler",
     "viewAll": "Tümünü gör",
     "total": "Toplam",
+    "currencyNote": "Özetler yalnızca {{currency}} cinsinden hesaplanır. Diğer para birimlerindeki işlemler listede görünür ancak toplamlara dahil edilmez.",
     "noTransactions": "Bu dönemde işlem yok",
     "period": {
       "day": "Gün",

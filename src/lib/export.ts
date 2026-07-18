@@ -20,6 +20,13 @@ export type ExportParams = {
   format: ExportFormat;
   locale: Locale;
   t: Translate;
+  /**
+   * Özet satırlarının (gelir/gider/net) hesaplanacağı para birimi — profilin varsayılanı.
+   * Eskiden toplam, ilk işlemin currency'siyle ETİKETLENİYOR ama tüm para birimleri
+   * ham olarak toplanıyordu. Artık toplamlar bu currency'ye filtreli; işlem satırları
+   * kendi para birimini göstermeye devam eder.
+   */
+  currency: Currency;
 };
 
 /** Sebebi koda göre ayırt edilebilen export hatası (UI mesajı için). */
@@ -102,10 +109,9 @@ function buildHtml(
   byId: Map<string, Category>,
   params: ExportParams
 ): string {
-  const { from, to, locale, t } = params;
-  const totals = getTotals(transactions);
-  // Toplamlar kullanıcının ilk işleminin para birimine göre etiketlenir (MVP, brief: tek toplam).
-  const currency: Currency = transactions[0]?.currency ?? 'TRY';
+  const { from, to, locale, t, currency } = params;
+  // Toplamlar YALNIZCA bu para birimindeki işlemlerden; diğerleri satır olarak listede kalır.
+  const totals = getTotals(transactions, currency);
 
   const rows = transactions
     .map((tx) => {

@@ -29,6 +29,7 @@ import {
 } from '@/lib/analytics';
 import { computeBudgetStatus, startOfMonthISO } from '@/lib/budgets';
 import { getPeriodRange } from '@/lib/period';
+import { hasOtherCurrencies } from '@/lib/currencyScope';
 import { getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
 import { usePeriodStore } from '@/stores/usePeriodStore';
@@ -63,21 +64,26 @@ export default function AnalyticsScreen() {
 
   // Gider tipi filtresi gelir'i etkilemez (filterByExpenseType gelirleri korur):
   // net = gelir − filtreli gider, böylece Sabit/Değişken seçiminde net birikim güncellenir.
+  // Tüm metrikler varsayılan para birimine filtreli (bkz. lib/currencyScope.ts).
   const totals = useMemo(
-    () => getTotals(filterByExpenseType(transactions, expenseType)),
-    [transactions, expenseType]
+    () => getTotals(filterByExpenseType(transactions, expenseType), currency),
+    [transactions, expenseType, currency]
   );
   const cashFlow = useMemo(
-    () => cashFlowSeries(transactions, filter, locale, expenseType),
-    [transactions, filter, locale, expenseType]
+    () => cashFlowSeries(transactions, filter, currency, locale, expenseType),
+    [transactions, filter, currency, locale, expenseType]
   );
   const avgDaily = useMemo(
-    () => avgDailySpend(transactions, filter, expenseType),
-    [transactions, filter, expenseType]
+    () => avgDailySpend(transactions, filter, currency, expenseType),
+    [transactions, filter, currency, expenseType]
   );
   const topCats = useMemo(
-    () => topCategories(transactions, 5, expenseType),
-    [transactions, expenseType]
+    () => topCategories(transactions, currency, 5, expenseType),
+    [transactions, currency, expenseType]
+  );
+  const hasExcludedCurrencies = useMemo(
+    () => hasOtherCurrencies(transactions, currency),
+    [transactions, currency]
   );
   const budgetStatuses = useMemo(
     () => budgets.map((b) => computeBudgetStatus(b, monthTransactions)),
@@ -127,6 +133,13 @@ export default function AnalyticsScreen() {
             onChange={(v) => setExpenseType(v as ExpenseType)}
           />
         </View>
+
+        {/* Yalnızca gerçekten dışarıda kalan işlem varsa göster (bkz. lib/currencyScope.ts). */}
+        {hasExcludedCurrencies ? (
+          <Text variant="labelSm" color="onSurfaceVariant">
+            {t('dashboard.currencyNote', { currency })}
+          </Text>
+        ) : null}
 
         {isLoading && !hasTransactions ? (
           <View style={styles.loading}>

@@ -1,3 +1,4 @@
+import { filterByCurrency } from '@/lib/currencyScope';
 import { supabase } from '@/lib/supabase';
 import type { Category, CategoryKind, Currency, Transaction } from '@/types';
 
@@ -137,13 +138,18 @@ export type Totals = {
   byCategory: Record<string, { total: number; categoryId: string }>;
 };
 
-/** Dashboard için app-level aggregate (DB view yerine). Sadece expense byCategory'de. */
-export function getTotals(transactions: Transaction[]): Totals {
+/**
+ * Dashboard için app-level aggregate (DB view yerine). Sadece expense byCategory'de.
+ *
+ * `currency` ZORUNLU: yalnızca o para birimindeki işlemler toplanır. Farklı para
+ * birimli kayıtlar ham olarak eklenmez (bkz. lib/currencyScope.ts).
+ */
+export function getTotals(transactions: Transaction[], currency: Currency): Totals {
   let income = 0;
   let expense = 0;
   const byCategory: Record<string, { total: number; categoryId: string }> = {};
 
-  for (const tx of transactions) {
+  for (const tx of filterByCurrency(transactions, currency)) {
     if (tx.kind === 'income') {
       income += tx.amount;
     } else {
@@ -174,9 +180,10 @@ export const REST_BUCKET_ID = '__rest__';
 /** Donut + legend için: en büyük 5 expense kategorisi + kalan "Diğer" altında. */
 export function getBreakdown(
   transactions: Transaction[],
-  categories: Category[]
+  categories: Category[],
+  currency: Currency
 ): { segments: BreakdownSegment[]; total: number } {
-  const { expense, byCategory } = getTotals(transactions);
+  const { expense, byCategory } = getTotals(transactions, currency);
   const catById = new Map(categories.map((c) => [c.id, c]));
   const pct = (v: number) => (expense > 0 ? (v / expense) * 100 : 0);
 

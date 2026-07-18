@@ -9,6 +9,7 @@ import { ErrorText } from '@/components/ui/ErrorText';
 import { Icon } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
+import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
 import { ExportError, exportTransactions, type ExportFormat, type QuickPick } from '@/lib/export';
 import { toISODate } from '@/lib/format';
@@ -47,6 +48,7 @@ export default function ExportScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
+  const { data: profile } = useProfile();
 
   const initial = rangeFor('thisYear');
   const [from, setFrom] = useState(initial.from);
@@ -95,7 +97,15 @@ export default function ExportScreen() {
     }
     setExporting(true);
     try {
-      await exportTransactions({ from, to, format, locale, t });
+      await exportTransactions({
+        from,
+        to,
+        format,
+        locale,
+        t,
+        // Özet toplamları varsayılan para biriminde; satırlar kendi currency'siyle kalır.
+        currency: profile?.defaultCurrency ?? 'TRY',
+      });
     } catch (e) {
       if (e instanceof ExportError) {
         setError(

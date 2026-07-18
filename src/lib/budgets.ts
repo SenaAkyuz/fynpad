@@ -97,6 +97,10 @@ function currentYearMonth(asOf: Date = new Date()): string {
 /**
  * Bu ayki (takvim ayı) expense transaction'lardan kategoriye göre harcamayı toplayıp
  * bütçe durumunu hesaplar. transactions ay dışı kayıt içerse bile burada filtrelenir.
+ *
+ * Para birimi: harcama YALNIZCA bütçenin kendi para birimindeki işlemlerden toplanır.
+ * Bütçe kendi `currency`'sini taşıdığı için ek parametre gerekmez. Bu şart olmadan
+ * 500 TRY'lik bütçeye 50 USD'lik bir gider 50 TRY gibi işleniyordu.
  */
 export function computeBudgetStatus(
   budget: CategoryBudget,
@@ -105,7 +109,12 @@ export function computeBudgetStatus(
   const ym = currentYearMonth();
   let spent = 0;
   for (const tx of transactions) {
-    if (tx.kind === 'expense' && tx.categoryId === budget.categoryId && tx.date.slice(0, 7) === ym) {
+    if (
+      tx.kind === 'expense' &&
+      tx.categoryId === budget.categoryId &&
+      tx.currency === budget.currency &&
+      tx.date.slice(0, 7) === ym
+    ) {
       spent += tx.amount;
     }
   }

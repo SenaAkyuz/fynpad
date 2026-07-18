@@ -20,6 +20,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
 import { getPeriodRange } from '@/lib/period';
+import { hasOtherCurrencies } from '@/lib/currencyScope';
 import { getBreakdown, getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
 import { usePeriodStore } from '@/stores/usePeriodStore';
@@ -42,8 +43,16 @@ export default function DashboardScreen() {
 
   const currency: Currency = profile?.defaultCurrency ?? 'TRY';
 
-  const totals = useMemo(() => getTotals(transactions), [transactions]);
-  const breakdown = useMemo(() => getBreakdown(transactions, categories), [transactions, categories]);
+  // Özetler YALNIZCA varsayılan para birimindeki işlemlerden hesaplanır (bkz. lib/currencyScope.ts).
+  const totals = useMemo(() => getTotals(transactions, currency), [transactions, currency]);
+  const breakdown = useMemo(
+    () => getBreakdown(transactions, categories, currency),
+    [transactions, categories, currency]
+  );
+  const hasExcludedCurrencies = useMemo(
+    () => hasOtherCurrencies(transactions, currency),
+    [transactions, currency]
+  );
   const recent = useMemo(() => transactions.slice(0, 10), [transactions]);
 
   const trendPercent = totals.income > 0 ? (totals.net / totals.income) * 100 : 0;
@@ -81,6 +90,13 @@ export default function DashboardScreen() {
           currency={currency}
           locale={locale}
         />
+
+        {/* Yalnızca gerçekten dışarıda kalan işlem varsa göster (bkz. lib/currencyScope.ts). */}
+        {hasExcludedCurrencies ? (
+          <Text variant="labelSm" color="onSurfaceVariant" style={styles.currencyNote}>
+            {t('dashboard.currencyNote', { currency })}
+          </Text>
+        ) : null}
 
         {isLoading && !hasTransactions ? (
           <View style={styles.loading}>
@@ -142,6 +158,10 @@ const styles = StyleSheet.create({
   loading: {
     paddingVertical: spacing.stackLg,
     alignItems: 'center',
+  },
+  currencyNote: {
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.stackSm,
   },
   empty: {
     alignItems: 'center',

@@ -1,3 +1,4 @@
+import { filterByCurrency } from '@/lib/currencyScope';
 import { fromISODate, toISODate } from '@/lib/format';
 import { computeGoalProgress } from '@/lib/goals';
 import { getPeriodRange, periodDayCount } from '@/lib/period';
@@ -52,10 +53,12 @@ export type CashFlowBucket = {
 export function cashFlowSeries(
   transactions: Transaction[],
   filter: PeriodFilter,
+  currency: Currency,
   locale: Locale = 'tr',
   expenseType: ExpenseType = 'all'
 ): { buckets: CashFlowBucket[] } {
-  transactions = filterByExpenseType(transactions, expenseType);
+  // Para birimi filtresi ÖNCE: bucket'lar asla farklı currency'leri karıştırmaz.
+  transactions = filterByExpenseType(filterByCurrency(transactions, currency), expenseType);
   const { from, to } = getPeriodRange(filter);
   const start = fromISODate(from);
   const end = fromISODate(to);
@@ -113,9 +116,10 @@ export function cashFlowSeries(
 /** Net birikim: gelir - gider (period'a göre filtrelenmiş transactions üzerinden). */
 export function netSavings(
   transactions: Transaction[],
+  currency: Currency,
   expenseType: ExpenseType = 'all'
 ): number {
-  transactions = filterByExpenseType(transactions, expenseType);
+  transactions = filterByExpenseType(filterByCurrency(transactions, currency), expenseType);
   let income = 0;
   let expense = 0;
   for (const tx of transactions) {
@@ -129,9 +133,10 @@ export function netSavings(
 export function avgDailySpend(
   transactions: Transaction[],
   filter: PeriodFilter,
+  currency: Currency,
   expenseType: ExpenseType = 'all'
 ): number {
-  transactions = filterByExpenseType(transactions, expenseType);
+  transactions = filterByExpenseType(filterByCurrency(transactions, currency), expenseType);
   let expense = 0;
   for (const tx of transactions) {
     if (tx.kind === 'expense') expense += tx.amount;
@@ -231,10 +236,11 @@ export type TopCategory = {
 /** En çok harcanan expense kategoriler (top N), toplam + yüzde. */
 export function topCategories(
   transactions: Transaction[],
+  currency: Currency,
   limit: number = 5,
   expenseType: ExpenseType = 'all'
 ): TopCategory[] {
-  transactions = filterByExpenseType(transactions, expenseType);
+  transactions = filterByExpenseType(filterByCurrency(transactions, currency), expenseType);
   let total = 0;
   const byCategory = new Map<string, number>();
   for (const tx of transactions) {

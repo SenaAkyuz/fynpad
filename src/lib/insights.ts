@@ -11,6 +11,7 @@ import type {
   BudgetStatus,
   Category,
   CategoryBudget,
+  Currency,
   Goal,
   Insight,
   InsightSeverity,
@@ -61,11 +62,27 @@ function previousMonths(today: Date, count: number): string[] {
   return out;
 }
 
-/** Bir kategorinin belirli ay(lar)daki toplam gideri. */
-function sumExpense(transactions: Transaction[], categoryId: string, months: Set<string>): number {
+/**
+ * Bir kategorinin belirli ay(lar)daki toplam gideri — YALNIZCA verilen para biriminde.
+ *
+ * currency filtresi olmadan aynı kategorideki 500 TRY ve 50 USD toplanıp 550 gibi
+ * davranıyordu; "ortalamanın üzerinde harcama" kuralı da bu bozuk toplamı
+ * karşılaştırdığı için yanlış uyarı üretebiliyordu.
+ */
+function sumExpense(
+  transactions: Transaction[],
+  categoryId: string,
+  months: Set<string>,
+  currency: Currency
+): number {
   let total = 0;
   for (const tx of transactions) {
-    if (tx.kind === 'expense' && tx.categoryId === categoryId && months.has(tx.date.slice(0, 7))) {
+    if (
+      tx.kind === 'expense' &&
+      tx.categoryId === categoryId &&
+      tx.currency === currency &&
+      months.has(tx.date.slice(0, 7))
+    ) {
       total += tx.amount;
     }
   }
@@ -106,12 +123,14 @@ function ruleAboveAverageSpending(ctx: GenerateContext): Insight[] {
   const result: Insight[] = [];
   const thisMonth = new Set([yearMonth(ctx.today)]);
   const prev3 = new Set(previousMonths(ctx.today, 3));
+  // Karşılaştırma tek para biriminde yapılır (bkz. lib/currencyScope.ts).
+  const currency: Currency = ctx.profile?.defaultCurrency ?? 'TRY';
 
   for (const cat of ctx.categories.filter((c) => c.kind === 'expense')) {
-    const thisMonthSpend = sumExpense(ctx.transactions, cat.id, thisMonth);
+    const thisMonthSpend = sumExpense(ctx.transactions, cat.id, thisMonth, currency);
     if (thisMonthSpend === 0) continue;
 
-    const avgSpend = sumExpense(ctx.transactions, cat.id, prev3) / 3;
+    const avgSpend = sumExpense(ctx.transactions, cat.id, prev3, currency) / 3;
     if (avgSpend === 0) continue; // geçmiş yok → atla
 
     const ratio = thisMonthSpend / avgSpend;

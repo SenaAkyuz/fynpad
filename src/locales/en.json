@@ -123,6 +123,7 @@
     "recentTransactions": "Recent Transactions",
     "viewAll": "View All",
     "total": "Total",
+    "currencyNote": "Summaries are calculated in {{currency}} only. Transactions in other currencies are listed but excluded from totals.",
     "noTransactions": "No transactions in this period",
     "period": {
       "day": "Day",
