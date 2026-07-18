@@ -30,6 +30,7 @@ import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStat
 import { rescheduleAll, syncDailyExpenseReminders } from '@/lib/notifications';
 import { initInterstitial } from '@/lib/interstitialAd';
 import { registerMutationDefaults } from '@/lib/offlineMutations';
+import { applyOrientationPolicy } from '@/lib/orientation';
 import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
 import { completeOAuthCallback, consumeIntentionalSignOut, hasOAuthCallbackParams } from '@/lib/auth';
 import { processRecurringRules } from '@/lib/recurring';
@@ -71,9 +72,20 @@ function NotificationsBootstrap() {
     }
   }, [subscriptions]);
 
+  // Bildirim tıklaması: içerikteki `data.type`'a göre yönlendir. Eskiden KOŞULSUZ
+  // /subscriptions'a gidiyordu → "harcamalarını ekle" hatırlatması da abonelik ekranını açıyordu.
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener(() => {
-      router.push('/subscriptions');
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const type = response.notification.request.content.data?.type;
+      if (type === 'subscription_renewal') {
+        router.push('/subscriptions');
+      } else if (type === 'daily_reminder') {
+        // Hatırlatmanın amacı işlem ekletmek → doğrudan hızlı ekleme ekranı.
+        router.push('/quick-add');
+      } else {
+        // data.type taşımayan ESKİ zamanlanmış bildirimler (sürüm öncesi) → güvenli varsayılan.
+        router.push('/(tabs)/dashboard');
+      }
     });
     return () => sub.remove();
   }, [router]);
@@ -118,6 +130,11 @@ export default function RootLayout() {
   useEffect(() => {
     startNetworkMonitoring();
     return () => stopNetworkMonitoring();
+  }, []);
+
+  // Yön politikası: telefonda dikey kilit, tablette serbest (bkz. lib/orientation.ts).
+  useEffect(() => {
+    void applyOrientationPolicy();
   }, []);
 
   // AdMob: önce EU/UK consent (UMP), sonra SDK init + ilk interstitial. Web'de no-op (native yok).

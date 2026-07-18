@@ -3,7 +3,7 @@
     "name": "FynPad",
     "slug": "fynpad",
     "version": "1.0.1",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "fynpad",
     "userInterfaceStyle": "automatic",

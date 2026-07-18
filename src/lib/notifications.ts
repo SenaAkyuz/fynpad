@@ -123,6 +123,8 @@ export async function scheduleDailyExpenseReminders(): Promise<boolean> {
         content: {
           title: i18n.t(reminder.titleKey),
           body: i18n.t(reminder.bodyKey),
+          // Tıklanınca nereye gidileceğini belirler (bkz. _layout.tsx listener'ı).
+          data: { type: 'daily_reminder' },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -200,6 +202,7 @@ export async function scheduleRenewalReminders(
             amount: formatCurrency(sub.amount, sub.currency, locale),
             date: formatAbsoluteDate(renewalISO, locale),
           }),
+          data: { type: 'subscription_renewal', subscriptionId: sub.id },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
