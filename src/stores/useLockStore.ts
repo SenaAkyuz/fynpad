@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { storage } from '@/lib/storage';
+import { secureStorage, storage } from '@/lib/storage';
 
 /**
  * Cihaz kilidi durumu. Kalıcı alanlar (lockEnabled, biometricEnabled) SecureStore'da;
@@ -26,10 +26,21 @@ export type LockState = {
   /** ayarların ait olduğu kullanıcı (setter'lar bu id ile yazar) */
   userId: string | null;
 
-  setLockEnabled: (v: boolean) => void;
-  setBiometricEnabled: (v: boolean) => void;
+  /**
+   * ASYNC ve await edilebilir: state YALNIZCA SecureStore yazması doğrulandıktan sonra
+   * güncellenir. Eskiden senkrondu ve yazma fire-and-forget idi — `lockEnabled` bellekte
+   * true olup diske hiç yazılmayabiliyor, uygulama yeniden başlayınca kilit kayboluyordu.
+   * Başarısızlıkta FIRLATIR; çağıran taraf kullanıcıya hata gösterip toggle'ı geri almalı.
+   */
+  setLockEnabled: (v: boolean) => Promise<void>;
+  setBiometricEnabled: (v: boolean) => Promise<void>;
   lock: () => void;
   unlock: () => void;
+  /**
+   * Bellek içi kilit durumunu sıfırlar (diske YAZMAZ). Oturum kapanırken kullanılır:
+   * setter'lar artık aktif userId gerektirdiği için çıkış sonrası çağrılamaz.
+   */
+  resetLockState: () => void;
   /** userId ile hydrate: null (çıkış) ise kilit sıfırlanır, aksi halde o kullanıcının ayarları okunur. */
   hydrate: (userId: string | null) => Promise<void>;
 };
@@ -41,18 +52,27 @@ export const useLockStore = create<LockState>((set, get) => ({
   initialized: false,
   userId: null,
 
-  setLockEnabled: (v) => {
+  setLockEnabled: async (v) => {
     const { userId } = get();
+    if (!userId) {
+      throw new Error('NO_ACTIVE_USER');
+    }
+    // Önce kalıcılaştır (yazma geri okunarak doğrulanır), sonra state'i güncelle.
+    await secureStorage.setItem(enabledKey(userId), v ? '1' : '0');
     set({ lockEnabled: v });
-    if (userId) void storage.setItem(enabledKey(userId), v ? '1' : '0');
   },
-  setBiometricEnabled: (v) => {
+  setBiometricEnabled: async (v) => {
     const { userId } = get();
+    if (!userId) {
+      throw new Error('NO_ACTIVE_USER');
+    }
+    await secureStorage.setItem(biometricKey(userId), v ? '1' : '0');
     set({ biometricEnabled: v });
-    if (userId) void storage.setItem(biometricKey(userId), v ? '1' : '0');
   },
   lock: () => set({ isLocked: true }),
   unlock: () => set({ isLocked: false }),
+  resetLockState: () =>
+    set({ userId: null, lockEnabled: false, biometricEnabled: false, isLocked: false }),
 
   hydrate: async (userId) => {
     // Oturum yoksa (çıkış yapılmış) kilit uygulanmaz — durumu sıfırla.

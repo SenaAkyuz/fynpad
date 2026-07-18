@@ -17,8 +17,8 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
-import { authenticate, canUseBiometric } from '@/lib/biometric';
-import { clearPin } from '@/lib/pin';
+import { authenticate, canUseBiometric, hasWeakOnlyBiometric } from '@/lib/biometric';
+import { clearLocalSecurityForUser } from '@/lib/lockSecurity';
 import { useAppStore, type Locale, type ThemeMode } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLockStore } from '@/stores/useLockStore';
@@ -270,12 +270,19 @@ function SecuritySection() {
   const setBiometricEnabled = useLockStore((s) => s.setBiometricEnabled);
 
   const [bioAvailable, setBioAvailable] = useState(false);
+  /** Cihazda biyometri var ama yalnızca zayıf (Class 2) — toggle'ın neden kapalı olduğunu açıklar. */
+  const [bioWeakOnly, setBioWeakOnly] = useState(false);
 
   useEffect(() => {
     let active = true;
     void canUseBiometric().then((ok) => {
       if (active) {
         setBioAvailable(ok);
+      }
+    });
+    void hasWeakOnlyBiometric().then((weak) => {
+      if (active) {
+        setBioWeakOnly(weak);
       }
     });
     return () => {
@@ -295,9 +302,19 @@ function SecuritySection() {
         style: 'destructive',
         onPress: () => {
           void (async () => {
-            await clearPin();
-            setLockEnabled(false);
-            setBiometricEnabled(false);
+            try {
+              // Kilidi kapatmak = tüm yerel güvenlik kayıtlarını silmek. Tek helper
+              // kullanılır ki üç akış (buradaki, PIN'i unuttum, hesap silme) ayrışmasın.
+              const userId = useAuthStore.getState().session?.user?.id ?? null;
+              if (userId) {
+                await clearLocalSecurityForUser(userId);
+              }
+              await setLockEnabled(false);
+              await setBiometricEnabled(false);
+            } catch {
+              // Kalıcılaştırılamadıysa UI'da "kapalı" GÖSTERME — kilit hâlâ aktif olabilir.
+              Alert.alert(t('settings.lockSaveFailedTitle'), t('settings.lockSaveFailedMessage'));
+            }
           })();
         },
       },
@@ -305,23 +322,41 @@ function SecuritySection() {
   };
 
   const onToggleBiometric = (next: boolean) => {
-    if (!next) {
-      setBiometricEnabled(false);
-      return;
-    }
     void (async () => {
+      if (!next) {
+        try {
+          await setBiometricEnabled(false);
+        } catch {
+          Alert.alert(t('settings.lockSaveFailedTitle'), t('settings.lockSaveFailedMessage'));
+        }
+        return;
+      }
       const result = await authenticate(t('lock.biometricPrompt'), t('settings.lockDisableCancel'));
-      if (result.success) {
-        setBiometricEnabled(true);
+      if (!result.success) {
+        // Kullanıcı iptali sessiz; gerçek başarısızlıkta bilgilendir.
+        if (result.failure === 'unavailable') {
+          Alert.alert(t('settings.biometricUnavailableTitle'), t('settings.biometricUnavailable'));
+        } else if (result.failure === 'lockout') {
+          Alert.alert(t('settings.biometricUnavailableTitle'), t('settings.biometricLockedOut'));
+        }
+        return;
+      }
+      try {
+        await setBiometricEnabled(true);
+      } catch {
+        Alert.alert(t('settings.lockSaveFailedTitle'), t('settings.lockSaveFailedMessage'));
       }
     })();
   };
 
   const biometricHint = useMemo(() => {
+    // Zayıf biyometri özel mesaj alır: kullanıcı "cihazımda parmak izi var ama neden
+    // kapalı?" diye kalmasın. PIN korumaya devam ediyor.
+    if (bioWeakOnly) return t('settings.biometricWeakOnly');
     if (!bioAvailable) return t('settings.biometricUnavailable');
     if (!lockEnabled) return t('settings.biometricRequiresLock');
     return undefined;
-  }, [bioAvailable, lockEnabled, t]);
+  }, [bioAvailable, bioWeakOnly, lockEnabled, t]);
 
   return (
     <SettingsSection title={t('settings.sections.security')}>

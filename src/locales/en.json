@@ -517,7 +517,9 @@
     "wrongPin": "Wrong PIN, try again",
     "tooManyAttempts": "Too many attempts. Wait {{seconds}}s.",
     "biometricButtonLabel": "Biometrics",
-    "biometricPrompt": "Unlock FynPad"
+    "biometricPrompt": "Unlock FynPad",
+    "forgotPinFailedTitle": "Could not fully clear",
+    "forgotPinFailedMessage": "Some local lock data could not be removed. You will still be signed out."
   },
   "pinSetup": {
     "welcomeTitle": "Lock FynPad",
@@ -536,7 +538,9 @@
     "biometricFailed": "Biometric authentication failed.",
     "doneTitle": "All set",
     "doneSubtitle": "Device lock is on. You'll be asked for your PIN next time.",
-    "doneContinue": "Continue"
+    "doneContinue": "Continue",
+    "saveFailedTitle": "Could not save PIN",
+    "saveFailedMessage": "Your PIN could not be stored securely on this device. Please try again."
   },
   "settings": {
     "title": "Settings",
@@ -568,6 +572,11 @@
     "biometric": "Biometrics",
     "biometricRequiresLock": "Enable App Lock first",
     "biometricUnavailable": "Set up fingerprint or face recognition in phone settings first.",
+    "biometricUnavailableTitle": "Biometrics unavailable",
+    "biometricWeakOnly": "Your device's biometrics aren't secure enough for a finance app. Your PIN still protects your account.",
+    "biometricLockedOut": "Too many failed attempts. Your device has temporarily disabled biometrics — use your PIN.",
+    "lockSaveFailedTitle": "Could not save",
+    "lockSaveFailedMessage": "Your lock settings could not be saved securely. Please try again.",
     "dailyExpenseReminders": "Daily spending reminders",
     "dailyExpenseRemindersHint": "Sends a quick check-in every day at 10:00 and 20:00.",
     "notificationPermissionDeniedTitle": "Notifications are off",
@@ -778,7 +787,17 @@
   },
   "errors": {
     "auth": {
-      "sessionExpired": "Your session has expired, please log in again"
+      "invalidCredentials": "Invalid email or password. If you created this account with Google, please use 'Sign in with Google'.",
+      "emailAlreadyInUse": "This email is already registered.",
+      "weakPassword": "Password is too weak.",
+      "rateLimitEmail": "Too many attempts. Please wait 1 hour and try again.",
+      "otpExpiredOrInvalid": "The code is invalid or has expired. Request a new one.",
+      "redirectNotAllowed": "Redirect address not allowed. Check Supabase configuration.",
+      "invalidEmail": "Please enter a valid email address.",
+      "network": "Connection error. Check your internet.",
+      "oauthCancelled": "Google sign-in was cancelled.",
+      "unknown": "Something went wrong. Please try again.",
+      "emailNotConfirmed": "Please verify your email address first."
     },
     "profile": {
       "updateFailed": "Couldn't update profile"
@@ -816,19 +835,6 @@
       "createFailed": "Couldn't create the rule.",
       "updateFailed": "Couldn't update the rule.",
       "deleteFailed": "Couldn't delete the rule."
-    },
-    "auth": {
-      "invalidCredentials": "Invalid email or password. If you created this account with Google, please use 'Sign in with Google'.",
-      "emailAlreadyInUse": "This email is already registered.",
-      "weakPassword": "Password is too weak.",
-      "rateLimitEmail": "Too many attempts. Please wait 1 hour and try again.",
-      "otpExpiredOrInvalid": "The code is invalid or has expired. Request a new one.",
-      "redirectNotAllowed": "Redirect address not allowed. Check Supabase configuration.",
-      "invalidEmail": "Please enter a valid email address.",
-      "network": "Connection error. Check your internet.",
-      "oauthCancelled": "Google sign-in was cancelled.",
-      "unknown": "Something went wrong. Please try again.",
-      "emailNotConfirmed": "Please verify your email address first."
     },
     "validation": {
       "emailInvalid": "Enter a valid email.",

@@ -41,12 +41,37 @@ export async function canUseBiometric(): Promise<boolean> {
   }
 
   if (Platform.OS === 'android') {
+    // ÜRÜN KARARI (docs/claude-fix-plan/03): finans uygulaması olduğumuz için
+    // BIOMETRIC_STRONG (Class 3) şartı aranır. Eskiden WEAK kabul ediliyordu; Class 2
+    // kamera bazlı yüz tanıma fotoğrafla aldatılabildiği için finansal veriye erişimde
+    // yeterli güvence sağlamıyor.
+    //
+    // Yalnızca weak biyometriye sahip cihazlarda toggle kullanılamaz olarak gösterilir
+    // (bkz. hasWeakOnlyBiometric) ve kullanıcı 6 haneli PIN ile korunmaya devam eder —
+    // yani özellik kaybı değil, daha zayıf yönteme düşüşün engellenmesidir.
     const enrolledLevel = await LocalAuthentication.getEnrolledLevelAsync();
-    return enrolledLevel >= LocalAuthentication.SecurityLevel.BIOMETRIC_WEAK;
+    return enrolledLevel >= LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG;
   }
 
-  // iOS: hasHardware + isEnrolled yeterli.
+  // iOS: Face ID / Touch ID zaten Class 3 muadili; hasHardware + isEnrolled yeterli.
   return true;
+}
+
+/**
+ * Cihazda biyometri kayıtlı AMA yalnızca zayıf (Class 2) seviyede mi?
+ * UI bunu kullanıp "cihazın biyometrisi bu uygulama için yeterince güçlü değil"
+ * açıklamasını gösterir; aksi halde toggle sebepsizce kapalı görünürdü.
+ */
+export async function hasWeakOnlyBiometric(): Promise<boolean> {
+  if (Platform.OS !== 'android') return false;
+  const hasHw = await LocalAuthentication.hasHardwareAsync();
+  const enrolled = await LocalAuthentication.isEnrolledAsync();
+  if (!hasHw || !enrolled) return false;
+  const level = await LocalAuthentication.getEnrolledLevelAsync();
+  return (
+    level >= LocalAuthentication.SecurityLevel.BIOMETRIC_WEAK &&
+    level < LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG
+  );
 }
 
 export type BiometricKind = 'face' | 'fingerprint' | 'iris' | 'unknown' | 'none';
@@ -69,7 +94,53 @@ export async function getBiometricKind(): Promise<BiometricKind> {
   return 'unknown';
 }
 
-export type BiometricResult = { success: boolean; error?: string };
+/**
+ * Doğrulama sonucunun UI için sınıflandırılmış hâli.
+ *
+ * Eskiden ham `result.error` string'i dönüyordu ve çağıran taraf hepsini aynı şekilde
+ * (sessiz) ele alıyordu: kullanıcı biyometriyi silmişse veya sistem kilitlemişse
+ * hiçbir açıklama görmüyor, toggle açık kalıp çalışmıyordu.
+ */
+export type BiometricFailure =
+  /** Kullanıcı promptu kendisi kapattı — sessiz geç, hata gösterme. */
+  | 'cancelled'
+  /** Sistem/uygulama iptali (arka plana geçme vb.) — akışı bozma. */
+  | 'system'
+  /** Cihazda kayıtlı biyometri yok veya donanım yok → toggle kapatılmalı. */
+  | 'unavailable'
+  /** Çok fazla başarısız deneme — SİSTEM biyometriyi kilitledi. */
+  | 'lockout'
+  /** Eşleşmedi — kullanıcı tekrar deneyebilir. */
+  | 'failed'
+  | 'unknown';
+
+export type BiometricResult =
+  | { success: true }
+  | { success: false; failure: BiometricFailure; raw?: string };
+
+/** expo-local-authentication hata kodlarını UI davranışına eşler. */
+export function mapBiometricError(raw: string | undefined): BiometricFailure {
+  switch (raw) {
+    case 'user_cancel':
+    case 'user_fallback':
+      return 'cancelled';
+    case 'system_cancel':
+    case 'app_cancel':
+      return 'system';
+    case 'not_enrolled':
+    case 'not_available':
+    case 'no_space':
+    case 'passcode_not_set':
+      return 'unavailable';
+    case 'lockout':
+    case 'lockout_permanent':
+      return 'lockout';
+    case 'authentication_failed':
+      return 'failed';
+    default:
+      return 'unknown';
+  }
+}
 
 /** Biyometrik doğrulama başlatır. */
 export async function authenticate(
@@ -81,16 +152,21 @@ export async function authenticate(
       promptMessage,
       cancelLabel: cancelLabel ?? 'Cancel',
       disableDeviceFallback: true, // cihaz PIN'ine düşmesin — bizim PIN'imiz var
-      // biometricsSecurityLevel Android-only; iOS'ta Face ID'yi etkiler, geçilmemeli
+      // biometricsSecurityLevel Android-only; iOS'ta Face ID'yi etkiler, geçilmemeli.
+      // 'strong' → Class 3; canUseBiometric ile tutarlı (bkz. yukarıdaki ürün kararı).
       ...(Platform.OS === 'android' && {
-        biometricsSecurityLevel: 'weak' as const, // Android yüz tanımayı (Class 2) kabul et
+        biometricsSecurityLevel: 'strong' as const,
       }),
     });
     if (result.success) {
       return { success: true };
     }
-    return { success: false, error: result.error };
+    return { success: false, failure: mapBiometricError(result.error), raw: result.error };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'unknown' };
+    return {
+      success: false,
+      failure: 'unknown',
+      raw: error instanceof Error ? error.message : 'unknown',
+    };
   }
 }

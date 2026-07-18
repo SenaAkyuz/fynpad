@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, BackHandler, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
@@ -69,12 +69,23 @@ export default function PinSetupScreen() {
     }
     busy.current = true;
     void (async () => {
-      await setPin(pin);
+      try {
+        // setPin artık ATOMİK ve yazmayı geri okuyarak DOĞRULAR. Başarısızsa fırlatır →
+        // 'done' aşamasına GEÇİLMEZ, kullanıcı "PIN kuruldu" sanmaz.
+        await setPin(pin);
+      } catch {
+        busy.current = false;
+        setPinValue('');
+        setEntered('');
+        setStage('create');
+        Alert.alert(t('pinSetup.saveFailedTitle'), t('pinSetup.saveFailedMessage'));
+        return;
+      }
       const canBio = await canUseBiometric();
       busy.current = false;
       setStage(canBio ? 'biometric' : 'done');
     })();
-  }, [stage, entered, pin]);
+  }, [stage, entered, pin, t]);
 
   // Android donanım geri tuşu.
   useEffect(() => {
@@ -107,18 +118,35 @@ export default function PinSetupScreen() {
   const handleEnableBiometric = () => {
     void (async () => {
       const result = await authenticate(t('lock.biometricPrompt'), t('pinSetup.welcomeCancel'));
-      if (result.success) {
-        setBiometricEnabled(true);
+      if (!result.success) {
+        // Kullanıcı kendisi iptal ettiyse hata gösterme; gerçek başarısızlıkta göster.
+        if (result.failure !== 'cancelled' && result.failure !== 'system') {
+          setError(true);
+        }
+        return;
+      }
+      try {
+        await setBiometricEnabled(true);
         setStage('done');
-      } else {
-        setError(true);
+      } catch {
+        // Tercih diske yazılamadı → biyometri açık GÖSTERİLMEZ; PIN yine çalışır.
+        Alert.alert(t('pinSetup.saveFailedTitle'), t('pinSetup.saveFailedMessage'));
+        setStage('done');
       }
     })();
   };
 
   const handleDone = () => {
-    setLockEnabled(true);
-    router.replace('/(tabs)/dashboard');
+    void (async () => {
+      try {
+        // Kilit AÇILDIĞINI ancak kalıcılaştığını doğruladıktan sonra kabul et ve yönlen.
+        await setLockEnabled(true);
+      } catch {
+        Alert.alert(t('pinSetup.saveFailedTitle'), t('pinSetup.saveFailedMessage'));
+        return; // Yönlendirme YOK — kullanıcı kilidin açıldığını sanmasın.
+      }
+      router.replace('/(tabs)/dashboard');
+    })();
   };
 
   const cancelable = stage === 'welcome' || stage === 'create' || stage === 'confirm';

@@ -9,13 +9,18 @@ import { PinKeypad } from '@/components/ui/PinKeypad';
 import { Text } from '@/components/ui/Text';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
-import { PIN_LENGTH, clearPin, verifyPin } from '@/lib/pin';
+import {
+  clearLockoutState,
+  clearLocalSecurityForUser,
+  readLockoutState,
+  registerFailedAttempt,
+} from '@/lib/lockSecurity';
+import { PIN_LENGTH, verifyPin } from '@/lib/pin';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useLockStore } from '@/stores/useLockStore';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 30_000;
 const RESET_DELAY_MS = 900;
 
 /**
@@ -28,13 +33,12 @@ export function LockScreen() {
   const insets = useSafeAreaInsets();
 
   const unlock = useLockStore((s) => s.unlock);
-  const setLockEnabled = useLockStore((s) => s.setLockEnabled);
-  const setBiometricEnabled = useLockStore((s) => s.setBiometricEnabled);
+  const resetLockState = useLockStore((s) => s.resetLockState);
   const biometricEnabled = useLockStore((s) => s.biometricEnabled);
+  const lockUserId = useLockStore((s) => s.userId);
 
   const [entered, setEntered] = useState('');
   const [error, setError] = useState(false);
-  const [, setAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [bioAvailable, setBioAvailable] = useState(false);
@@ -42,10 +46,17 @@ export function LockScreen() {
   const verifying = useRef(false);
 
   const locked = lockoutUntil !== null;
-  const showBiometric = biometricEnabled && bioAvailable && !locked;
+  // `locked` DAHİL DEĞİL: lockout sırasında biyometri erişilebilir kalır (bkz. tryBiometric).
+  const showBiometric = biometricEnabled && bioAvailable;
 
+  /**
+   * POLİTİKA: brute-force lockout PIN keypad'ini kapatır ama BİYOMETRİYİ KAPATMAZ.
+   * Gerekçe: lockout kör PIN denemesine karşıdır; biyometri zaten sistem tarafından
+   * kendi deneme limitine sahiptir ve cihaz sahibinin meşru erişimini gereksiz yere
+   * 30 sn engellemek kullanıcıyı cezalandırır.
+   */
   const tryBiometric = useCallback(async () => {
-    if (!biometricEnabled || locked) {
+    if (!biometricEnabled) {
       return;
     }
     const ok = await canUseBiometric();
@@ -54,9 +65,14 @@ export function LockScreen() {
     }
     const result = await authenticate(t('lock.biometricPrompt'), t('lock.forgotPinCancel'));
     if (result.success) {
+      // Biyometri de meşru bir başarılı doğrulamadır → lockout sayacını sıfırla.
+      if (lockUserId) {
+        await clearLockoutState(lockUserId);
+      }
+      setLockoutUntil(null);
       unlock();
     }
-  }, [biometricEnabled, locked, t, unlock]);
+  }, [biometricEnabled, t, unlock, lockUserId]);
 
   // Mount: biyometrik destek kontrolü + etkinse otomatik prompt.
   useEffect(() => {
@@ -87,18 +103,22 @@ export function LockScreen() {
         return;
       }
       if (ok) {
+        // Başarılı giriş → kalıcı deneme sayacı sıfırlanır.
+        if (lockUserId) {
+          void clearLockoutState(lockUserId);
+        }
         unlock();
         verifying.current = false;
         return;
       }
       setError(true);
-      setAttempts((prev) => {
-        const next = prev + 1;
-        if (next >= MAX_ATTEMPTS) {
-          setLockoutUntil(Date.now() + LOCKOUT_MS);
+      // Sayaç KALICI: force-stop ile lockout sıfırlanamasın (bkz. lib/lockSecurity.ts).
+      if (lockUserId) {
+        const next = await registerFailedAttempt(lockUserId);
+        if (next.lockoutUntil !== null) {
+          setLockoutUntil(next.lockoutUntil);
         }
-        return next;
-      });
+      }
       setTimeout(() => {
         setEntered('');
         setError(false);
@@ -108,7 +128,22 @@ export function LockScreen() {
     return () => {
       cancelled = true;
     };
-  }, [entered, unlock]);
+  }, [entered, unlock, lockUserId]);
+
+  // Açılışta kayıtlı lockout'u geri yükle — uygulama force-stop edilse bile
+  // kalan süre devam eder (eskiden yalnızca component state'indeydi, restart sıfırlıyordu).
+  useEffect(() => {
+    if (!lockUserId) return;
+    let active = true;
+    void readLockoutState(lockUserId).then((state) => {
+      if (active && state.lockoutUntil !== null) {
+        setLockoutUntil(state.lockoutUntil);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [lockUserId]);
 
   // Lockout geri sayım.
   useEffect(() => {
@@ -119,9 +154,12 @@ export function LockScreen() {
       const ms = lockoutUntil - Date.now();
       if (ms <= 0) {
         setLockoutUntil(null);
-        setAttempts(0);
         setRemaining(0);
         setEntered('');
+        // Süre doldu → kalıcı sayacı da temizle, sonraki 5 deneme sıfırdan başlasın.
+        if (lockUserId) {
+          void clearLockoutState(lockUserId);
+        }
       } else {
         setRemaining(Math.ceil(ms / 1000));
       }
@@ -129,7 +167,7 @@ export function LockScreen() {
     tick();
     const id = setInterval(tick, 250);
     return () => clearInterval(id);
-  }, [lockoutUntil]);
+  }, [lockoutUntil, lockUserId]);
 
   const handleDigit = (d: string) => {
     if (locked || verifying.current) {
@@ -155,10 +193,29 @@ export function LockScreen() {
         style: 'destructive',
         onPress: () => {
           void (async () => {
+            // SIRA KRİTİK: userId'yi oturum KAPANMADAN önce yakala. Eskiden önce signOut
+            // çağrılıyor, sonra clearPin() aktif kullanıcıyı auth store'dan okumaya
+            // çalışıyordu — oturum bittiği için null dönüp SESSİZCE hiçbir şey silmiyordu
+            // ve kullanıcının PIN'i cihazda kalıyordu.
+            const userId = useAuthStore.getState().session?.user?.id ?? null;
+
+            if (userId) {
+              try {
+                // Önce YEREL güvenlik kayıtları: PIN (v1+v2), kilit, biyometri, lockout.
+                await clearLocalSecurityForUser(userId);
+              } catch {
+                // Yerel temizlik başarısız → kullanıcıyı güvenli tarafta bilgilendir,
+                // ama oturumu yine de kapat (aksi halde kilitli ekranda mahsur kalır).
+                Alert.alert(t('lock.forgotPinFailedTitle'), t('lock.forgotPinFailedMessage'));
+              }
+            }
+
+            // Yerel temizlik bittikten SONRA oturumu kapat + query cache temizliği.
             await signOut();
-            await clearPin();
-            setLockEnabled(false);
-            setBiometricEnabled(false);
+
+            // Bellek içi kilit durumunu da sıfırla (store setter'ları artık async ve
+            // userId gerektiriyor; oturum kapandığı için doğrudan reset kullanılır).
+            resetLockState();
             unlock();
             // session null → root layout auth guard Welcome'a yönlendirir.
           })();
