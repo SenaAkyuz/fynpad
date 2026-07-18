@@ -1,4 +1,5 @@
 import { markIntentionalSignOut } from '@/lib/auth';
+import { clearAppCache } from '@/lib/clearAppCache';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -15,4 +16,6 @@ export async function deleteAccount(): Promise<void> {
   // Kasıtlı çıkış: "oturum süresi doldu" bildirimi tetiklenmesin.
   markIntentionalSignOut();
   await supabase.auth.signOut();
+  // Hesap silindi ama cache'teki verisi diskte kalırdı → sonraki kullanıcıya sızabilirdi.
+  await clearAppCache();
 }

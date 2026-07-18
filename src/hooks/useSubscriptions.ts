@@ -15,14 +15,18 @@ import {
   type SubscriptionPatch,
 } from '@/lib/subscriptions';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
+import { useAuthStore } from '@/stores/useAuthStore';
 import type { Subscription } from '@/types';
 
 export { subscriptionsKey };
 
 export function useSubscriptions() {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: subscriptionsKey,
+    // subscriptionsKey ÖNEK olarak kalır (invalidation'lar onu kullanır); key userId taşır.
+    queryKey: [...subscriptionsKey, userId],
     queryFn: listSubscriptions,
+    enabled: !!userId,
   });
 }
 

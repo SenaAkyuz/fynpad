@@ -6,13 +6,17 @@ import {
   listCategories,
   updateCategory,
 } from '@/lib/categories';
+import { useAuthStore } from '@/stores/useAuthStore';
 
+/** ÖNEK key — invalidation'lar bunu kullanır; gerçek key userId taşır (bkz. useTransactions). */
 export const categoriesKey = ['categories'] as const;
 
 export function useCategories() {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: categoriesKey,
+    queryKey: [...categoriesKey, userId],
     queryFn: listCategories,
+    enabled: !!userId,
   });
 }
 

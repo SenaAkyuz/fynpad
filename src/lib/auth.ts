@@ -2,6 +2,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
+import { clearAppCache } from '@/lib/clearAppCache';
 import { supabase } from '@/lib/supabase';
 import type { Locale } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -358,6 +359,8 @@ export async function signOut(): Promise<void> {
   intentionalSignOut = true;
   await supabase.auth.signOut();
   useAuthStore.getState().setSession(null);
+  // Sonraki kullanıcı öncekinin verisini görmesin (bkz. lib/clearAppCache.ts).
+  await clearAppCache();
 }
 
 /**

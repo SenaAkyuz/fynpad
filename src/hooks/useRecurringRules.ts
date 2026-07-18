@@ -10,13 +10,17 @@ import {
 } from '@/lib/recurring';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { transactionsKey } from '@/hooks/useTransactions';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export { recurringRulesKey };
 
 export function useRecurringRules() {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: recurringRulesKey,
+    // recurringRulesKey ÖNEK olarak kalır (invalidation'lar onu kullanır); key userId taşır.
+    queryKey: [...recurringRulesKey, userId],
     queryFn: listRecurringRules,
+    enabled: !!userId,
   });
 }
 

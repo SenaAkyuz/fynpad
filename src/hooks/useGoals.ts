@@ -8,13 +8,17 @@ import {
   subtractFromGoal,
   updateGoal,
 } from '@/lib/goals';
+import { useAuthStore } from '@/stores/useAuthStore';
 
+/** ÖNEK key — invalidation'lar bunu kullanır; gerçek key userId taşır (bkz. useTransactions). */
 export const goalsKey = ['goals'] as const;
 
 export function useGoals() {
+  const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: goalsKey,
+    queryKey: [...goalsKey, userId],
     queryFn: listGoals,
+    enabled: !!userId,
   });
 }
 
