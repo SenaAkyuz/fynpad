@@ -573,7 +573,6 @@
     "biometricRequiresLock": "Enable App Lock first",
     "biometricUnavailable": "Set up fingerprint or face recognition in phone settings first.",
     "biometricUnavailableTitle": "Biometrics unavailable",
-    "biometricWeakOnly": "Your device's biometrics aren't secure enough for a finance app. Your PIN still protects your account.",
     "biometricLockedOut": "Too many failed attempts. Your device has temporarily disabled biometrics — use your PIN.",
     "lockSaveFailedTitle": "Could not save",
     "lockSaveFailedMessage": "Your lock settings could not be saved securely. Please try again.",

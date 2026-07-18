@@ -573,7 +573,6 @@
     "biometricRequiresLock": "Önce cihaz kilidi açılmalı",
     "biometricUnavailable": "Önce telefon ayarlarından parmak izi veya yüz tanıma kur.",
     "biometricUnavailableTitle": "Biyometri kullanılamıyor",
-    "biometricWeakOnly": "Cihazının biyometrisi bir finans uygulaması için yeterince güvenli değil. Hesabını PIN'in korumaya devam ediyor.",
     "biometricLockedOut": "Çok fazla başarısız deneme. Cihazın biyometriyi geçici olarak kapattı — PIN'ini kullan.",
     "lockSaveFailedTitle": "Kaydedilemedi",
     "lockSaveFailedMessage": "Kilit ayarların güvenli şekilde kaydedilemedi. Lütfen tekrar dene.",

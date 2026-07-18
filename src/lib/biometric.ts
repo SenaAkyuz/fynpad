@@ -41,37 +41,34 @@ export async function canUseBiometric(): Promise<boolean> {
   }
 
   if (Platform.OS === 'android') {
-    // ÜRÜN KARARI (docs/claude-fix-plan/03): finans uygulaması olduğumuz için
-    // BIOMETRIC_STRONG (Class 3) şartı aranır. Eskiden WEAK kabul ediliyordu; Class 2
-    // kamera bazlı yüz tanıma fotoğrafla aldatılabildiği için finansal veriye erişimde
-    // yeterli güvence sağlamıyor.
+    // ── ÜRÜN KARARI: BIOMETRIC_WEAK (Class 2) KABUL EDİLİR ────────────────────
     //
-    // Yalnızca weak biyometriye sahip cihazlarda toggle kullanılamaz olarak gösterilir
-    // (bkz. hasWeakOnlyBiometric) ve kullanıcı 6 haneli PIN ile korunmaya devam eder —
-    // yani özellik kaybı değil, daha zayıf yönteme düşüşün engellenmesidir.
+    // docs/claude-fix-plan/03 finans uygulaması için STRONG (Class 3) öneriyordu.
+    // Bilinçli olarak WEAK'te kalınıyor; belge bu durumda kararın kodda açıkça
+    // yazılmasını şart koşuyor:
+    //
+    // Gerekçe: kullanıcı tabanında yalnızca Class 2 yüz tanıma sunan cihazlar
+    // (ör. Samsung A serisi) yaygın. STRONG şartı bu cihazlarda biyometriyi
+    // TAMAMEN kullanılamaz hale getiriyor ve kullanıcılar hâlihazırda
+    // kullandıkları bir özelliği kaybediyor.
+    //
+    // KABUL EDİLEN RİSK: Class 2 kamera bazlı yüz tanıma fotoğraf/video ile
+    // aldatılabilir. Yani cihaza fiziksel erişimi olan ve kullanıcının fotoğrafına
+    // sahip biri uygulamayı açabilir.
+    //
+    // Riski sınırlayan etkenler: biyometri yalnızca UYGULAMA KİLİDİNİ açar, hesabı
+    // ele geçirmez (Supabase oturumu ayrı); 6 haneli PIN her zaman alternatif olarak
+    // çalışır ve kalıcı brute-force lockout ile korunur; para transferi gibi geri
+    // alınamaz bir işlem yok.
+    //
+    // Bu karar değiştirilecekse authenticate() içindeki biometricsSecurityLevel
+    // ile BİRLİKTE değiştirilmeli — ikisi tutarlı olmalı.
     const enrolledLevel = await LocalAuthentication.getEnrolledLevelAsync();
-    return enrolledLevel >= LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG;
+    return enrolledLevel >= LocalAuthentication.SecurityLevel.BIOMETRIC_WEAK;
   }
 
   // iOS: Face ID / Touch ID zaten Class 3 muadili; hasHardware + isEnrolled yeterli.
   return true;
-}
-
-/**
- * Cihazda biyometri kayıtlı AMA yalnızca zayıf (Class 2) seviyede mi?
- * UI bunu kullanıp "cihazın biyometrisi bu uygulama için yeterince güçlü değil"
- * açıklamasını gösterir; aksi halde toggle sebepsizce kapalı görünürdü.
- */
-export async function hasWeakOnlyBiometric(): Promise<boolean> {
-  if (Platform.OS !== 'android') return false;
-  const hasHw = await LocalAuthentication.hasHardwareAsync();
-  const enrolled = await LocalAuthentication.isEnrolledAsync();
-  if (!hasHw || !enrolled) return false;
-  const level = await LocalAuthentication.getEnrolledLevelAsync();
-  return (
-    level >= LocalAuthentication.SecurityLevel.BIOMETRIC_WEAK &&
-    level < LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG
-  );
 }
 
 export type BiometricKind = 'face' | 'fingerprint' | 'iris' | 'unknown' | 'none';
@@ -153,9 +150,10 @@ export async function authenticate(
       cancelLabel: cancelLabel ?? 'Cancel',
       disableDeviceFallback: true, // cihaz PIN'ine düşmesin — bizim PIN'imiz var
       // biometricsSecurityLevel Android-only; iOS'ta Face ID'yi etkiler, geçilmemeli.
-      // 'strong' → Class 3; canUseBiometric ile tutarlı (bkz. yukarıdaki ürün kararı).
+      // 'weak' → Class 2 kabul; canUseBiometric'teki eşikle TUTARLI olmak zorunda.
+      // Tutarsız olursa toggle açılabilir ama prompt reddeder (veya tersi).
       ...(Platform.OS === 'android' && {
-        biometricsSecurityLevel: 'strong' as const,
+        biometricsSecurityLevel: 'weak' as const,
       }),
     });
     if (result.success) {

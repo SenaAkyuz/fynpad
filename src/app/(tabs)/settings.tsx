@@ -17,7 +17,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
-import { authenticate, canUseBiometric, hasWeakOnlyBiometric } from '@/lib/biometric';
+import { authenticate, canUseBiometric } from '@/lib/biometric';
 import { clearLocalSecurityForUser } from '@/lib/lockSecurity';
 import { useAppStore, type Locale, type ThemeMode } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -270,19 +270,12 @@ function SecuritySection() {
   const setBiometricEnabled = useLockStore((s) => s.setBiometricEnabled);
 
   const [bioAvailable, setBioAvailable] = useState(false);
-  /** Cihazda biyometri var ama yalnızca zayıf (Class 2) — toggle'ın neden kapalı olduğunu açıklar. */
-  const [bioWeakOnly, setBioWeakOnly] = useState(false);
 
   useEffect(() => {
     let active = true;
     void canUseBiometric().then((ok) => {
       if (active) {
         setBioAvailable(ok);
-      }
-    });
-    void hasWeakOnlyBiometric().then((weak) => {
-      if (active) {
-        setBioWeakOnly(weak);
       }
     });
     return () => {
@@ -350,13 +343,12 @@ function SecuritySection() {
   };
 
   const biometricHint = useMemo(() => {
-    // Zayıf biyometri özel mesaj alır: kullanıcı "cihazımda parmak izi var ama neden
-    // kapalı?" diye kalmasın. PIN korumaya devam ediyor.
-    if (bioWeakOnly) return t('settings.biometricWeakOnly');
+    // Class 2 (weak) biyometri kabul edildiği için "yeterince güvenli değil" durumu YOK;
+    // toggle yalnızca gerçekten biyometri kurulu değilse kapalı kalır.
     if (!bioAvailable) return t('settings.biometricUnavailable');
     if (!lockEnabled) return t('settings.biometricRequiresLock');
     return undefined;
-  }, [bioAvailable, bioWeakOnly, lockEnabled, t]);
+  }, [bioAvailable, lockEnabled, t]);
 
   return (
     <SettingsSection title={t('settings.sections.security')}>
