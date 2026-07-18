@@ -17,6 +17,7 @@ import {
   type RecurringRulePatch,
 } from '@/lib/recurring';
 import { deleteBudget, upsertBudget } from '@/lib/budgets';
+import { updateProfile, type UpdateProfileInput } from '@/lib/profile';
 import {
   addToGoal,
   createGoal,
@@ -136,6 +137,17 @@ export function registerMutationDefaults(qc: QueryClient): void {
   qc.setMutationDefaults(['subtractFromGoal'], {
     mutationFn: ({ id, amount }: { id: string; amount: number }) => subtractFromGoal(id, amount),
     onSuccess: () => invalidate(goalsKey),
+  });
+
+  // — Profile —
+  // Bu kayıt EKSİKTİ: çevrimdışı yapılan profil değişikliği uygulama yeniden başlatılınca
+  // mutationFn'siz restore ediliyor ve resume edilemiyordu. Invalidation yalnızca
+  // mutation'ın SAHİBİ olan kullanıcının profil query'sini hedefler.
+  qc.setMutationDefaults(['updateProfile'], {
+    mutationFn: (input: UpdateProfileInput) => updateProfile(input),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['profile', (variables as UpdateProfileInput).ownerUserId] });
+    },
   });
 
   // — Budgets —

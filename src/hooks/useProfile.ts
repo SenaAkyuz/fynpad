@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { updateProfile, type ProfilePatch } from '@/lib/profile';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { Currency } from '@/types';
@@ -52,27 +53,18 @@ export function useProfile() {
   });
 }
 
+/**
+ * Profil güncelleme. Çağıran taraf yalnızca `patch` verir; `ownerUserId` burada
+ * eklenir, böylece offline'da persist edilen payload sahibini taşır ve restart
+ * sonrası başka bir kullanıcının oturumunda çalıştırılamaz (bkz. lib/profile.ts).
+ */
 export function useUpdateProfile() {
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
     mutationKey: ['updateProfile'],
-    mutationFn: async (
-      patch: Partial<{
-        fullName: string;
-        defaultCurrency: Currency;
-        locale: Locale;
-      }>
-    ) => {
-      const dbPatch: Record<string, unknown> = {};
-      if (patch.fullName !== undefined) dbPatch.full_name = patch.fullName;
-      if (patch.defaultCurrency !== undefined) dbPatch.default_currency = patch.defaultCurrency;
-      if (patch.locale !== undefined) dbPatch.locale = patch.locale;
-      const { error } = await supabase.from('profiles').update(dbPatch).eq('id', userId as string);
-      if (error) {
-        throw error;
-      }
-    },
+    mutationFn: (patch: ProfilePatch) =>
+      updateProfile({ ownerUserId: userId as string, patch }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['profile', userId] });
     },

@@ -163,21 +163,50 @@ export default function RootLayout() {
   // Supabase session'ı yükle + değişiklikleri dinle.
   useEffect(() => {
     let mounted = true;
+    // Auth bootstrap DAYANIKLILIĞI: burada fırlatılan herhangi bir hata (deep link okuma,
+    // OAuth callback, session storage bozulması) setInitialized()'a ulaşılmasını engellerse
+    // splash SONSUZA KADAR açık kalır ve uygulama tamamen kullanılamaz olur. Bu yüzden her
+    // adım ayrı korunur ve setInitialized finally'de ÇAĞRILIR.
     void (async () => {
-      const initialUrl = await Linking.getInitialURL();
-      if (Platform.OS !== 'web' && initialUrl && hasOAuthCallbackParams(initialUrl)) {
-        const res = await completeOAuthCallback(initialUrl);
-        if (res.success) {
-          router.replace('/(tabs)/dashboard');
-        } else {
-          useToastStore.getState().show(res.errorKey, 'error');
+      try {
+        const initialUrl = await Linking.getInitialURL();
+        if (Platform.OS !== 'web' && initialUrl && hasOAuthCallbackParams(initialUrl)) {
+          const res = await completeOAuthCallback(initialUrl);
+          if (!mounted) return;
+          if (res.success) {
+            router.replace('/(tabs)/dashboard');
+          } else {
+            useToastStore.getState().show(res.errorKey, 'error');
+            router.replace('/(auth)/login');
+          }
+        }
+      } catch (e) {
+        // Deep link / OAuth başarısız → kullanıcı bilgilendirilir ve login'e döner.
+        // Session yüklemesi yine de denenir (aşağıda), uygulama açılmaya devam eder.
+        if (__DEV__) console.warn('[FynPad/auth] OAuth callback bootstrap failed:', e);
+        if (mounted) {
+          useToastStore.getState().show('errors.auth.unknown', 'error');
           router.replace('/(auth)/login');
         }
       }
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session);
-      setInitialized();
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setSession(data.session);
+      } catch (e) {
+        // Session storage okunamıyor (bozuk kayıt/SecureStore hatası) → GÜVENLİ TARAF:
+        // oturumsuz başla. Kullanıcı tekrar giriş yapar; yanlış oturumla açılmaktan iyidir.
+        if (__DEV__) console.warn('[FynPad/auth] getSession failed, starting signed out:', e);
+        if (mounted) {
+          setSession(null);
+        }
+      } finally {
+        // Unmount olduysa store'a dokunma; olmadıysa splash MUTLAKA kalksın.
+        if (mounted) {
+          setInitialized();
+        }
+      }
     })();
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       const hadSession = useAuthStore.getState().session != null;

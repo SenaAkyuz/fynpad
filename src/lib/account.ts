@@ -17,5 +17,11 @@ export async function deleteAccount(): Promise<void> {
   markIntentionalSignOut();
   await supabase.auth.signOut();
   // Hesap silindi ama cache'teki verisi diskte kalırdı → sonraki kullanıcıya sızabilirdi.
-  await clearAppCache();
+  // Temizlik başarısız olsa bile hesap SİLİNMİŞ durumda; akışı bloklamak kullanıcıyı
+  // ölü bir oturumda bırakır. Hata görünür kılınır, akış devam eder.
+  try {
+    await clearAppCache();
+  } catch (e) {
+    if (__DEV__) console.warn('[FynPad/account] cache clear after deletion failed:', e);
+  }
 }

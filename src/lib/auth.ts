@@ -360,7 +360,14 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
   useAuthStore.getState().setSession(null);
   // Sonraki kullanıcı öncekinin verisini görmesin (bkz. lib/clearAppCache.ts).
-  await clearAppCache();
+  // Disk temizliği başarısız olsa bile ÇIKIŞ TAMAMLANMALI — aksi halde kullanıcı
+  // uygulamada kilitli kalır. Bellek cache'i her koşulda temizlenmiş olur ve
+  // query key'lerindeki userId ikinci savunma katmanı olarak devrededir.
+  try {
+    await clearAppCache();
+  } catch (e) {
+    logAuthError('signOut.clearAppCache', e);
+  }
 }
 
 /**

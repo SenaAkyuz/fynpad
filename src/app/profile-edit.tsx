@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -29,6 +29,22 @@ export default function ProfileEditScreen() {
 
   const [name, setName] = useState(profile?.fullName ?? '');
   const [error, setError] = useState('');
+
+  /**
+   * Profil yükleme yarışı: `name` ilk render'daki değerle başlatılıyor. Query o an henüz
+   * yüklenmemişse (soğuk açılış / cache boş) form BOŞ kalıyor, sonradan gelen isim state'e
+   * aktarılmıyordu → kullanıcı farkında olmadan ismini silerek kaydedebiliyordu.
+   *
+   * Çözüm: profil İLK KEZ geldiğinde formu bir kez doldur. `hydratedRef` sayesinde
+   * arka plan refetch'leri kullanıcının yazdığını EZMEZ.
+   */
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    if (profile === undefined) return; // henüz yüklenmedi
+    hydratedRef.current = true;
+    setName(profile?.fullName ?? '');
+  }, [profile]);
 
   const email = profile?.email ?? '';
   const initial = (name.trim()[0] ?? email.trim()[0] ?? 'F').toUpperCase();
