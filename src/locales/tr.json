@@ -111,6 +111,7 @@
       "amountRequired": "Hedef tutar zorunlu",
       "amountPositive": "Tutar 0'dan büyük olmalı",
       "descriptionTooLong": "Açıklama en fazla 200 karakter olabilir",
+      "targetDateInPast": "Hedef tarihi geçmişte olamaz",
       "saveFailed": "Hedef kaydedilemedi",
       "deleteFailed": "Hedef silinemedi"
     }
@@ -608,6 +609,8 @@
     "changeTitle": "Şifre Değiştir",
     "createSubtitle": "Hesabına bir şifre belirle; böylece Google'ın yanı sıra e-posta ve şifrenle de giriş yapabilirsin.",
     "changeSubtitle": "Hesabın için yeni bir şifre belirle.",
+    "currentPasswordLabel": "Mevcut Şifre",
+    "currentPasswordPlaceholder": "Mevcut şifreni gir",
     "passwordLabel": "Yeni Şifre",
     "passwordPlaceholder": "En az 8 karakter",
     "confirmPasswordLabel": "Yeni Şifre (Tekrar)",
@@ -835,8 +838,11 @@
       "passwordNeedsLetter": "Şifre en az bir harf içermeli.",
       "passwordNeedsNumber": "Şifre en az bir rakam içermeli.",
       "passwordsDoNotMatch": "Şifreler eşleşmiyor.",
+      "currentPasswordRequired": "Mevcut şifreni gir.",
       "otpInvalid": "Geçerli bir kod gir.",
-      "recurringConfigIncomplete": "Tekrarlama ayarları eksik"
+      "recurringConfigIncomplete": "Tekrarlama ayarları eksik",
+      "dateInvalid": "Geçerli bir tarih gir",
+      "endDateBeforeStart": "Bitiş tarihi başlangıçtan önce olamaz"
     }
   }
 }

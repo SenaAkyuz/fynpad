@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, type Resolver } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
@@ -17,8 +17,8 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
-import { updatePassword } from '@/lib/auth';
-import { resetPasswordSchema, type ResetPasswordForm } from '@/lib/validation';
+import { reauthenticateWithPassword, updatePassword } from '@/lib/auth';
+import { passwordFormSchema, type ChangePasswordForm } from '@/lib/validation';
 import { useNetworkStore } from '@/stores/useNetworkStore';
 import { useToastStore } from '@/stores/useToastStore';
 import { spacing } from '@/theme/tokens';
@@ -38,18 +38,33 @@ export default function SetPasswordScreen() {
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // 'change' modunda mevcut şifre alanı da var → farklı şema.
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<ResetPasswordForm>({
-    resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { password: '', confirmPassword: '' },
+  } = useForm<ChangePasswordForm>({
+    resolver: zodResolver(passwordFormSchema(isChange)) as Resolver<ChangePasswordForm>,
+    defaultValues: { currentPassword: '', password: '', confirmPassword: '' },
   });
 
-  const onSubmit = async (values: ResetPasswordForm) => {
+  const onSubmit = async (values: ChangePasswordForm) => {
     setFormError('');
     setLoading(true);
+
+    // Hassas işlem → önce yeniden doğrulama. Yalnızca 'change' modunda; 'create'
+    // modunda (Google-only hesaba ilk şifre) doğrulanacak mevcut şifre yoktur.
+    if (isChange) {
+      const reauth = await reauthenticateWithPassword({
+        currentPassword: values.currentPassword,
+      });
+      if (!reauth.success) {
+        setLoading(false);
+        setFormError(t(reauth.errorKey));
+        return;
+      }
+    }
+
     const res = await updatePassword({ newPassword: values.password });
     setLoading(false);
     if (res.success) {
@@ -86,6 +101,31 @@ export default function SetPasswordScreen() {
             {formError ? (
               <View style={styles.banner}>
                 <ErrorText>{formError}</ErrorText>
+              </View>
+            ) : null}
+
+            {isChange ? (
+              <View style={styles.field}>
+                <Controller
+                  control={control}
+                  name="currentPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      label={t('setPassword.currentPasswordLabel')}
+                      placeholder={t('setPassword.currentPasswordPlaceholder')}
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      secureTextEntry
+                      autoCapitalize="none"
+                      error={
+                        errors.currentPassword?.message
+                          ? t(errors.currentPassword.message)
+                          : undefined
+                      }
+                    />
+                  )}
+                />
               </View>
             ) : null}
 

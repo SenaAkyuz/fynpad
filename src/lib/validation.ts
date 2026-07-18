@@ -6,6 +6,45 @@ import { z } from 'zod';
 
 const emailSchema = z.string().email('errors.validation.emailInvalid');
 
+/**
+ * Ortak ISO tarih şeması — 'YYYY-MM-DD'.
+ *
+ * Eskiden tarih alanları yalnızca `z.string()` idi: '2026-02-31', 'abc' veya boş string
+ * form doğrulamasından geçip DB'ye gidiyor, kullanıcı ham/generic bir constraint hatası
+ * görüyordu. Bu şema hem formatı hem GERÇEK TAKVİM tarihini kontrol eder.
+ *
+ * Takvim kontrolü Date round-trip ile yapılır: Date(2026,1,31) → 3 Mart'a taşar, geri
+ * biçimlendirildiğinde girdiyle eşleşmez → reddedilir.
+ */
+export const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'errors.validation.dateInvalid')
+  .refine((value) => {
+    const [y, m, d] = value.split('-').map(Number);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    const parsed = new Date(y, m - 1, d);
+    return (
+      parsed.getFullYear() === y && parsed.getMonth() === m - 1 && parsed.getDate() === d
+    );
+  }, 'errors.validation.dateInvalid');
+
+/** Bugünün yerel ISO tarihi — geçmiş/gelecek karşılaştırmaları için. */
+function todayISO(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
+}
+
+/**
+ * endDate >= startDate kuralı. ISO 'YYYY-MM-DD' sözlüksel sıralaması takvim
+ * sıralamasıyla aynı olduğu için string karşılaştırması yeterli ve TZ'den bağımsızdır.
+ */
+function endNotBeforeStart(d: { startDate: string; endDate?: string | null }): boolean {
+  if (!d.endDate) return true;
+  return d.endDate >= d.startDate;
+}
+
 const passwordSchema = z
   .string()
   .min(8, 'errors.validation.passwordTooShort')
@@ -42,6 +81,40 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
+/**
+ * Şifre DEĞİŞTİRME (mevcut şifresi olan hesap). Yeniden doğrulama için mevcut şifre
+ * zorunlu — bkz. lib/auth.ts reauthenticateWithPassword. Şifre EKLEME ('create' modu,
+ * Google-only hesap) bu şemayı kullanmaz: doğrulanacak mevcut şifre yoktur.
+ */
+/**
+ * Alan ŞEKLİ her iki modda aynıdır (react-hook-form resolver tipi tek bir form tipine
+ * bağlanmak zorunda); fark yalnızca `currentPassword`'ün zorunlu olup olmamasıdır.
+ *
+ * - requireCurrent = true  → 'change' modu: mevcut şifre zorunlu (yeniden doğrulama).
+ * - requireCurrent = false → 'create' modu: Google-only hesaba ilk şifre; doğrulanacak
+ *   mevcut şifre yoktur, alan gizlenir ve boş geçilir.
+ */
+export function passwordFormSchema(requireCurrent: boolean) {
+  return z
+    .object({
+      currentPassword: requireCurrent
+        ? z.string().min(1, 'errors.validation.currentPasswordRequired')
+        : z.string().optional().default(''),
+      password: passwordSchema,
+      confirmPassword: z.string(),
+    })
+    .refine((d) => d.password === d.confirmPassword, {
+      message: 'errors.validation.passwordsDoNotMatch',
+      path: ['confirmPassword'],
+    });
+}
+
+export type ChangePasswordForm = {
+  currentPassword: string;
+  password: string;
+  confirmPassword: string;
+};
+
 /** OTP tabanlı şifre sıfırlama: 6 haneli kod + yeni şifre (e-posta route param'dan gelir). */
 export const resetPasswordOtpSchema = z
   .object({
@@ -76,8 +149,8 @@ export const recurringRuleSchema = z
     dayOfWeek: z.number().int().min(0).max(6).nullable().optional(),
     dayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
     monthOfYear: z.number().int().min(1).max(12).nullable().optional(),
-    startDate: z.string(),
-    endDate: z.string().nullable().optional(),
+    startDate: isoDateSchema,
+    endDate: isoDateSchema.nullable().optional(),
   })
   .refine(
     (d) => {
@@ -87,7 +160,11 @@ export const recurringRuleSchema = z
       return true;
     },
     { message: 'errors.validation.recurringConfigIncomplete' }
-  );
+  )
+  .refine(endNotBeforeStart, {
+    message: 'errors.validation.endDateBeforeStart',
+    path: ['endDate'],
+  });
 
 export type RecurringRuleForm = z.infer<typeof recurringRuleSchema>;
 
@@ -100,7 +177,7 @@ export const quickAddSchema = z
       .positive('errors.transaction.amountPositive'),
     categoryId: z.string().uuid('errors.transaction.categoryRequired'),
     currency: z.enum(['TRY', 'USD', 'EUR']),
-    date: z.string(),
+    date: isoDateSchema,
     note: z.string().max(200, 'errors.transaction.noteTooLong').nullable().optional(),
     recurring: z.boolean(),
     recurringRule: recurringRuleSchema.nullable().optional(),
@@ -120,7 +197,7 @@ export const transactionEditSchema = z.object({
     .positive('errors.transaction.amountPositive'),
   categoryId: z.string().uuid('errors.transaction.categoryRequired'),
   currency: z.enum(['TRY', 'USD', 'EUR']),
-  date: z.string(),
+  date: isoDateSchema,
   note: z.string().max(200, 'errors.transaction.noteTooLong').nullable().optional(),
 });
 
@@ -139,13 +216,17 @@ export const subscriptionSchema = z
     frequency: z.enum(['monthly', 'yearly']),
     dayOfMonth: z.number().int().min(1).max(31),
     monthOfYear: z.number().int().min(1).max(12).nullable().optional(),
-    startDate: z.string(),
-    endDate: z.string().nullable().optional(),
+    startDate: isoDateSchema,
+    endDate: isoDateSchema.nullable().optional(),
     note: z.string().max(200, 'errors.transaction.noteTooLong').nullable().optional(),
   })
   .refine((d) => d.frequency !== 'yearly' || d.monthOfYear != null, {
     message: 'errors.validation.recurringConfigIncomplete',
     path: ['monthOfYear'],
+  })
+  .refine(endNotBeforeStart, {
+    message: 'errors.validation.endDateBeforeStart',
+    path: ['endDate'],
   });
 
 export type SubscriptionForm = z.infer<typeof subscriptionSchema>;
@@ -159,7 +240,12 @@ export const goalSchema = z.object({
     .number({ message: 'goals.errors.amountRequired' })
     .positive('goals.errors.amountPositive'),
   currency: z.enum(['TRY', 'USD', 'EUR']),
-  targetDate: z.string().nullable().optional(),
+  // Hedef tarihi geçmişte olamaz: geçmiş bir tarih "gereken aylık birikim" hesabını
+  // anlamsız kılar (kalan ay sayısı ≤ 0). Bugün kabul edilir.
+  targetDate: isoDateSchema
+    .refine((v) => v >= todayISO(), 'goals.errors.targetDateInPast')
+    .nullable()
+    .optional(),
   currentAmount: z.number().min(0).optional(),
 });
 

@@ -111,6 +111,7 @@
       "amountRequired": "Target amount is required",
       "amountPositive": "Amount must be greater than 0",
       "descriptionTooLong": "Description can be at most 200 characters",
+      "targetDateInPast": "Target date cannot be in the past",
       "saveFailed": "Could not save goal",
       "deleteFailed": "Could not delete goal"
     }
@@ -608,6 +609,8 @@
     "changeTitle": "Change Password",
     "createSubtitle": "Set a password for your account so you can sign in with email and password in addition to Google.",
     "changeSubtitle": "Choose a new password for your account.",
+    "currentPasswordLabel": "Current Password",
+    "currentPasswordPlaceholder": "Enter your current password",
     "passwordLabel": "New Password",
     "passwordPlaceholder": "At least 8 characters",
     "confirmPasswordLabel": "Confirm New Password",
@@ -835,8 +838,11 @@
       "passwordNeedsLetter": "Password must contain at least one letter.",
       "passwordNeedsNumber": "Password must contain at least one number.",
       "passwordsDoNotMatch": "Passwords do not match.",
+      "currentPasswordRequired": "Enter your current password.",
       "otpInvalid": "Enter a valid code.",
-      "recurringConfigIncomplete": "Recurrence settings are incomplete"
+      "recurringConfigIncomplete": "Recurrence settings are incomplete",
+      "dateInvalid": "Enter a valid date",
+      "endDateBeforeStart": "End date cannot be before the start date"
     }
   }
 }

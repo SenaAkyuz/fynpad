@@ -418,6 +418,38 @@ export async function verifyPasswordResetOtp(params: {
 }
 
 /** Reset deep link ile session açıldıktan sonra yeni şifreyi yazar. */
+/**
+ * Hassas işlem öncesi yeniden doğrulama.
+ *
+ * Şifre değişimi açık session ile tek adımda yapılıyordu: cihazı eline geçiren biri
+ * (uygulama kilidi yoksa veya kilit açıkken) mevcut şifreyi BİLMEDEN hesabın şifresini
+ * değiştirip kalıcı erişim sağlayabilirdi. Artık mevcut şifre tekrar doğrulanır.
+ *
+ * Doğrulama `signInWithPassword` ile yapılır — aynı kullanıcı için yeni bir session
+ * üretir, oturum kaybı olmaz. Yanlış şifrede Supabase invalid_credentials döner.
+ */
+export async function reauthenticateWithPassword(params: {
+  currentPassword: string;
+}): Promise<AuthResult> {
+  try {
+    const { data } = await supabase.auth.getUser();
+    const email = data.user?.email;
+    if (!email) {
+      return { success: false, errorKey: 'errors.auth.unknown' };
+    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: params.currentPassword,
+    });
+    if (error) {
+      return fail('reauthenticate', error);
+    }
+    return { success: true };
+  } catch (error) {
+    return fail('reauthenticate', error);
+  }
+}
+
 export async function updatePassword(params: { newPassword: string }): Promise<AuthResult> {
   try {
     const { error } = await supabase.auth.updateUser({ password: params.newPassword });
