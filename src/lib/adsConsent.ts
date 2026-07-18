@@ -49,13 +49,29 @@ export async function requestConsent(): Promise<void> {
  * Kullanıcının reklam/veri tercihlerini yeniden düzenleyebilmesi için UMP "privacy options"
  * formunu gösterir (Ayarlar → Reklam Tercihleri). Form yalnızca consent gereken bölgelerde
  * (EU/UK) kullanılabilir; kullanılamıyorsa `false` döner ve arayan bir mesaj gösterebilir.
+ *
+ * UMP formu TEMBEL yüklenir: ilk `showPrivacyOptionsForm()` çağrısı, form arka planda daha
+ * inmemişse `privacy-options-form-error` ("form is being loading") ile reddeder. Bu yüzden bu
+ * hatada kısa aralıklarla birkaç kez yeniden denenir; başka bir hata (ör. bölge desteklemiyor)
+ * anında `false` döner. Böylece kullanıcı açılıştan hemen sonra dokunsa bile form açılır.
  */
 export async function showAdPrivacyOptions(): Promise<boolean> {
-  try {
-    await AdsConsent.showPrivacyOptionsForm();
-    return true;
-  } catch (e) {
-    if (__DEV__) console.log('[FynPad/ads] privacy options error:', e);
-    return false;
+  const isFormLoading = (e: unknown): boolean =>
+    (e as { code?: string } | null)?.code === 'privacy-options-form-error';
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await AdsConsent.showPrivacyOptionsForm();
+      return true;
+    } catch (e) {
+      // Yalnızca "form yükleniyor" hatasında yeniden dene; diğer hatalarda hemen vazgeç.
+      if (isFormLoading(e) && attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        continue;
+      }
+      if (__DEV__) console.log('[FynPad/ads] privacy options error:', e);
+      return false;
+    }
   }
+  return false;
 }
