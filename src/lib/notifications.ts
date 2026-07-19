@@ -8,7 +8,14 @@ import { useAppStore } from '@/stores/useAppStore';
 import type { Subscription } from '@/types';
 
 const ID_PREFIX = 'fynpad.sub.';
+/**
+ * Günlük hatırlatma ID'leri KULLANICIYA ÖZELDİR: `fynpad.daily.<userId>.<morning|evening>`.
+ * Eskiden `fynpad.daily.morning` gibi global idi → bir hesabı kapatmak cihazdaki TÜM hesapların
+ * hatırlatmalarını iptal ediyordu. Sürüm öncesi zamanlanmış global ID'ler `cancelLegacyDailyReminders`
+ * ile bir kez temizlenir (orphan kalmasın).
+ */
 const DAILY_ID_PREFIX = 'fynpad.daily.';
+const dailyPrefix = (userId: string) => `${DAILY_ID_PREFIX}${userId}.`;
 /** Android bildirim kanalı (yenilenme hatırlatmaları). */
 const CHANNEL_ID = 'subscription-renewals';
 const DAILY_CHANNEL_ID = 'daily-expense-reminders';
@@ -47,8 +54,8 @@ export async function getNotificationPermission(): Promise<boolean> {
  * İzni ister; verilirse günde 2 sabit hatırlatmayı (prefix-güvenli) zamanlar. Zil ikonuna
  * ilk basışta çağrılır. Return: izin verildi (ve zamanlandı) mı.
  */
-export async function requestAndScheduleReminders(): Promise<boolean> {
-  return scheduleDailyExpenseReminders();
+export async function requestAndScheduleReminders(userId: string): Promise<boolean> {
+  return scheduleDailyExpenseReminders(userId);
 }
 
 /** Bildirim izni iste; verildi mi döner. İlk subscription oluşturulurken çağrılır. */
@@ -61,6 +68,11 @@ export async function requestPermissions(): Promise<boolean> {
     if (current.granted) {
       return true;
     }
+    // Android 13+: kanallar izin İSTENMEDEN ÖNCE oluşturulmalı (Expo SDK 54 dokümanı). Aksi
+    // halde izin akışı bazı cihazlarda kararsız oluyor ve bildirimler kanalsız kalabiliyor.
+    // Yeni kanal uydurulmuyor — projedeki mevcut iki kanal (CHANNEL_ID, DAILY_CHANNEL_ID).
+    await ensureAndroidChannel();
+    await ensureDailyReminderChannel();
     const requested = await Notifications.requestPermissionsAsync();
     if (__DEV__) {
       console.log('[FynPad/notifications] permission status after:', JSON.stringify(requested));
@@ -94,12 +106,14 @@ async function ensureDailyReminderChannel(): Promise<void> {
   });
 }
 
-export async function cancelDailyExpenseReminders(): Promise<void> {
+/** YALNIZCA verilen kullanıcının günlük hatırlatmalarını iptal eder (diğer hesaplarınkine dokunmaz). */
+export async function cancelDailyExpenseReminders(userId: string): Promise<void> {
   try {
+    const prefix = dailyPrefix(userId);
     const all = await Notifications.getAllScheduledNotificationsAsync();
     await Promise.all(
       all
-        .filter((n) => n.identifier.startsWith(DAILY_ID_PREFIX))
+        .filter((n) => n.identifier.startsWith(prefix))
         .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
     );
   } catch {
@@ -107,19 +121,41 @@ export async function cancelDailyExpenseReminders(): Promise<void> {
   }
 }
 
-export async function scheduleDailyExpenseReminders(): Promise<boolean> {
+/**
+ * Sürüm öncesi global ID'leri (`fynpad.daily.morning|evening` — userId segmenti YOK) temizler.
+ * Yeni ID'ler `fynpad.daily.<userId>.<id>` olduğundan kalan segmentte nokta bulunur.
+ */
+async function cancelLegacyDailyReminders(): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      all
+        .filter(
+          (n) =>
+            n.identifier.startsWith(DAILY_ID_PREFIX) &&
+            !n.identifier.slice(DAILY_ID_PREFIX.length).includes('.')
+        )
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
+    );
+  } catch {
+    /* sessiz */
+  }
+}
+
+export async function scheduleDailyExpenseReminders(userId: string): Promise<boolean> {
   const granted = await requestPermissions();
   if (!granted) {
     return false;
   }
 
-  await cancelDailyExpenseReminders();
+  await cancelDailyExpenseReminders(userId);
+  await cancelLegacyDailyReminders();
   await ensureDailyReminderChannel();
 
   await Promise.all(
     DAILY_REMINDERS.map((reminder) =>
       Notifications.scheduleNotificationAsync({
-        identifier: `${DAILY_ID_PREFIX}${reminder.id}`,
+        identifier: `${dailyPrefix(userId)}${reminder.id}`,
         content: {
           title: i18n.t(reminder.titleKey),
           body: i18n.t(reminder.bodyKey),
@@ -138,16 +174,17 @@ export async function scheduleDailyExpenseReminders(): Promise<boolean> {
   return true;
 }
 
-export async function syncDailyExpenseReminders(enabled: boolean): Promise<void> {
+export async function syncDailyExpenseReminders(enabled: boolean, userId: string): Promise<void> {
   if (enabled) {
     const perm = await Notifications.getPermissionsAsync();
     if (!perm.granted) {
       return;
     }
-    await scheduleDailyExpenseReminders();
+    await scheduleDailyExpenseReminders(userId);
     return;
   }
-  await cancelDailyExpenseReminders();
+  await cancelDailyExpenseReminders(userId);
+  await cancelLegacyDailyReminders();
 }
 
 function upcomingRenewals(sub: Subscription, count: number): string[] {

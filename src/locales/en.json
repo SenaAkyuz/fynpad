@@ -782,7 +782,8 @@
     "consentTerms": "Terms of Service",
     "consentAnd": " and ",
     "consentPrivacy": "Privacy Policy",
-    "consentSuffix": "."
+    "consentSuffix": ".",
+    "consentRequired": "Please accept the Terms of Service to continue."
   },
   "errors": {
     "auth": {

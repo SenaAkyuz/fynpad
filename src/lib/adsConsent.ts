@@ -1,5 +1,10 @@
 import type { AdsConsentInfoOptions } from 'react-native-google-mobile-ads';
-import { AdsConsent, AdsConsentDebugGeography, AdsConsentStatus } from 'react-native-google-mobile-ads';
+import {
+  AdsConsent,
+  AdsConsentDebugGeography,
+  AdsConsentPrivacyOptionsRequirementStatus,
+  AdsConsentStatus,
+} from 'react-native-google-mobile-ads';
 
 /**
  * DEV'de EEA taklidini GERÇEK cihazlarda da etkinleştirmek için test cihazı "hashed ID"leri.
@@ -42,6 +47,24 @@ export async function requestConsent(): Promise<void> {
   } catch (e) {
     if (__DEV__) console.log('[FynPad/ads] consent error:', e);
     // Consent alınamasa bile akışı bloklama.
+  }
+}
+
+/**
+ * UMP "privacy options" formu bu kullanıcı için GEREKLİ mi (yalnızca EU/UK gibi bölgelerde).
+ * Ayarlar'daki "Reklam Tercihleri" satırı buna göre gösterilir: Türkiye gibi bölgelerde satır
+ * hiç çıkmaz — eskiden çıkıyor ve tıklayınca "kullanılamıyor" diyerek kırık özellik izlenimi
+ * veriyordu. `requestConsent()` (açılışta) requestInfoUpdate'i zaten çağırdığı için buradaki
+ * getConsentInfo güncel değeri döner.
+ */
+export async function isPrivacyOptionsRequired(): Promise<boolean> {
+  try {
+    const info = await AdsConsent.getConsentInfo();
+    return (
+      info.privacyOptionsRequirementStatus === AdsConsentPrivacyOptionsRequirementStatus.REQUIRED
+    );
+  } catch {
+    return false;
   }
 }
 

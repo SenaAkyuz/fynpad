@@ -7,7 +7,6 @@ import '@/lib/logbox';
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
-import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -32,7 +31,7 @@ import { initInterstitial } from '@/lib/interstitialAd';
 import { registerMutationDefaults } from '@/lib/offlineMutations';
 import { applyOrientationPolicy } from '@/lib/orientation';
 import { asyncStoragePersister, queryClient } from '@/lib/queryClient';
-import { completeOAuthCallback, consumeIntentionalSignOut, hasOAuthCallbackParams } from '@/lib/auth';
+import { consumeIntentionalSignOut } from '@/lib/auth';
 import { processRecurringRules } from '@/lib/recurring';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/stores/useAppStore';
@@ -97,6 +96,8 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontMap);
   const hydrated = useAppStore((s) => s.hydrated);
   const dailyExpenseRemindersEnabled = useAppStore((s) => s.dailyExpenseRemindersEnabled);
+  const remindersUserId = useAppStore((s) => s.remindersUserId);
+  const hydrateDailyReminders = useAppStore((s) => s.hydrateDailyReminders);
 
   const initialized = useAuthStore((s) => s.initialized);
   const session = useAuthStore((s) => s.session);
@@ -117,11 +118,17 @@ export default function RootLayout() {
 
   // Kilit ayarları KULLANICIYA ÖZEL: auth çözüldükten sonra oturumdaki kullanıcının kilidini
   // oku. Oturum yoksa/hesap değişince yeniden hydrate → başka hesabın PIN'i istenmez.
-  const lockUserId = session?.user?.id ?? null;
+  const sessionUserId = session?.user?.id ?? null;
   useEffect(() => {
     if (!initialized) return;
-    void hydrateLock(lockUserId);
-  }, [initialized, lockUserId, hydrateLock]);
+    void hydrateLock(sessionUserId);
+  }, [initialized, sessionUserId, hydrateLock]);
+
+  // Hatırlatma tercihi de KULLANICIYA ÖZEL → hesap değişince yeniden oku (çıkışta sıfırlanır).
+  useEffect(() => {
+    if (!initialized) return;
+    void hydrateDailyReminders(sessionUserId);
+  }, [initialized, sessionUserId, hydrateDailyReminders]);
 
   // Arka plana düşünce kilitle (kilit açık + oturum varsa).
   useAppLifecycle();
@@ -154,11 +161,13 @@ export default function RootLayout() {
     })();
   }, []);
 
+  // Zamanlamaları tercihle senkronla. YALNIZCA tercih aktif kullanıcı için hydrate edildiyse
+  // çalışır (remindersUserId === sessionUserId) — aksi halde önceki hesabın değeriyle yanlış
+  // schedule/cancel yapılırdı. Oturum yokken hiç dokunma: başka hesabın zamanlamaları silinmesin.
   useEffect(() => {
-    if (hydrated) {
-      void syncDailyExpenseReminders(dailyExpenseRemindersEnabled);
-    }
-  }, [dailyExpenseRemindersEnabled, hydrated]);
+    if (!hydrated || !sessionUserId || remindersUserId !== sessionUserId) return;
+    void syncDailyExpenseReminders(dailyExpenseRemindersEnabled, sessionUserId);
+  }, [dailyExpenseRemindersEnabled, hydrated, sessionUserId, remindersUserId]);
 
   // Supabase session'ı yükle + değişiklikleri dinle.
   useEffect(() => {
@@ -168,28 +177,9 @@ export default function RootLayout() {
     // splash SONSUZA KADAR açık kalır ve uygulama tamamen kullanılamaz olur. Bu yüzden her
     // adım ayrı korunur ve setInitialized finally'de ÇAĞRILIR.
     void (async () => {
-      try {
-        const initialUrl = await Linking.getInitialURL();
-        if (Platform.OS !== 'web' && initialUrl && hasOAuthCallbackParams(initialUrl)) {
-          const res = await completeOAuthCallback(initialUrl);
-          if (!mounted) return;
-          if (res.success) {
-            router.replace('/(tabs)/dashboard');
-          } else {
-            useToastStore.getState().show(res.errorKey, 'error');
-            router.replace('/(auth)/login');
-          }
-        }
-      } catch (e) {
-        // Deep link / OAuth başarısız → kullanıcı bilgilendirilir ve login'e döner.
-        // Session yüklemesi yine de denenir (aşağıda), uygulama açılmaya devam eder.
-        if (__DEV__) console.warn('[FynPad/auth] OAuth callback bootstrap failed:', e);
-        if (mounted) {
-          useToastStore.getState().show('errors.auth.unknown', 'error');
-          router.replace('/(auth)/login');
-        }
-      }
-
+      // OAuth callback BURADA İŞLENMEZ. Tek sahip prensibi: code exchange'i signInWithGoogle
+      // (openAuthSessionAsync sonucu) veya cold-start'ta `auth/callback` ekranı yapar. Burada
+      // üçüncü bir kez denemek yarışa ve yanlış "something went wrong" toast'ına yol açıyordu.
       try {
         const { data } = await supabase.auth.getSession();
         if (!mounted) return;
@@ -222,7 +212,7 @@ export default function RootLayout() {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, [router, setSession, setInitialized]);
+  }, [setSession, setInitialized]);
 
   useEffect(() => {
     if (ready) {

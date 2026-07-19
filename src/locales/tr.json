@@ -782,7 +782,8 @@
     "consentTerms": "Kullanım Koşulları",
     "consentAnd": " ve ",
     "consentPrivacy": "Gizlilik Politikası",
-    "consentSuffix": "'nı kabul ediyorum."
+    "consentSuffix": "'nı kabul ediyorum.",
+    "consentRequired": "Devam etmek için kullanım koşullarını kabul edin."
   },
   "errors": {
     "auth": {

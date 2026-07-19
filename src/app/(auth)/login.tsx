@@ -61,8 +61,14 @@ export default function LoginScreen() {
     if (!res.success) {
       // E-posta doğrulanmamışsa: yeni kod gönder + doğrulama ekranına yönlendir.
       if (res.errorKey === 'errors.auth.emailNotConfirmed') {
-        await resendSignupOtp({ email: values.email });
+        // Gönderim SONUCU kontrol edilmeli: başarısızsa (rate limit vb.) kullanıcıyı kod
+        // beklediği boş bir ekranda bırakma — hatayı burada göster, OTP ekranına GEÇME.
+        const resend = await resendSignupOtp({ email: values.email });
         setLoading(false);
+        if (!resend.success) {
+          setFormError(t(resend.errorKey));
+          return;
+        }
         router.replace({ pathname: '/(auth)/verify-email-otp', params: { email: values.email } });
         return;
       }

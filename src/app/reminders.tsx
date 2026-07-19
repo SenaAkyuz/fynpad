@@ -12,6 +12,7 @@ import {
   scheduleDailyExpenseReminders,
 } from '@/lib/notifications';
 import { useAppStore } from '@/stores/useAppStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -27,15 +28,18 @@ export default function RemindersScreen() {
 
   const enabled = useAppStore((s) => s.dailyExpenseRemindersEnabled);
   const setEnabled = useAppStore((s) => s.setDailyExpenseRemindersEnabled);
+  // Hatırlatmalar kullanıcıya özel: tercih ve bildirim ID'leri aktif oturumun id'siyle yazılır.
+  const userId = useAuthStore((s) => s.session?.user?.id);
 
   const onToggle = (next: boolean) => {
+    if (!userId) return;
     void (async () => {
       if (next) {
-        const ok = await scheduleDailyExpenseReminders();
-        setEnabled(ok);
+        const ok = await scheduleDailyExpenseReminders(userId);
+        await setEnabled(ok);
       } else {
-        setEnabled(false);
-        await cancelDailyExpenseReminders();
+        await setEnabled(false);
+        await cancelDailyExpenseReminders(userId);
       }
     })();
   };

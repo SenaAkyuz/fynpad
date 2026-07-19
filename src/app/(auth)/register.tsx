@@ -81,6 +81,11 @@ export default function RegisterScreen() {
 
   const onGoogleSignIn = async () => {
     setFormError('');
+    // Buton zaten disabled; yine de savunma amaçlı (hukuki: onay olmadan kayıt başlamaz).
+    if (!accepted) {
+      setFormError(t('signUp.consentRequired'));
+      return;
+    }
     if (Platform.OS === 'web' && googleOAuthUrl) {
       window.location.href = googleOAuthUrl;
       return;
@@ -245,9 +250,11 @@ export default function RegisterScreen() {
             <Button
               label={t('auth.continueWithGoogle')}
               variant="secondary"
-              href={Platform.OS === 'web' ? googleOAuthUrl : undefined}
+              // Şartlar kabul edilmeden Google ile KAYIT da başlamamalı (e-posta kaydıyla birebir
+              // aynı kural). Web'de href doğrudan gezinir → kabul edilmeden href verilmez.
+              href={Platform.OS === 'web' && accepted ? googleOAuthUrl : undefined}
               loading={googleLoading}
-              disabled={!isOnline || loading}
+              disabled={!accepted || !isOnline || loading}
               onPress={onGoogleSignIn}
               style={styles.googleButton}
             />

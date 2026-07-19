@@ -24,6 +24,8 @@ export function DashboardHeader() {
   const displayName = profile?.fullName?.trim() || email.split('@')[0] || 'F';
   const initial = (displayName.trim()[0] ?? 'F').toUpperCase();
 
+  const userId = useAuthStore((s) => s.session?.user?.id);
+
   const onBellPress = () => {
     void (async () => {
       // İzin varsa doğrudan Hatırlatmalar ekranı; yoksa izin iste + (verilirse) zamanla.
@@ -31,9 +33,10 @@ export function DashboardHeader() {
         router.push('/reminders');
         return;
       }
-      const granted = await requestAndScheduleReminders();
+      if (!userId) return;
+      const granted = await requestAndScheduleReminders(userId);
       if (granted) {
-        useAppStore.getState().setDailyExpenseRemindersEnabled(true);
+        await useAppStore.getState().setDailyExpenseRemindersEnabled(true);
         useToastStore.getState().show('reminders.enabledToast', 'success');
       } else {
         useToastStore.getState().show('reminders.permissionDenied', 'info');

@@ -40,15 +40,24 @@ export default function AuthCallbackScreen() {
     let mounted = true;
 
     void (async () => {
+      const { supabase } = await import('@/lib/supabase');
+
       // Provider hatası (kullanıcı izni reddetti vb.) → login'e dön + bilgilendir.
+      // AMA ÖNCE session kontrol: paralel handler (signInWithGoogle) bu sırada oturumu açmış
+      // olabilir → o durumda hata GÖSTERME, session effect dashboard'a alsın.
       if (providerError) {
+        const onError =
+          useAuthStore.getState().session ?? (await supabase.auth.getSession()).data.session;
         if (!mounted) return;
+        if (onError) {
+          setSession(onError);
+          return;
+        }
         useToastStore.getState().show('errors.auth.unknown', 'error');
         router.replace('/(auth)/login');
         return;
       }
 
-      const { supabase } = await import('@/lib/supabase');
       const existing =
         useAuthStore.getState().session ?? (await supabase.auth.getSession()).data.session;
       if (existing) {

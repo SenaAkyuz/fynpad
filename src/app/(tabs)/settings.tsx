@@ -15,7 +15,7 @@ import { SyncStatusIndicator } from '@/components/ui/SyncStatusIndicator';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { showAdPrivacyOptions } from '@/lib/adsConsent';
+import { isPrivacyOptionsRequired, showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
 import { clearLocalSecurityForUser } from '@/lib/lockSecurity';
@@ -70,6 +70,21 @@ export default function SettingsScreen() {
     { value: 'light', label: t('settings.themeLight') },
     { value: 'dark', label: t('settings.themeDark') },
   ];
+
+  // "Reklam Tercihleri" satırı YALNIZCA UMP privacy options'ın gerekli olduğu bölgelerde (EU/UK)
+  // gösterilir. Gerekli olmayan bölgede kullanıcı bir şey kaçırmaz — o bölgede tercih yok.
+  const [showAdPreferencesRow, setShowAdPreferencesRow] = useState(false);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let mounted = true;
+    void (async () => {
+      const required = await isPrivacyOptionsRequired();
+      if (mounted) setShowAdPreferencesRow(required);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const onAdPreferences = () => {
     void (async () => {
@@ -183,7 +198,7 @@ export default function SettingsScreen() {
             label={t('settings.termsOfService')}
             onPress={() => router.push('/terms')}
           />
-          {Platform.OS !== 'web' && (
+          {Platform.OS !== 'web' && showAdPreferencesRow && (
             <SettingsRow
               icon="settings"
               label={t('settings.adPreferences')}

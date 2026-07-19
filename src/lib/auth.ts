@@ -235,6 +235,25 @@ export async function getGoogleOAuthUrl(): Promise<
   }
 }
 
+/**
+ * Aynı OAuth code'unu iki handler (openAuthSessionAsync sonucu + `auth/callback` deep link ekranı)
+ * paralel exchange etmeye çalışabilir. İkinci çağrı `pkce_code_verifier_not_found` /
+ * "code already used" alır ve kullanıcıya YANLIŞ hata gösterilir. Code başına TEK exchange
+ * promise'i paylaşılır; sonuç map'te kalır → sonraki denemeler aynı sonucu görür (idempotent).
+ */
+const exchangeInFlight = new Map<string, Promise<{ error: unknown }>>();
+
+async function exchangeCodeOnce(code: string): Promise<{ error: unknown }> {
+  const inFlight = exchangeInFlight.get(code);
+  if (inFlight) return inFlight;
+
+  const promise = supabase.auth
+    .exchangeCodeForSession(code)
+    .then(({ error }) => ({ error: error as unknown }));
+  exchangeInFlight.set(code, promise);
+  return promise;
+}
+
 export async function signInWithGoogle(): Promise<AuthResult> {
   try {
     const redirectTo = Linking.createURL('auth/callback');
@@ -270,6 +289,9 @@ export async function signInWithGoogle(): Promise<AuthResult> {
 
     const providerError = getOAuthCallbackParam(result.url, 'error_description');
     if (providerError) {
+      // Session-önce-hata kuralı: callback ekranı bu sırada oturumu açtıysa hata gösterme.
+      const { data: onError } = await supabase.auth.getSession();
+      if (onError.session) return { success: true };
       return fail('signInWithGoogle.provider', { message: providerError });
     }
 
@@ -278,7 +300,7 @@ export async function signInWithGoogle(): Promise<AuthResult> {
       return { success: false, errorKey: 'errors.auth.unknown' };
     }
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await exchangeCodeOnce(code);
     if (exchangeError) {
       // Yarış: callback ekranı aynı code'u önce exchange ettiyse burada verifier tükenmiş olur
       // ama session VARDIR → hata sayma, başarı dön.
@@ -305,6 +327,9 @@ export async function completeOAuthCallback(url: string): Promise<AuthResult> {
     const providerError =
       getOAuthCallbackParam(url, 'error_description') ?? getOAuthCallbackParam(url, 'error');
     if (providerError) {
+      // Session-önce-hata kuralı: paralel handler bu sırada oturumu açmış olabilir → hata sayma.
+      const { data: onError } = await supabase.auth.getSession();
+      if (onError.session) return { success: true };
       return fail('completeOAuthCallback.provider', { message: providerError });
     }
 
@@ -321,7 +346,7 @@ export async function completeOAuthCallback(url: string): Promise<AuthResult> {
       return { success: true };
     }
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await exchangeCodeOnce(code);
     if (error) {
       // Yarış: signInWithGoogle aynı code'u önce exchange ettiyse verifier tükenmiş olur ama
       // session VARDIR → hata gösterme, başarı say.
