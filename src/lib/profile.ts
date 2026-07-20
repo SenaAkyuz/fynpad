@@ -1,3 +1,4 @@
+import { assertOwner } from '@/lib/mutationOwner';
 import { supabase } from '@/lib/supabase';
 import type { Currency } from '@/types';
 import type { Locale } from '@/stores/useAppStore';
@@ -29,20 +30,10 @@ export type UpdateProfileInput = {
 };
 
 /**
- * Bekleyen mutation'ın sahibi hâlâ aktif oturum mu?
- *
- * Çıkışta cache temizleniyor (clearAppCache) ama bu tek başına yeterli bir garanti değil:
- * beklenmeyen crash veya sign-out yarışında diskte kalmış bir mutation, BAŞKA kullanıcının
- * oturumunda resume olabilir ve onun verisini değiştirebilir. Bu kontrol o senaryoyu keser.
+ * Sahiplik kontrolü artık TÜM mutation'lar için ortak (bkz. lib/mutationOwner.ts) —
+ * profil, bu deseni ilk uygulayan yerdi. Geriye dönük uyumluluk için buradan da export edilir.
  */
-export async function assertOwner(ownerUserId: string): Promise<void> {
-  const { data } = await supabase.auth.getUser();
-  const currentUserId = data.user?.id;
-  if (!currentUserId || currentUserId !== ownerUserId) {
-    // Kontrollü iptal: DB'ye HİÇBİR ŞEY gönderilmez.
-    throw new Error('MUTATION_OWNER_MISMATCH');
-  }
-}
+export { assertOwner };
 
 export async function updateProfile(input: UpdateProfileInput): Promise<void> {
   await assertOwner(input.ownerUserId);

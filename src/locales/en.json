@@ -348,7 +348,8 @@
     "toggleLabel": "Daily reminders",
     "toggleHint": "You can turn these off here anytime.",
     "enabledToast": "Notifications enabled.",
-    "permissionDenied": "Notification permission denied. You can enable it in your device settings."
+    "permissionDenied": "Notification permission denied. You can enable it in your device settings.",
+    "saveFailed": "Preference could not be saved. Please try again."
   },
   "analytics": {
     "title": "Analytics",

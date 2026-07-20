@@ -13,6 +13,7 @@ import {
 } from '@/lib/notifications';
 import { useAppStore } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useToastStore } from '@/stores/useToastStore';
 import { spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -36,10 +37,17 @@ export default function RemindersScreen() {
     void (async () => {
       if (next) {
         const ok = await scheduleDailyExpenseReminders(userId);
-        await setEnabled(ok);
+        // Tercih diske yazılamadıysa store görünen değeri zaten geri alır; kullanıcı
+        // sessizce yanlış bir duruma bakmasın diye kısa bir hata gösterilir.
+        if (!(await setEnabled(ok))) {
+          useToastStore.getState().show('reminders.saveFailed', 'error');
+        }
       } else {
-        await setEnabled(false);
+        const saved = await setEnabled(false);
         await cancelDailyExpenseReminders(userId);
+        if (!saved) {
+          useToastStore.getState().show('reminders.saveFailed', 'error');
+        }
       }
     })();
   };

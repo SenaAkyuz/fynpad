@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import i18n from '@/locales/i18n';
-import { storage } from '@/lib/storage';
+import { secureStorage, storage } from '@/lib/storage';
 
 export type ThemeMode = 'light' | 'dark';
 export type Locale = 'tr' | 'en';
@@ -24,8 +24,12 @@ export type AppState = {
   hydrated: boolean;
   setThemeMode: (mode: ThemeMode) => void;
   setLocale: (locale: Locale) => void;
-  /** Aktif kullanıcının anahtarına yazar. Oturum yoksa yalnızca bellekte kalır. */
-  setDailyExpenseRemindersEnabled: (enabled: boolean) => Promise<void>;
+  /**
+   * Aktif kullanıcının anahtarına yazar. Oturum yoksa yalnızca bellekte kalır.
+   * Diske YAZILAMAZSA bellekteki değeri geri alır ve `false` döner — çağıran taraf
+   * kullanıcıya hata göstermeli (bkz. app/reminders.tsx).
+   */
+  setDailyExpenseRemindersEnabled: (enabled: boolean) => Promise<boolean>;
   /** userId ile hydrate: null (çıkış) ise varsayılana döner. */
   hydrateDailyReminders: (userId: string | null) => Promise<void>;
 };
@@ -44,10 +48,27 @@ export const useAppStore = create<AppState>()(
         void i18n.changeLanguage(locale);
       },
       setDailyExpenseRemindersEnabled: async (dailyExpenseRemindersEnabled) => {
+        const previous = get().dailyExpenseRemindersEnabled;
         set({ dailyExpenseRemindersEnabled });
         const { remindersUserId } = get();
-        if (remindersUserId) {
-          await storage.setItem(dailyRemindersKey(remindersUserId), dailyExpenseRemindersEnabled ? '1' : '0');
+        if (!remindersUserId) {
+          return true;
+        }
+        // `storage` yazma hatalarını YUTUYOR: disk yazımı sessizce başarısız olunca UI
+        // "açık" gösteriyor, uygulama yeniden açılınca tercih kapalı dönüyordu. Bu tek
+        // çağrı için hata bildiren + geri okuyup doğrulayan varyant kullanılır
+        // (genel `storage` davranışı değişmeden — bkz. lib/storage.ts).
+        try {
+          await secureStorage.setItem(
+            dailyRemindersKey(remindersUserId),
+            dailyExpenseRemindersEnabled ? '1' : '0'
+          );
+          return true;
+        } catch (e) {
+          if (__DEV__) console.warn('[FynPad/app] reminder preference write failed:', e);
+          // UI gerçeği yansıtsın: diske yazılamadıysa görünen değeri geri al.
+          set({ dailyExpenseRemindersEnabled: previous });
+          return false;
         }
       },
       hydrateDailyReminders: async (userId) => {

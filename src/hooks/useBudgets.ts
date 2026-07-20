@@ -1,6 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { deleteBudget, listBudgets, upsertBudget } from '@/lib/budgets';
+import { ownedById, useOwnedMutation } from '@/hooks/useOwnedMutation';
+import { listBudgets, upsertBudget } from '@/lib/budgets';
+import {
+  deleteBudgetOwned,
+  upsertBudgetOwned,
+  type UpsertBudgetVars,
+} from '@/lib/ownedMutations';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 /** ÖNEK key — invalidation'lar bunu kullanır; gerçek key userId taşır (bkz. useTransactions). */
@@ -17,20 +23,26 @@ export function useBudgets() {
 
 export function useUpsertBudget() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['upsertBudget'],
-    mutationFn: upsertBudget,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: budgetsKey });
-    },
-  });
+  return useOwnedMutation(
+    (
+      input: Parameters<typeof upsertBudget>[0],
+      ownerUserId
+    ): UpsertBudgetVars => ({ ...input, ownerUserId }),
+    {
+      mutationKey: ['upsertBudget'],
+      mutationFn: upsertBudgetOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: budgetsKey });
+      },
+    }
+  );
 }
 
 export function useDeleteBudget() {
   const qc = useQueryClient();
-  return useMutation({
+  return useOwnedMutation(ownedById, {
     mutationKey: ['deleteBudget'],
-    mutationFn: deleteBudget,
+    mutationFn: deleteBudgetOwned,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: budgetsKey });
     },

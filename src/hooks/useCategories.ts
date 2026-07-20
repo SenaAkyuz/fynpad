@@ -1,11 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { ownedById, useOwnedMutation } from '@/hooks/useOwnedMutation';
+import { createCategory, listCategories, updateCategory } from '@/lib/categories';
 import {
-  createCategory,
-  deleteCategory,
-  listCategories,
-  updateCategory,
-} from '@/lib/categories';
+  createCategoryOwned,
+  deleteCategoryOwned,
+  updateCategoryOwned,
+  type CreateCategoryVars,
+  type UpdateCategoryVars,
+} from '@/lib/ownedMutations';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 /** ÖNEK key — invalidation'lar bunu kullanır; gerçek key userId taşır (bkz. useTransactions). */
@@ -20,39 +23,42 @@ export function useCategories() {
   });
 }
 
+type CreateInput = Parameters<typeof createCategory>[0];
+type UpdateArgs = { id: string; patch: Parameters<typeof updateCategory>[1] };
+
 export function useCreateCategory() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['createCategory'],
-    mutationFn: createCategory,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: categoriesKey });
-    },
-  });
+  return useOwnedMutation(
+    (input: CreateInput, ownerUserId): CreateCategoryVars => ({ ...input, ownerUserId }),
+    {
+      mutationKey: ['createCategory'],
+      mutationFn: createCategoryOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: categoriesKey });
+      },
+    }
+  );
 }
 
 export function useUpdateCategory() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['updateCategory'],
-    mutationFn: ({
-      id,
-      patch,
-    }: {
-      id: string;
-      patch: Partial<{ name: string; icon: string; color: string }>;
-    }) => updateCategory(id, patch),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: categoriesKey });
-    },
-  });
+  return useOwnedMutation(
+    (args: UpdateArgs, ownerUserId): UpdateCategoryVars => ({ ...args, ownerUserId }),
+    {
+      mutationKey: ['updateCategory'],
+      mutationFn: updateCategoryOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: categoriesKey });
+      },
+    }
+  );
 }
 
 export function useDeleteCategory() {
   const qc = useQueryClient();
-  return useMutation({
+  return useOwnedMutation(ownedById, {
     mutationKey: ['deleteCategory'],
-    mutationFn: deleteCategory,
+    mutationFn: deleteCategoryOwned,
     onSuccess: () => {
       // delete işlemleri Diğer'e taşıdığı için transactions da geçersiz kılınır
       void qc.invalidateQueries({ queryKey: categoriesKey });

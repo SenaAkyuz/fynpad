@@ -1,6 +1,7 @@
 import { markIntentionalSignOut } from '@/lib/auth';
 import { clearAppCache } from '@/lib/clearAppCache';
 import { clearLocalSecurityForUser } from '@/lib/lockSecurity';
+import { cancelUserNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -29,6 +30,9 @@ export async function deleteAccount(): Promise<void> {
     } catch (e) {
       if (__DEV__) console.warn('[FynPad/account] local security cleanup failed:', e);
     }
+    // Zamanlanmış bildirimler cihazda yaşar: hesap silinse bile günlük hatırlatma ve
+    // abonelik yenilenme bildirimleri gelmeye devam ederdi.
+    await cancelUserNotifications(userId);
   }
   // User artık yok — kalan session'ı temizle (onAuthStateChange guard'ı tetikler).
   // Kasıtlı çıkış: "oturum süresi doldu" bildirimi tetiklenmesin.

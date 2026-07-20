@@ -1,13 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { ownedById, useOwnedMutation } from '@/hooks/useOwnedMutation';
 import {
   createRecurringRule,
-  deleteRecurringRule,
   listRecurringRules,
   processRecurringRules,
-  updateRecurringRule,
   type RecurringRulePatch,
 } from '@/lib/recurring';
+import {
+  createRecurringRuleOwned,
+  deleteRecurringRuleOwned,
+  updateRecurringRuleOwned,
+  type CreateRecurringRuleVars,
+  type UpdateRecurringRuleVars,
+} from '@/lib/ownedMutations';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { transactionsKey } from '@/hooks/useTransactions';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -24,41 +30,51 @@ export function useRecurringRules() {
   });
 }
 
+type UpdateArgs = { id: string; patch: RecurringRulePatch };
+
 /** Kural oluşturma + backfill sonrası hem kural hem işlem listesini tazele. */
 export function useCreateRecurringRule() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['createRecurringRule'],
-    mutationFn: createRecurringRule,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: recurringRulesKey });
-      void qc.invalidateQueries({ queryKey: transactionsKey });
-      // Kural abonelik olabilir → subscription listesi/grafik + bildirim reschedule tetiklensin.
-      void qc.invalidateQueries({ queryKey: subscriptionsKey });
-    },
-  });
+  return useOwnedMutation(
+    (input: Parameters<typeof createRecurringRule>[0], ownerUserId): CreateRecurringRuleVars => ({
+      ...input,
+      ownerUserId,
+    }),
+    {
+      mutationKey: ['createRecurringRule'],
+      mutationFn: createRecurringRuleOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: recurringRulesKey });
+        void qc.invalidateQueries({ queryKey: transactionsKey });
+        // Kural abonelik olabilir → subscription listesi/grafik + bildirim reschedule tetiklensin.
+        void qc.invalidateQueries({ queryKey: subscriptionsKey });
+      },
+    }
+  );
 }
 
 export function useUpdateRecurringRule() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['updateRecurringRule'],
-    mutationFn: ({ id, patch }: { id: string; patch: RecurringRulePatch }) =>
-      updateRecurringRule(id, patch),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: recurringRulesKey });
-      void qc.invalidateQueries({ queryKey: transactionsKey });
-      // Abonelik dönüşümü (recurring↔subscription) listeyi + bildirimleri etkiler.
-      void qc.invalidateQueries({ queryKey: subscriptionsKey });
-    },
-  });
+  return useOwnedMutation(
+    (args: UpdateArgs, ownerUserId): UpdateRecurringRuleVars => ({ ...args, ownerUserId }),
+    {
+      mutationKey: ['updateRecurringRule'],
+      mutationFn: updateRecurringRuleOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: recurringRulesKey });
+        void qc.invalidateQueries({ queryKey: transactionsKey });
+        // Abonelik dönüşümü (recurring↔subscription) listeyi + bildirimleri etkiler.
+        void qc.invalidateQueries({ queryKey: subscriptionsKey });
+      },
+    }
+  );
 }
 
 export function useDeleteRecurringRule() {
   const qc = useQueryClient();
-  return useMutation({
+  return useOwnedMutation(ownedById, {
     mutationKey: ['deleteRecurringRule'],
-    mutationFn: deleteRecurringRule,
+    mutationFn: deleteRecurringRuleOwned,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: recurringRulesKey });
       // FK SET NULL ile transaction'lardaki recurring_rule_id değişir → repeat ikonu kaybolsun.

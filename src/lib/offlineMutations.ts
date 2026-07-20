@@ -5,38 +5,29 @@ import { categoriesKey } from '@/hooks/useCategories';
 import { goalsKey } from '@/hooks/useGoals';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { transactionsKey } from '@/hooks/useTransactions';
+import { OWNER_MISMATCH } from '@/lib/mutationOwner';
 import {
-  createCategory,
-  deleteCategory,
-  updateCategory,
-} from '@/lib/categories';
-import {
-  createRecurringRule,
-  deleteRecurringRule,
-  updateRecurringRule,
-  type RecurringRulePatch,
-} from '@/lib/recurring';
-import { deleteBudget, upsertBudget } from '@/lib/budgets';
+  addToGoalOwned,
+  createCategoryOwned,
+  createGoalOwned,
+  createRecurringRuleOwned,
+  createSubscriptionOwned,
+  createTransactionOwned,
+  deleteBudgetOwned,
+  deleteCategoryOwned,
+  deleteGoalOwned,
+  deleteRecurringRuleOwned,
+  deleteSubscriptionOwned,
+  deleteTransactionOwned,
+  subtractFromGoalOwned,
+  updateCategoryOwned,
+  updateGoalOwned,
+  updateRecurringRuleOwned,
+  updateSubscriptionOwned,
+  updateTransactionOwned,
+  upsertBudgetOwned,
+} from '@/lib/ownedMutations';
 import { updateProfile, type UpdateProfileInput } from '@/lib/profile';
-import {
-  addToGoal,
-  createGoal,
-  deleteGoal,
-  subtractFromGoal,
-  updateGoal,
-  type GoalPatch,
-} from '@/lib/goals';
-import {
-  createSubscription,
-  deleteSubscription,
-  updateSubscription,
-  type SubscriptionPatch,
-} from '@/lib/subscriptions';
-import {
-  createTransaction,
-  deleteTransaction,
-  updateTransaction,
-} from '@/lib/transactions';
 
 /**
  * Part 13.5: Offline mutation default'ları.
@@ -46,6 +37,10 @@ import {
  * edilemediği için kaybolur → resume edilemez. setMutationDefaults her mutationKey için
  * fn'i (ve resume sonrası invalidation'ı) yeniden kaydeder, böylece restart sonrası da
  * otomatik sync çalışır. (In-session resume zaten hook'un kendi fn'i ile olur.)
+ *
+ * SAHİPLİK: buradaki tüm fn'ler `lib/ownedMutations.ts`'ten gelir — çalışmadan önce
+ * payload'daki `ownerUserId` aktif oturumla karşılaştırılır. Restore edilen bir mutation
+ * BAŞKA bir hesabın oturumunda asla DB'ye yazmaz.
  *
  * Not: Bu default'lar yalnızca restore edilmiş, fn'siz mutation'lar için devreye girer;
  * canlı hook'lar kendi onMutate/onSuccess optimistic mantığını kullanmaya devam eder.
@@ -57,85 +52,107 @@ export function registerMutationDefaults(qc: QueryClient): void {
     }
   };
 
-  type IdPatch<P> = { id: string; patch: P };
+  /**
+   * Sahiplik uyuşmazlığı KALICI bir durumdur (yanlış hesap oturumda) — yeniden denemek
+   * anlamsız. Diğer hatalarda React Query'nin varsayılan retry davranışı korunur.
+   */
+  const retry = (failureCount: number, error: Error) => {
+    if (error?.message === OWNER_MISMATCH) return false;
+    return failureCount < 3;
+  };
 
   // — Transactions —
   qc.setMutationDefaults(['createTransaction'], {
-    mutationFn: (input: Parameters<typeof createTransaction>[0]) => createTransaction(input),
+    mutationFn: createTransactionOwned,
+    retry,
     onSuccess: () => invalidate(transactionsKey),
   });
   qc.setMutationDefaults(['updateTransaction'], {
-    mutationFn: ({ id, patch }: IdPatch<Parameters<typeof updateTransaction>[1]>) =>
-      updateTransaction(id, patch),
+    mutationFn: updateTransactionOwned,
+    retry,
     onSuccess: () => invalidate(transactionsKey),
   });
   qc.setMutationDefaults(['deleteTransaction'], {
-    mutationFn: (id: string) => deleteTransaction(id),
+    mutationFn: deleteTransactionOwned,
+    retry,
     onSuccess: () => invalidate(transactionsKey),
   });
 
   // — Categories —
   qc.setMutationDefaults(['createCategory'], {
-    mutationFn: (input: Parameters<typeof createCategory>[0]) => createCategory(input),
+    mutationFn: createCategoryOwned,
+    retry,
     onSuccess: () => invalidate(categoriesKey),
   });
   qc.setMutationDefaults(['updateCategory'], {
-    mutationFn: ({ id, patch }: IdPatch<Parameters<typeof updateCategory>[1]>) =>
-      updateCategory(id, patch),
+    mutationFn: updateCategoryOwned,
+    retry,
     onSuccess: () => invalidate(categoriesKey),
   });
   qc.setMutationDefaults(['deleteCategory'], {
-    mutationFn: (id: string) => deleteCategory(id),
+    mutationFn: deleteCategoryOwned,
+    retry,
     onSuccess: () => invalidate(categoriesKey, transactionsKey),
   });
 
   // — Recurring rules — (kural abonelik olabilir → subscriptionsKey de tazelenir)
   qc.setMutationDefaults(['createRecurringRule'], {
-    mutationFn: (input: Parameters<typeof createRecurringRule>[0]) => createRecurringRule(input),
+    mutationFn: createRecurringRuleOwned,
+    retry,
     onSuccess: () => invalidate(recurringRulesKey, transactionsKey, subscriptionsKey),
   });
   qc.setMutationDefaults(['updateRecurringRule'], {
-    mutationFn: ({ id, patch }: IdPatch<RecurringRulePatch>) => updateRecurringRule(id, patch),
+    mutationFn: updateRecurringRuleOwned,
+    retry,
     onSuccess: () => invalidate(recurringRulesKey, transactionsKey, subscriptionsKey),
   });
   qc.setMutationDefaults(['deleteRecurringRule'], {
-    mutationFn: (id: string) => deleteRecurringRule(id),
+    mutationFn: deleteRecurringRuleOwned,
+    retry,
     onSuccess: () => invalidate(recurringRulesKey, transactionsKey, subscriptionsKey),
   });
 
   // — Subscriptions — (invalidate yeterli: NotificationsBootstrap subs değişince reschedule eder)
   qc.setMutationDefaults(['createSubscription'], {
-    mutationFn: (input: Parameters<typeof createSubscription>[0]) => createSubscription(input),
+    mutationFn: createSubscriptionOwned,
+    retry,
     onSuccess: () => invalidate(subscriptionsKey, recurringRulesKey, transactionsKey),
   });
   qc.setMutationDefaults(['updateSubscription'], {
-    mutationFn: ({ id, patch }: IdPatch<SubscriptionPatch>) => updateSubscription(id, patch),
+    mutationFn: updateSubscriptionOwned,
+    retry,
     onSuccess: () => invalidate(subscriptionsKey, recurringRulesKey, transactionsKey),
   });
   qc.setMutationDefaults(['deleteSubscription'], {
-    mutationFn: (id: string) => deleteSubscription(id),
+    mutationFn: deleteSubscriptionOwned,
+    retry,
     onSuccess: () => invalidate(subscriptionsKey, recurringRulesKey, transactionsKey),
   });
 
   // — Goals — (Part 14)
   qc.setMutationDefaults(['createGoal'], {
-    mutationFn: (input: Parameters<typeof createGoal>[0]) => createGoal(input),
+    mutationFn: createGoalOwned,
+    retry,
     onSuccess: () => invalidate(goalsKey),
   });
   qc.setMutationDefaults(['updateGoal'], {
-    mutationFn: (input: { id: string } & GoalPatch) => updateGoal(input),
+    mutationFn: updateGoalOwned,
+    retry,
     onSuccess: () => invalidate(goalsKey),
   });
   qc.setMutationDefaults(['deleteGoal'], {
-    mutationFn: (id: string) => deleteGoal(id),
+    mutationFn: deleteGoalOwned,
+    retry,
     onSuccess: () => invalidate(goalsKey),
   });
   qc.setMutationDefaults(['addToGoal'], {
-    mutationFn: ({ id, amount }: { id: string; amount: number }) => addToGoal(id, amount),
+    mutationFn: addToGoalOwned,
+    retry,
     onSuccess: () => invalidate(goalsKey),
   });
   qc.setMutationDefaults(['subtractFromGoal'], {
-    mutationFn: ({ id, amount }: { id: string; amount: number }) => subtractFromGoal(id, amount),
+    mutationFn: subtractFromGoalOwned,
+    retry,
     onSuccess: () => invalidate(goalsKey),
   });
 
@@ -145,6 +162,7 @@ export function registerMutationDefaults(qc: QueryClient): void {
   // mutation'ın SAHİBİ olan kullanıcının profil query'sini hedefler.
   qc.setMutationDefaults(['updateProfile'], {
     mutationFn: (input: UpdateProfileInput) => updateProfile(input),
+    retry,
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({ queryKey: ['profile', (variables as UpdateProfileInput).ownerUserId] });
     },
@@ -152,11 +170,13 @@ export function registerMutationDefaults(qc: QueryClient): void {
 
   // — Budgets —
   qc.setMutationDefaults(['upsertBudget'], {
-    mutationFn: (input: Parameters<typeof upsertBudget>[0]) => upsertBudget(input),
+    mutationFn: upsertBudgetOwned,
+    retry,
     onSuccess: () => invalidate(budgetsKey),
   });
   qc.setMutationDefaults(['deleteBudget'], {
-    mutationFn: (id: string) => deleteBudget(id),
+    mutationFn: deleteBudgetOwned,
+    retry,
     onSuccess: () => invalidate(budgetsKey),
   });
 }

@@ -1,13 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { ownedById, useOwnedMutation } from '@/hooks/useOwnedMutation';
+import { createGoal, listGoals, type GoalPatch } from '@/lib/goals';
 import {
-  addToGoal,
-  createGoal,
-  deleteGoal,
-  listGoals,
-  subtractFromGoal,
-  updateGoal,
-} from '@/lib/goals';
+  addToGoalOwned,
+  createGoalOwned,
+  deleteGoalOwned,
+  subtractFromGoalOwned,
+  updateGoalOwned,
+  type CreateGoalVars,
+  type GoalAmountVars,
+  type UpdateGoalVars,
+} from '@/lib/ownedMutations';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 /** ÖNEK key — invalidation'lar bunu kullanır; gerçek key userId taşır (bkz. useTransactions). */
@@ -22,33 +26,47 @@ export function useGoals() {
   });
 }
 
+type AmountArgs = { id: string; amount: number };
+
 export function useCreateGoal() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['createGoal'],
-    mutationFn: createGoal,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: goalsKey });
-    },
-  });
+  return useOwnedMutation(
+    (input: Parameters<typeof createGoal>[0], ownerUserId): CreateGoalVars => ({
+      ...input,
+      ownerUserId,
+    }),
+    {
+      mutationKey: ['createGoal'],
+      mutationFn: createGoalOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: goalsKey });
+      },
+    }
+  );
 }
 
 export function useUpdateGoal() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['updateGoal'],
-    mutationFn: updateGoal,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: goalsKey });
-    },
-  });
+  return useOwnedMutation(
+    (input: { id: string } & GoalPatch, ownerUserId): UpdateGoalVars => ({
+      ...input,
+      ownerUserId,
+    }),
+    {
+      mutationKey: ['updateGoal'],
+      mutationFn: updateGoalOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: goalsKey });
+      },
+    }
+  );
 }
 
 export function useDeleteGoal() {
   const qc = useQueryClient();
-  return useMutation({
+  return useOwnedMutation(ownedById, {
     mutationKey: ['deleteGoal'],
-    mutationFn: deleteGoal,
+    mutationFn: deleteGoalOwned,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: goalsKey });
     },
@@ -57,22 +75,28 @@ export function useDeleteGoal() {
 
 export function useAddToGoal() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['addToGoal'],
-    mutationFn: ({ id, amount }: { id: string; amount: number }) => addToGoal(id, amount),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: goalsKey });
-    },
-  });
+  return useOwnedMutation(
+    (args: AmountArgs, ownerUserId): GoalAmountVars => ({ ...args, ownerUserId }),
+    {
+      mutationKey: ['addToGoal'],
+      mutationFn: addToGoalOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: goalsKey });
+      },
+    }
+  );
 }
 
 export function useSubtractFromGoal() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['subtractFromGoal'],
-    mutationFn: ({ id, amount }: { id: string; amount: number }) => subtractFromGoal(id, amount),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: goalsKey });
-    },
-  });
+  return useOwnedMutation(
+    (args: AmountArgs, ownerUserId): GoalAmountVars => ({ ...args, ownerUserId }),
+    {
+      mutationKey: ['subtractFromGoal'],
+      mutationFn: subtractFromGoalOwned,
+      onSuccess: () => {
+        void qc.invalidateQueries({ queryKey: goalsKey });
+      },
+    }
+  );
 }

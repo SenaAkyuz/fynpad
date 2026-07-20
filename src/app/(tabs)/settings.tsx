@@ -15,7 +15,7 @@ import { SyncStatusIndicator } from '@/components/ui/SyncStatusIndicator';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { isPrivacyOptionsRequired, showAdPrivacyOptions } from '@/lib/adsConsent';
+import { getConsentReady, isPrivacyOptionsRequired, showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
 import { clearLocalSecurityForUser } from '@/lib/lockSecurity';
@@ -78,6 +78,9 @@ export default function SettingsScreen() {
     if (Platform.OS === 'web') return;
     let mounted = true;
     void (async () => {
+      // Açılıştaki consent init'i bekle: aksi halde requestInfoUpdate henüz bitmemişken
+      // `false` okunup satır bu mount boyunca gizli kalıyordu (bkz. lib/adsConsent.ts).
+      await getConsentReady();
       const required = await isPrivacyOptionsRequired();
       if (mounted) setShowAdPreferencesRow(required);
     })();

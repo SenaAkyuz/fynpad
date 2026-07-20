@@ -36,8 +36,12 @@ export function DashboardHeader() {
       if (!userId) return;
       const granted = await requestAndScheduleReminders(userId);
       if (granted) {
-        await useAppStore.getState().setDailyExpenseRemindersEnabled(true);
-        useToastStore.getState().show('reminders.enabledToast', 'success');
+        // Tercih diske yazılamazsa "açıldı" DEME: store değeri geri alır, kullanıcı
+        // yeniden açılışta kapalı bulup şaşırırdı.
+        const saved = await useAppStore.getState().setDailyExpenseRemindersEnabled(true);
+        useToastStore
+          .getState()
+          .show(saved ? 'reminders.enabledToast' : 'reminders.saveFailed', saved ? 'success' : 'error');
       } else {
         useToastStore.getState().show('reminders.permissionDenied', 'info');
       }

@@ -1,17 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { ownedById, useOwnedMutation } from '@/hooks/useOwnedMutation';
 import { transactionsKey } from '@/hooks/useTransactions';
 import { rescheduleAll } from '@/lib/notifications';
 import {
+  createSubscriptionOwned,
+  deleteSubscriptionOwned,
+  updateSubscriptionOwned,
+  type CreateSubscriptionVars,
+  type UpdateSubscriptionVars,
+} from '@/lib/ownedMutations';
+import {
   createSubscription,
-  deleteSubscription,
   listSubscriptions,
   monthlySpendHistory,
   monthOverMonthPct,
   nextDueAcrossAll,
   totalMonthlySpend,
-  updateSubscription,
   type SubscriptionPatch,
 } from '@/lib/subscriptions';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
@@ -38,38 +44,49 @@ async function refreshAndReschedule(): Promise<void> {
 
 export function useCreateSubscription() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['createSubscription'],
-    mutationFn: createSubscription,
-    onSuccess: async () => {
-      void qc.invalidateQueries({ queryKey: subscriptionsKey });
-      void qc.invalidateQueries({ queryKey: recurringRulesKey });
-      void qc.invalidateQueries({ queryKey: transactionsKey });
-      await refreshAndReschedule();
-    },
-  });
+  return useOwnedMutation(
+    (input: Parameters<typeof createSubscription>[0], ownerUserId): CreateSubscriptionVars => ({
+      ...input,
+      ownerUserId,
+    }),
+    {
+      mutationKey: ['createSubscription'],
+      mutationFn: createSubscriptionOwned,
+      onSuccess: async () => {
+        void qc.invalidateQueries({ queryKey: subscriptionsKey });
+        void qc.invalidateQueries({ queryKey: recurringRulesKey });
+        void qc.invalidateQueries({ queryKey: transactionsKey });
+        await refreshAndReschedule();
+      },
+    }
+  );
 }
 
 export function useUpdateSubscription() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationKey: ['updateSubscription'],
-    mutationFn: ({ id, patch }: { id: string; patch: SubscriptionPatch }) =>
-      updateSubscription(id, patch),
-    onSuccess: async () => {
-      void qc.invalidateQueries({ queryKey: subscriptionsKey });
-      void qc.invalidateQueries({ queryKey: recurringRulesKey });
-      void qc.invalidateQueries({ queryKey: transactionsKey });
-      await refreshAndReschedule();
-    },
-  });
+  return useOwnedMutation(
+    (
+      args: { id: string; patch: SubscriptionPatch },
+      ownerUserId
+    ): UpdateSubscriptionVars => ({ ...args, ownerUserId }),
+    {
+      mutationKey: ['updateSubscription'],
+      mutationFn: updateSubscriptionOwned,
+      onSuccess: async () => {
+        void qc.invalidateQueries({ queryKey: subscriptionsKey });
+        void qc.invalidateQueries({ queryKey: recurringRulesKey });
+        void qc.invalidateQueries({ queryKey: transactionsKey });
+        await refreshAndReschedule();
+      },
+    }
+  );
 }
 
 export function useDeleteSubscription() {
   const qc = useQueryClient();
-  return useMutation({
+  return useOwnedMutation(ownedById, {
     mutationKey: ['deleteSubscription'],
-    mutationFn: deleteSubscription,
+    mutationFn: deleteSubscriptionOwned,
     onSuccess: async () => {
       void qc.invalidateQueries({ queryKey: subscriptionsKey });
       void qc.invalidateQueries({ queryKey: recurringRulesKey });

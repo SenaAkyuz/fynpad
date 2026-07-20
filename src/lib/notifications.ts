@@ -122,6 +122,35 @@ export async function cancelDailyExpenseReminders(userId: string): Promise<void>
 }
 
 /**
+ * Bir kullanıcıya ait TÜM zamanlanmış bildirimleri iptal eder (günlük hatırlatma + abonelik
+ * yenilenmesi). Çıkışta ve hesap silmede çağrılır.
+ *
+ * Neden: çıkışta yalnızca cache temizleniyordu; A'nın zamanlamaları cihazda kalıyor ve B
+ * giriş yaptıktan sonra da çalışmaya devam ediyordu (iki hesabın bildirimleri iç içe).
+ *
+ * İki ölçüt: günlük hatırlatmalar ID prefix'inden (`fynpad.daily.<userId>.`), abonelik
+ * hatırlatmaları ise payload'daki `ownerUserId`'den bulunur (ID'leri subscription id taşır,
+ * userId taşımaz). DİĞER hesapların zamanlamalarına dokunulmaz.
+ */
+export async function cancelUserNotifications(userId: string): Promise<void> {
+  try {
+    const prefix = dailyPrefix(userId);
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      all
+        .filter(
+          (n) =>
+            n.identifier.startsWith(prefix) ||
+            n.content.data?.ownerUserId === userId
+        )
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
+    );
+  } catch {
+    /* sessiz — çıkış/silme akışı bloklanmamalı */
+  }
+}
+
+/**
  * Sürüm öncesi global ID'leri (`fynpad.daily.morning|evening` — userId segmenti YOK) temizler.
  * Yeni ID'ler `fynpad.daily.<userId>.<id>` olduğundan kalan segmentte nokta bulunur.
  */
@@ -160,7 +189,9 @@ export async function scheduleDailyExpenseReminders(userId: string): Promise<boo
           title: i18n.t(reminder.titleKey),
           body: i18n.t(reminder.bodyKey),
           // Tıklanınca nereye gidileceğini belirler (bkz. _layout.tsx listener'ı).
-          data: { type: 'daily_reminder' },
+          // `ownerUserId`: bildirimi zamanlayan hesap. Tıklama anında aktif oturumla
+          // karşılaştırılır — A'nın bildirimi B oturumdayken yönlendirme YAPMAMALI.
+          data: { type: 'daily_reminder', ownerUserId: userId },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -239,7 +270,11 @@ export async function scheduleRenewalReminders(
             amount: formatCurrency(sub.amount, sub.currency, locale),
             date: formatAbsoluteDate(renewalISO, locale),
           }),
-          data: { type: 'subscription_renewal', subscriptionId: sub.id },
+          data: {
+            type: 'subscription_renewal',
+            ownerUserId: sub.userId,
+            subscriptionId: sub.id,
+          },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,

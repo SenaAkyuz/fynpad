@@ -348,7 +348,8 @@
     "toggleLabel": "Günlük hatırlatmalar",
     "toggleHint": "İstediğin zaman buradan kapatabilirsin.",
     "enabledToast": "Bildirimler açıldı.",
-    "permissionDenied": "Bildirim izni verilmedi. Cihaz ayarlarından açabilirsin."
+    "permissionDenied": "Bildirim izni verilmedi. Cihaz ayarlarından açabilirsin.",
+    "saveFailed": "Tercih kaydedilemedi. Lütfen tekrar dene."
   },
   "analytics": {
     "title": "Analiz",

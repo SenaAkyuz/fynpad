@@ -3,6 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
 import { clearAppCache } from '@/lib/clearAppCache';
+import { cancelUserNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import type { Locale } from '@/stores/useAppStore';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -239,7 +240,13 @@ export async function getGoogleOAuthUrl(): Promise<
  * Aynı OAuth code'unu iki handler (openAuthSessionAsync sonucu + `auth/callback` deep link ekranı)
  * paralel exchange etmeye çalışabilir. İkinci çağrı `pkce_code_verifier_not_found` /
  * "code already used" alır ve kullanıcıya YANLIŞ hata gösterilir. Code başına TEK exchange
- * promise'i paylaşılır; sonuç map'te kalır → sonraki denemeler aynı sonucu görür (idempotent).
+ * promise'i paylaşılır → EŞZAMANLI ikinci çağrı ilkinin sonucunu bekler (idempotent).
+ *
+ * Kayıt, promise SETTLE OLDUKTAN SONRA silinir: guard'ın amacı eşzamanlı çağrıları
+ * birleştirmektir, tamamlanmış kodları süresiz saklamak değil. Eskiden hiç silinmiyordu →
+ * OAuth kodları uygulama kapanana kadar bellekte birikiyordu. Settle sonrası aynı code ile
+ * gelen GEÇ bir çağrı yeniden exchange dener; hata alsa bile her iki çağıran da ardından
+ * `getSession()` kontrolü yaptığı için (aşağıya bkz.) yanlış hata gösterilmez.
  */
 const exchangeInFlight = new Map<string, Promise<{ error: unknown }>>();
 
@@ -249,7 +256,10 @@ async function exchangeCodeOnce(code: string): Promise<{ error: unknown }> {
 
   const promise = supabase.auth
     .exchangeCodeForSession(code)
-    .then(({ error }) => ({ error: error as unknown }));
+    .then(({ error }) => ({ error: error as unknown }))
+    .finally(() => {
+      exchangeInFlight.delete(code);
+    });
   exchangeInFlight.set(code, promise);
   return promise;
 }
@@ -382,8 +392,18 @@ export function consumeIntentionalSignOut(): boolean {
 
 export async function signOut(): Promise<void> {
   intentionalSignOut = true;
+  // userId'yi signOut'tan ÖNCE yakala — sonrasında session yok, kimin bildirimlerinin
+  // iptal edileceği bilinemez.
+  const signingOutUserId = useAuthStore.getState().session?.user?.id ?? null;
+
   await supabase.auth.signOut();
   useAuthStore.getState().setSession(null);
+
+  // A'nın zamanlanmış bildirimleri cihazda kalırsa B giriş yaptıktan sonra da çalışır.
+  // YALNIZCA bu kullanıcınınkiler iptal edilir (bkz. lib/notifications.ts).
+  if (signingOutUserId) {
+    await cancelUserNotifications(signingOutUserId);
+  }
   // Sonraki kullanıcı öncekinin verisini görmesin (bkz. lib/clearAppCache.ts).
   // Disk temizliği başarısız olsa bile ÇIKIŞ TAMAMLANMALI — aksi halde kullanıcı
   // uygulamada kilitli kalır. Bellek cache'i her koşulda temizlenmiş olur ve

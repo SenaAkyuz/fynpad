@@ -10,7 +10,7 @@ import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import mobileAds from 'react-native-google-mobile-ads';
@@ -26,7 +26,12 @@ import { transactionsKey } from '@/hooks/useTransactions';
 import { requestConsent } from '@/lib/adsConsent';
 import { fontMap } from '@/lib/fonts';
 import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStatus';
-import { rescheduleAll, syncDailyExpenseReminders } from '@/lib/notifications';
+import { clearAppCache } from '@/lib/clearAppCache';
+import {
+  cancelUserNotifications,
+  rescheduleAll,
+  syncDailyExpenseReminders,
+} from '@/lib/notifications';
 import { initInterstitial } from '@/lib/interstitialAd';
 import { registerMutationDefaults } from '@/lib/offlineMutations';
 import { applyOrientationPolicy } from '@/lib/orientation';
@@ -75,7 +80,16 @@ function NotificationsBootstrap() {
   // /subscriptions'a gidiyordu → "harcamalarını ekle" hatırlatması da abonelik ekranını açıyordu.
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const type = response.notification.request.content.data?.type;
+      const data = response.notification.request.content.data;
+      const type = data?.type;
+      // SAHİPLİK: bildirim başka bir hesap oturumdayken zamanlanmışsa yönlendirme YAPMA.
+      // A'nın "harcamanı ekle" hatırlatması B oturumdayken tıklanınca /quick-add açılıyor ve
+      // işlem B'nin hesabına yazılabiliyordu. ownerUserId taşımayan ESKİ bildirimlerde
+      // mevcut davranış korunur (aşağıdaki tip bazlı yönlendirme).
+      const activeUserId = useAuthStore.getState().session?.user?.id;
+      if (data?.ownerUserId && data.ownerUserId !== activeUserId) {
+        return;
+      }
       if (type === 'subscription_renewal') {
         router.push('/subscriptions');
       } else if (type === 'daily_reminder') {
@@ -111,6 +125,12 @@ export default function RootLayout() {
 
   const router = useRouter();
   const segments = useSegments();
+
+  // Persist cache restore edildi mi. resumePausedMutations İKİ koşul birden gerektirir:
+  // restore bitmiş olmalı (kuyruk yüklensin) VE oturum hazır olmalı (sahiplik doğrulanabilsin).
+  // Tek başına `onSuccess` içinde resume etmek yetmiyordu: restore auth'tan ÖNCE bitiyor,
+  // o an session henüz null olduğu için kuyruk o açılış boyunca hiç resume edilmiyordu.
+  const [cacheRestored, setCacheRestored] = useState(false);
 
   // Fontlar + persisted tercihler + ilk auth + lock hydrate tamamlanana kadar splash'i tut.
   const ready =
@@ -200,12 +220,24 @@ export default function RootLayout() {
     })();
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       const hadSession = useAuthStore.getState().session != null;
+      const previousUserId = useAuthStore.getState().session?.user?.id ?? null;
       setSession(nextSession);
       // Refresh token geçersiz/expired olduğunda Supabase otomatik SIGNED_OUT yayar.
       // Kullanıcı kendisi çıkış yapmadıysa (kasıtlı bayrağı yok) bu istemsiz bir oturum
       // sonlanmasıdır → kullanıcıyı bilgilendir. Guard zaten login'e yönlendirir.
       if (event === 'SIGNED_OUT' && hadSession && !consumeIntentionalSignOut()) {
         useToastStore.getState().show('errors.auth.sessionExpired', 'info');
+        // İSTEMSİZ çıkışta da gönüllü çıkıştaki temizlik yapılmalı: eskiden yalnızca
+        // session sıfırlanıyor, cache + bekleyen mutation kuyruğu diskte kalıyordu →
+        // sonraki hesap önceki kullanıcının verisini görebiliyor / kuyruğunu resume
+        // edebiliyordu. clearAppCache signOut ile AYNI helper (bkz. lib/clearAppCache.ts).
+        void clearAppCache().catch((e) => {
+          if (__DEV__) console.warn('[FynPad/auth] involuntary sign-out cache clear failed:', e);
+        });
+        // Zamanlanmış bildirimler de bu kullanıcıya aitti — cihazda çalışmaya devam etmesin.
+        if (previousUserId) {
+          void cancelUserNotifications(previousUserId);
+        }
       }
     });
     return () => {
@@ -219,6 +251,15 @@ export default function RootLayout() {
       void SplashScreen.hideAsync();
     }
   }, [ready]);
+
+  // Bekleyen offline kuyruğu YALNIZCA restore bitmiş + oturum hazırken resume et.
+  // Oturum yokken resume etmek diskte kalmış bir kuyruğu sahipsiz çalıştırmayı deniyordu;
+  // payload'daki ownerUserId ikinci savunma katmanı olarak yine reddeder ama gereksiz
+  // DB/auth trafiği üretirdi (bkz. lib/mutationOwner.ts).
+  useEffect(() => {
+    if (!cacheRestored || !initialized || !sessionUserId) return;
+    void queryClient.resumePausedMutations();
+  }, [cacheRestored, initialized, sessionUserId]);
 
   // Giriş sonrası ilk yüklemede tekrarlayan işlemleri tetikle (cron + foreground'a ek
   // belt-and-suspenders catch-up). RPC idempotent — çift üretim olmaz. Sessiz başarısızlık.
@@ -275,10 +316,7 @@ export default function RootLayout() {
               shouldDehydrateQuery: () => true,
             },
           }}
-          onSuccess={() => {
-            // Cache restore edildikten sonra restore edilen paused mutation'ları resume et.
-            void queryClient.resumePausedMutations();
-          }}
+          onSuccess={() => setCacheRestored(true)}
         >
           <ThemeProvider>
             <View style={{ flex: 1 }}>

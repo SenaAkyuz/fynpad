@@ -28,7 +28,28 @@ const DEV_TEST_DEVICE_IDS: string[] = [
  * `status` REQUIRED olmadığı için form ÇIKMAZ. Hata olsa bile akış bloklanmaz — reklamlar
  * gerekirse non-personalized olarak gösterilebilir. mobileAds().initialize()'dan ÖNCE çağrılmalı.
  */
+/**
+ * Açılıştaki `requestConsent()` çağrısının promise'i (modül seviyesinde).
+ *
+ * `isPrivacyOptionsRequired()` yalnızca requestInfoUpdate TAMAMLANDIKTAN sonra doğru değeri
+ * döner. Ayarlar ekranı consent güncellenmeden önce açılırsa `false` okuyup "Reklam
+ * Tercihleri" satırını o mount boyunca gizli bırakıyordu. Okuyucular önce bunu `await`
+ * ederek deterministik sonuç alır.
+ */
+let consentReady: Promise<void> | null = null;
+
+/** Açılıştaki consent init'i bekler. Henüz başlamadıysa hemen çözülür. */
+export function getConsentReady(): Promise<void> {
+  return consentReady ?? Promise.resolve();
+}
+
 export async function requestConsent(): Promise<void> {
+  const run = doRequestConsent();
+  consentReady = run;
+  return run;
+}
+
+async function doRequestConsent(): Promise<void> {
   try {
     // DEV: EEA coğrafyasını taklit et → UMP consent formu + "Reklam Tercihleri" (privacy options)
     // formu test ortamında görünür olur. Emülatör otomatik test cihazıdır; gerçek cihaz için
