@@ -10,6 +10,12 @@ import {
   type UpdateTransactionVars,
 } from '@/lib/ownedMutations';
 import { createTransaction, listTransactions, updateTransaction } from '@/lib/transactions';
+import {
+  addTransactionToCache,
+  deleteTransactionFromCache,
+  filterTransactionsByRange,
+  updateTransactionInCache,
+} from '@/lib/transactionCache';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { Transaction } from '@/types';
 
@@ -31,8 +37,12 @@ function userScope(userId: string | undefined) {
 export function useTransactions(params?: ListParams) {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: [...userScope(userId), params ?? {}],
-    queryFn: () => listTransactions(params),
+    // Kullanıcı başına TEK canonical liste tutulur. Gün/Ay/Yıl/Özel görünümler `select`
+    // ile bu listeden türetilir. Böylece offline eklenen işlem, daha önce hiç açılmamış
+    // bir dönem ekranı sonradan açıldığında da görünür.
+    queryKey: userScope(userId),
+    queryFn: () => listTransactions(),
+    select: (transactions) => filterTransactionsByRange(transactions, params),
     enabled: !!userId,
   });
 }
@@ -52,7 +62,7 @@ export function useCreateTransaction() {
       // Optimistic: modal anında kapanır, dashboard'da işlem hemen görünür.
       onMutate: async (input: CreateTransactionVars) => {
         await qc.cancelQueries({ queryKey: scope });
-        const previous = qc.getQueriesData<Transaction[]>({ queryKey: scope });
+        const previous = qc.getQueryData<Transaction[]>(scope);
 
         const now = new Date().toISOString();
         const optimistic: Transaction = {
@@ -69,14 +79,12 @@ export function useCreateTransaction() {
           updatedAt: now,
         };
 
-        qc.setQueriesData<Transaction[]>({ queryKey: scope }, (old) =>
-          old ? [optimistic, ...old] : old
-        );
+        qc.setQueryData<Transaction[]>(scope, (old) => addTransactionToCache(old, optimistic));
 
         return { previous };
       },
       onError: (_err, _input, ctx) => {
-        ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
+        qc.setQueryData(scope, ctx?.previous);
       },
       onSettled: () => {
         void qc.invalidateQueries({ queryKey: transactionsKey });
@@ -97,14 +105,12 @@ export function useUpdateTransaction() {
       // Optimistic (create ile paralel): liste anında güncellenir, offline'da bile.
       onMutate: async ({ id, patch }: UpdateTransactionVars) => {
         await qc.cancelQueries({ queryKey: scope });
-        const previous = qc.getQueriesData<Transaction[]>({ queryKey: scope });
-        qc.setQueriesData<Transaction[]>({ queryKey: scope }, (old) =>
-          old ? old.map((tx) => (tx.id === id ? { ...tx, ...patch } : tx)) : old
-        );
+        const previous = qc.getQueryData<Transaction[]>(scope);
+        qc.setQueryData<Transaction[]>(scope, (old) => updateTransactionInCache(old, id, patch));
         return { previous };
       },
       onError: (_err, _input, ctx) => {
-        ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
+        qc.setQueryData(scope, ctx?.previous);
       },
       onSettled: () => {
         void qc.invalidateQueries({ queryKey: transactionsKey });
@@ -123,14 +129,12 @@ export function useDeleteTransaction() {
     // Optimistic: silinen işlem listeden anında kalkar; hata olursa geri yüklenir.
     onMutate: async ({ id }: DeleteVars) => {
       await qc.cancelQueries({ queryKey: scope });
-      const previous = qc.getQueriesData<Transaction[]>({ queryKey: scope });
-      qc.setQueriesData<Transaction[]>({ queryKey: scope }, (old) =>
-        old ? old.filter((tx) => tx.id !== id) : old
-      );
+      const previous = qc.getQueryData<Transaction[]>(scope);
+      qc.setQueryData<Transaction[]>(scope, (old) => deleteTransactionFromCache(old, id));
       return { previous };
     },
     onError: (_err, _id, ctx) => {
-      ctx?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
+      qc.setQueryData(scope, ctx?.previous);
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: transactionsKey });

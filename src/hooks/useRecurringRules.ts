@@ -16,7 +16,9 @@ import {
 } from '@/lib/ownedMutations';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { transactionsKey } from '@/hooks/useTransactions';
+import { addTransactionToCache } from '@/lib/transactionCache';
 import { useAuthStore } from '@/stores/useAuthStore';
+import type { Transaction } from '@/types';
 
 export { recurringRulesKey };
 
@@ -35,6 +37,8 @@ type UpdateArgs = { id: string; patch: RecurringRulePatch };
 /** Kural oluşturma + backfill sonrası hem kural hem işlem listesini tazele. */
 export function useCreateRecurringRule() {
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+  const transactionScope = [...transactionsKey, userId] as const;
   return useOwnedMutation(
     (input: Parameters<typeof createRecurringRule>[0], ownerUserId): CreateRecurringRuleVars => ({
       ...input,
@@ -43,11 +47,44 @@ export function useCreateRecurringRule() {
     {
       mutationKey: ['createRecurringRule'],
       mutationFn: createRecurringRuleOwned,
+      onMutate: async (input) => {
+        await qc.cancelQueries({ queryKey: transactionScope });
+        const previousTransactions = qc.getQueryData<Transaction[]>(transactionScope);
+        // Optimistic işlem YALNIZCA bugüne bir kayıt yazılacaksa (initialTransactionDate
+        // dolu). Geçmiş/gelecek başlangıçta initial null → bugüne kayıt yok; occurrence'lar
+        // sunucu catch-up'ından geldiği için burada optimistic eklemek yalan gösterirdi.
+        if (input.initialTransactionDate) {
+          const now = new Date().toISOString();
+          const optimistic: Transaction = {
+            id: `temp_recurring_${input.clientRequestId}`,
+            userId: input.ownerUserId,
+            categoryId: input.categoryId,
+            amount: input.amount,
+            currency: input.currency,
+            kind: input.kind,
+            date: input.initialTransactionDate,
+            note: input.note ?? null,
+            recurringRuleId: `temp_rule_${input.clientRequestId}`,
+            createdAt: now,
+            updatedAt: now,
+          };
+          qc.setQueryData<Transaction[]>(transactionScope, (old) =>
+            addTransactionToCache(old, optimistic)
+          );
+        }
+        return { previousTransactions };
+      },
+      onError: (_error, _input, context) => {
+        qc.setQueryData(transactionScope, context?.previousTransactions);
+      },
       onSuccess: () => {
         void qc.invalidateQueries({ queryKey: recurringRulesKey });
         void qc.invalidateQueries({ queryKey: transactionsKey });
         // Kural abonelik olabilir → subscription listesi/grafik + bildirim reschedule tetiklensin.
         void qc.invalidateQueries({ queryKey: subscriptionsKey });
+      },
+      onSettled: () => {
+        void qc.invalidateQueries({ queryKey: transactionsKey });
       },
     }
   );

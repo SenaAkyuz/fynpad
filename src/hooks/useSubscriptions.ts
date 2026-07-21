@@ -22,7 +22,7 @@ import {
 } from '@/lib/subscriptions';
 import { recurringRulesKey, subscriptionsKey } from '@/hooks/queryKeys';
 import { useAuthStore } from '@/stores/useAuthStore';
-import type { Subscription } from '@/types';
+import type { Currency, Subscription } from '@/types';
 
 export { subscriptionsKey };
 
@@ -97,16 +97,20 @@ export function useDeleteSubscription() {
   });
 }
 
-/** Özet kart + grafik için türetilmiş değerler. */
-export function useSubscriptionTotals(subs: Subscription[]) {
+/**
+ * Özet kart + grafik için türetilmiş değerler. Toplam/geçmiş/değişim ve `count` YALNIZCA
+ * `currency` cinsindendir (para birimi karışmasını önler, bkz. lib/subscriptions.ts). Sıradaki
+ * yenilenme tek bir aboneliktir (toplama girmez) → tüm para birimleri arasında bırakılır.
+ */
+export function useSubscriptionTotals(subs: Subscription[], currency: Currency) {
   return useMemo(
     () => ({
-      monthly: totalMonthlySpend(subs),
-      momPct: monthOverMonthPct(subs),
-      growthHistory: monthlySpendHistory(subs, 7),
+      monthly: totalMonthlySpend(subs, currency),
+      momPct: monthOverMonthPct(subs, currency),
+      growthHistory: monthlySpendHistory(subs, currency, 7),
       nextDue: nextDueAcrossAll(subs),
-      count: subs.length,
+      count: subs.filter((s) => s.currency === currency).length,
     }),
-    [subs]
+    [subs, currency]
   );
 }

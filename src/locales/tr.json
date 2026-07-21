@@ -8,6 +8,7 @@
     "syncing": "{{count}} işlem senkronize ediliyor...",
     "queuedOffline": "{{count}} işlem senkronize bekleniyor",
     "offlineSavedSyncLater": "Çevrimdışısın — kayıt online olunca gönderilecek",
+    "loading": "Yükleniyor...",
     "errorTitle": "Bir şeyler ters gitti",
     "errorMessage": "Beklenmeyen bir hata oluştu. Tekrar deneyebilirsin.",
     "errorRetry": "Tekrar dene"
@@ -124,7 +125,9 @@
     "recentTransactions": "Son İşlemler",
     "viewAll": "Tümünü gör",
     "total": "Toplam",
-    "currencyNote": "Özetler yalnızca {{currency}} cinsinden hesaplanır. Diğer para birimlerindeki işlemler listede görünür ancak toplamlara dahil edilmez.",
+    "currencyNote": "Özetler yalnızca {{currency}} işlemlerine göre hesaplanır. Diğer para birimleri toplamlara dahil edilmez.",
+    "noCurrencyTransactions": "Bu dönemde {{currency}} işlemi bulunmuyor.",
+    "currencyChangeHint": "Para birimini Ayarlar'dan değiştirebilirsiniz.",
     "noTransactions": "Bu dönemde işlem yok",
     "period": {
       "day": "Gün",
@@ -166,7 +169,9 @@
       "allDates": "Tüm Tarihler",
       "thisMonth": "Bu Ay",
       "thisYear": "Bu Yıl",
-      "last30days": "Son 30 Gün"
+      "last30days": "Son 30 Gün",
+      "currency": "Para Birimi",
+      "allCurrencies": "Tüm Para Birimleri"
     },
     "empty": "Bu filtrelerle eşleşen işlem yok",
     "clearFilters": "Filtreleri Temizle",
@@ -210,6 +215,9 @@
   },
   "recurring": {
     "toggle": "Tekrarla",
+    "scheduleSummary": "İlk kayıt: {{first}} · Sonraki tekrar: {{next}}",
+    "scheduleSummaryNoNext": "İlk kayıt: {{first}} · Sonraki tekrar yok",
+    "pastStartSummary": "Geçmiş tarihli başlangıç: {{count}} işlem oluşturulacak ({{from}}'tan itibaren)",
     "frequency": "Sıklık",
     "freqDaily": "Günlük",
     "freqWeekly": "Haftalık",
@@ -563,6 +571,7 @@
     "languageTr": "Türkçe",
     "languageEn": "İngilizce",
     "currency": "Varsayılan Para Birimi",
+    "currencyDescription": "Yeni işlemlerde otomatik seçilir ve raporlar bu para birimiyle açılır. Mevcut işlemler değişmez; farklı para birimleri birbirine dönüştürülmez.",
     "currencyTry": "Türk Lirası (₺)",
     "currencyUsd": "ABD Doları ($)",
     "currencyEur": "Euro (€)",
@@ -588,6 +597,7 @@
     "exportData": "Veriyi Dışa Aktar",
     "version": "Sürüm",
     "signOut": "Çıkış Yap",
+    "signOutFailed": "Çıkış yapılamadı. Lütfen tekrar dene.",
     "signOutConfirmTitle": "Çıkış yapmak istediğine emin misin?",
     "signOutConfirmAction": "Çıkış Yap",
     "signOutCancel": "Vazgeç",
@@ -626,7 +636,8 @@
     "confirmPasswordPlaceholder": "Yeni şifreni tekrar gir",
     "submit": "Kaydet",
     "createSuccess": "Şifren oluşturuldu. Artık e-posta ve şifre ile de giriş yapabilirsin.",
-    "changeSuccess": "Şifren güncellendi."
+    "changeSuccess": "Şifren güncellendi.",
+    "forgotPassword": "Şifremi unuttum"
   },
   "transactionEdit": {
     "title": "İşlemi Düzenle",
@@ -662,7 +673,8 @@
       "totalIncome": "Toplam Gelir",
       "totalExpense": "Toplam Gider",
       "net": "Net",
-      "generatedAt": "Oluşturulma"
+      "generatedAt": "Oluşturulma",
+      "summaryCurrency": "Özet {{currency}} cinsinden (diğer para birimleri toplamlara dahil değil)"
     },
     "columns": {
       "date": "Tarih",
@@ -695,7 +707,7 @@
       "Tüm bütçelerin silinecek",
       "Tüm aboneliklerin silinecek",
       "Bu işlem geri alınamaz",
-      "E-posta adresin yeni kayıt için kullanılabilir hale gelir"
+      "Aynı Google hesabıyla daha sonra devam edersen yeni ve boş bir FynPad hesabı oluşturulur; silinen veriler geri gelmez"
     ],
     "confirmPrompt": "Devam etmek için aşağıya {{keyword}} yazın",
     "confirmKeyword": "SİL",
@@ -784,7 +796,8 @@
     "consentAnd": " ve ",
     "consentPrivacy": "Gizlilik Politikası",
     "consentSuffix": "'nı kabul ediyorum.",
-    "consentRequired": "Devam etmek için kullanım koşullarını kabul edin."
+    "consentRequired": "Devam etmek için kullanım koşullarını kabul edin.",
+    "googleContinueHint": "Google ile devam etmek mevcut hesabında oturum açabilir veya yeni bir hesap oluşturabilir."
   },
   "errors": {
     "auth": {
@@ -798,7 +811,8 @@
       "network": "Bağlantı hatası. İnternetini kontrol et.",
       "oauthCancelled": "Google girişi iptal edildi.",
       "unknown": "Bir şeyler ters gitti. Tekrar dene.",
-      "emailNotConfirmed": "Önce e-posta adresini doğrulaman gerek."
+      "emailNotConfirmed": "Önce e-posta adresini doğrulaman gerek.",
+      "sessionExpired": "Oturumun sona erdi. Lütfen tekrar giriş yap."
     },
     "profile": {
       "updateFailed": "Profil güncellenemedi"

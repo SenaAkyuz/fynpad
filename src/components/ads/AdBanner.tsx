@@ -4,6 +4,7 @@ import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { AD_UNIT_IDS } from '@/lib/ads';
+import { useAppStore } from '@/stores/useAppStore';
 
 /** Ardışık kaç hatadan sonra banner tamamen gizlenir. */
 const MAX_RETRIES = 3;
@@ -25,6 +26,9 @@ export function AdBanner() {
 }
 
 function AdBannerInner() {
+  // UMP consent kapısı: canRequestAds true olup SDK init edilene kadar (bkz. _layout.tsx +
+  // lib/adsConsent.ts) banner HİÇ render edilmez → consent tamamlanmadan reklam isteği çıkmaz.
+  const adsAllowed = useAppStore((s) => s.adsAllowed);
   // BannerAd'in load() metodu yok — yeni istek ancak remount ile tetiklenir. Bu yüzden key
   // olarak yalnızca ARTAN bir sayaç kullanılır; sıfırlanırsa remount döngüsü oluşur.
   const [retryKey, setRetryKey] = useState(0);
@@ -41,7 +45,7 @@ function AdBannerInner() {
     };
   }, []);
 
-  if (Platform.OS === 'web' || gaveUp) {
+  if (Platform.OS === 'web' || gaveUp || !adsAllowed) {
     return null;
   }
 
@@ -62,11 +66,12 @@ function AdBannerInner() {
 
   return (
     <View style={styles.container}>
+      {/* requestOptions verilmez: UMP doğru kurulduğunda SDK, kişiselleştirme kararını consent
+          durumuna göre KENDİSİ uygular. Elle requestNonPersonalizedAdsOnly vermek bunu ezerdi. */}
       <BannerAd
         key={retryKey}
         unitId={AD_UNIT_IDS.banner}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{ requestNonPersonalizedAdsOnly: false }}
         onAdLoaded={() => {
           failCount.current = 0;
         }}

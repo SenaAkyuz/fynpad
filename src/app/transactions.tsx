@@ -12,17 +12,21 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
+import { distinctCurrencies } from '@/lib/currencyScope';
 import { formatMonthYear, toISODate } from '@/lib/format';
 import { useAppStore } from '@/stores/useAppStore';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import type { CategoryKind, Transaction } from '@/types';
+import type { CategoryKind, Currency, Transaction } from '@/types';
 
 type KindFilter = 'all' | CategoryKind;
 type DateRange = 'all' | 'thisMonth' | 'thisYear' | 'last30days';
+type CurrencyFilter = 'all' | Currency;
 
 /** Filtrenin başlangıç değeri yokken kategori seçici için "hepsi" sentinel'i. */
 const ALL_CATEGORIES = 'all';
+/** Para birimi filtresi için "hepsi" sentinel'i. Liste toplama yapmadığı için "Tümü" güvenli. */
+const ALL_CURRENCIES = 'all';
 
 /** dateRange → ISO 'YYYY-MM-DD' alt sınır (transaction.date >= cutoff). */
 function computeCutoff(range: Exclude<DateRange, 'all'>): string {
@@ -55,13 +59,20 @@ export default function TransactionsScreen() {
   const [kindFilter, setKindFilter] = useState<KindFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('all');
+  const [currencyFilter, setCurrencyFilter] = useState<CurrencyFilter>('all');
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
 
   const categoryById = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
     [categories]
   );
+
+  // Para birimi filtresi YALNIZCA birden fazla para birimi varsa gösterilir (dashboard'daki
+  // seçiciyle aynı koşul). Tek para birimi kullananın filtre şeridi eskisi gibi kalır.
+  const currencies = useMemo(() => distinctCurrencies(transactions), [transactions]);
+  const showCurrencyFilter = currencies.length >= 2;
 
   const filtered = useMemo(() => {
     let result = transactions;
@@ -75,8 +86,11 @@ export default function TransactionsScreen() {
       const cutoff = computeCutoff(dateRange);
       result = result.filter((tx) => tx.date >= cutoff);
     }
+    if (currencyFilter !== 'all') {
+      result = result.filter((tx) => tx.currency === currencyFilter);
+    }
     return [...result].sort((a, b) => b.date.localeCompare(a.date));
-  }, [transactions, kindFilter, categoryFilter, dateRange]);
+  }, [transactions, kindFilter, categoryFilter, dateRange, currencyFilter]);
 
   // filtered date desc sıralı → ay anahtarları da desc gelir, ay içi de desc kalır.
   const sections = useMemo(() => {
@@ -115,17 +129,25 @@ export default function TransactionsScreen() {
     { value: 'last30days', label: t('transactions.filters.last30days') },
   ];
 
+  const currencyOptions = [
+    { value: ALL_CURRENCIES, label: t('transactions.filters.allCurrencies') },
+    ...currencies.map((c) => ({ value: c, label: c })),
+  ];
+
   const categoryChipLabel = categoryFilter
     ? t(categoryById.get(categoryFilter)?.name ?? 'transactions.filters.category')
     : t('transactions.filters.allCategories');
   const dateChipLabel =
     dateOptions.find((o) => o.value === dateRange)?.label ??
     t('transactions.filters.allDates');
+  const currencyChipLabel =
+    currencyFilter === 'all' ? t('transactions.filters.currency') : currencyFilter;
 
   const clearFilters = () => {
     setKindFilter('all');
     setCategoryFilter(null);
     setDateRange('all');
+    setCurrencyFilter('all');
   };
 
   const renderChip = (label: string, active: boolean, onPress: () => void) => (
@@ -181,6 +203,11 @@ export default function TransactionsScreen() {
             setCategoryPickerOpen(true)
           )}
           {renderChip(dateChipLabel, dateRange !== 'all', () => setDatePickerOpen(true))}
+          {showCurrencyFilter
+            ? renderChip(currencyChipLabel, currencyFilter !== 'all', () =>
+                setCurrencyPickerOpen(true)
+              )
+            : null}
         </View>
       </View>
 
@@ -241,6 +268,14 @@ export default function TransactionsScreen() {
         selectedValue={dateRange}
         onSelect={(v) => setDateRange(v)}
         onClose={() => setDatePickerOpen(false)}
+      />
+      <PreferencePicker
+        visible={currencyPickerOpen}
+        title={t('transactions.filters.currency')}
+        options={currencyOptions}
+        selectedValue={currencyFilter}
+        onSelect={(v) => setCurrencyFilter(v as CurrencyFilter)}
+        onClose={() => setCurrencyPickerOpen(false)}
       />
     </Screen>
   );

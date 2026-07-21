@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { CurrencyScopeSelector } from '@/components/CurrencyScopeSelector';
 import { SubscriptionGrowthChart } from '@/components/subscriptions/SubscriptionGrowthChart';
 import { SubscriptionList } from '@/components/subscriptions/SubscriptionList';
 import { SubscriptionSummaryCard } from '@/components/subscriptions/SubscriptionSummaryCard';
@@ -12,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { useProfile } from '@/hooks/useProfile';
 import { useSubscriptions, useSubscriptionTotals } from '@/hooks/useSubscriptions';
+import { distinctCurrencies } from '@/lib/currencyScope';
 import { radii, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Currency, Subscription } from '@/types';
@@ -29,9 +32,19 @@ export default function SubscriptionsScreen() {
 
   const { data: subscriptions = [], isLoading } = useSubscriptions();
   const { data: profile } = useProfile();
-  const currency: Currency = profile?.defaultCurrency ?? 'TRY';
 
-  const { monthly, momPct, growthHistory, nextDue, count } = useSubscriptionTotals(subscriptions);
+  // Dashboard/Analiz ile aynı raporlama para birimini paylaşır (ekranlar arası tutarlılık).
+  const reportingCurrency = useAppStore((s) => s.reportingCurrency);
+  const setReportingCurrency = useAppStore((s) => s.setReportingCurrency);
+  const currency: Currency = reportingCurrency ?? profile?.defaultCurrency ?? 'TRY';
+
+  // Seçici yalnızca birden fazla para biriminde abonelik varsa görünür (koşullu).
+  const currencies = useMemo(() => distinctCurrencies(subscriptions), [subscriptions]);
+
+  const { monthly, momPct, growthHistory, nextDue, count } = useSubscriptionTotals(
+    subscriptions,
+    currency
+  );
   const hasSubs = subscriptions.length > 0;
 
   const openEdit = (sub: Subscription) => router.push(`/subscription-edit?id=${sub.id}`);
@@ -53,6 +66,12 @@ export default function SubscriptionsScreen() {
             {t('subscriptions.subtitle')}
           </Text>
         </View>
+
+        <CurrencyScopeSelector
+          currencies={currencies}
+          value={currency}
+          onChange={(c) => void setReportingCurrency(c)}
+        />
 
         <SubscriptionSummaryCard
           totalMonthly={monthly}

@@ -9,6 +9,8 @@ import { useTheme } from '@/theme/useTheme';
 export type SettingsRowProps = {
   icon?: IconName;
   label: string;
+  /** Label altında gösterilen açıklama satırı (örn. "Yeni işlemlerde ön seçili…"). */
+  description?: string;
   /** Sağda gösterilen değer (örn. "TRY", "Türkçe"). */
   value?: string;
   onPress?: () => void;
@@ -28,6 +30,7 @@ export type SettingsRowProps = {
 export function SettingsRow({
   icon,
   label,
+  description,
   value,
   onPress,
   showChevron = true,
@@ -52,9 +55,21 @@ export function SettingsRow({
     >
       <View style={styles.left}>
         {icon ? <Icon name={icon} size={20} color={iconColor} strokeWidth={2} /> : null}
-        <Text variant="bodyMd" color={labelColor} numberOfLines={1} style={styles.label}>
-          {label}
-        </Text>
+        <View style={styles.labelColumn}>
+          <Text
+            variant="bodyMd"
+            color={labelColor}
+            numberOfLines={1}
+            style={styles.label}
+          >
+            {label}
+          </Text>
+          {description ? (
+            <Text variant="labelSm" color="onSurfaceVariant" style={styles.description}>
+              {description}
+            </Text>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.right}>
@@ -94,7 +109,14 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     flex: 1,
   },
+  labelColumn: {
+    flexShrink: 1,
+    gap: 2,
+  },
   label: {
+    flexShrink: 1,
+  },
+  description: {
     flexShrink: 1,
   },
   right: {

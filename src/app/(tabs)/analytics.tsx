@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AdBanner } from '@/components/ads/AdBanner';
+import { CurrencyScopeSelector } from '@/components/CurrencyScopeSelector';
 import { AvgDailySpendCard } from '@/components/analytics/AvgDailySpendCard';
 import { BudgetList } from '@/components/analytics/BudgetList';
 import { CashFlowChart } from '@/components/analytics/CashFlowChart';
@@ -29,7 +30,7 @@ import {
 } from '@/lib/analytics';
 import { computeBudgetStatus, startOfMonthISO } from '@/lib/budgets';
 import { getPeriodRange } from '@/lib/period';
-import { hasOtherCurrencies } from '@/lib/currencyScope';
+import { distinctCurrencies, filterByCurrency, hasOtherCurrencies } from '@/lib/currencyScope';
 import { getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
 import { usePeriodStore } from '@/stores/usePeriodStore';
@@ -60,7 +61,12 @@ export default function AnalyticsScreen() {
   const monthFrom = useMemo(() => startOfMonthISO(), []);
   const { data: monthTransactions = [] } = useTransactions({ from: monthFrom });
 
-  const currency: Currency = profile?.defaultCurrency ?? 'TRY';
+  const reportingCurrency = useAppStore((s) => s.reportingCurrency);
+  const setReportingCurrency = useAppStore((s) => s.setReportingCurrency);
+  const currency: Currency = reportingCurrency ?? profile?.defaultCurrency ?? 'TRY';
+
+  // Seçici yalnızca kullanıcının birden fazla para biriminde işlemi varsa görünür (koşullu).
+  const currencies = useMemo(() => distinctCurrencies(transactions), [transactions]);
 
   // Gider tipi filtresi gelir'i etkilemez (filterByExpenseType gelirleri korur):
   // net = gelir − filtreli gider, böylece Sabit/Değişken seçiminde net birikim güncellenir.
@@ -92,6 +98,7 @@ export default function AnalyticsScreen() {
 
   const savingsRate = totals.income > 0 && totals.net > 0 ? totals.net / totals.income : null;
   const hasTransactions = transactions.length > 0;
+  const hasCurrencyTransactions = filterByCurrency(transactions, currency).length > 0;
 
   const trendKey = filter.type === 'custom' ? 'custom' : filter.type;
 
@@ -127,6 +134,11 @@ export default function AnalyticsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.selectors}>
           <PeriodSelector />
+          <CurrencyScopeSelector
+            currencies={currencies}
+            value={currency}
+            onChange={(c) => void setReportingCurrency(c)}
+          />
           <SegmentedControl
             options={expenseTypeOptions}
             value={expenseType}
@@ -138,6 +150,13 @@ export default function AnalyticsScreen() {
         {hasExcludedCurrencies ? (
           <Text variant="labelSm" color="onSurfaceVariant">
             {t('dashboard.currencyNote', { currency })}
+          </Text>
+        ) : null}
+
+        {hasTransactions && !hasCurrencyTransactions ? (
+          // Para birimi seçici üstte görünür olduğundan "Ayarlar'dan değiştir" ipucu kaldırıldı.
+          <Text variant="bodyMd" color="onSurfaceVariant">
+            {t('dashboard.noCurrencyTransactions', { currency })}
           </Text>
         ) : null}
 

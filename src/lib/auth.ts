@@ -3,6 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
 import { clearAppCache } from '@/lib/clearAppCache';
+import { markPasswordCreated } from '@/lib/authCapabilities';
 import { cancelUserNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import type { Locale } from '@/stores/useAppStore';
@@ -456,6 +457,7 @@ export async function verifyPasswordResetOtp(params: {
     if (updateError) {
       return fail('verifyPasswordResetOtp', updateError);
     }
+    await markPasswordCreated();
     return { success: true };
   } catch (error) {
     return fail('verifyPasswordResetOtp', error);
@@ -501,6 +503,7 @@ export async function updatePassword(params: { newPassword: string }): Promise<A
     if (error) {
       return fail('updatePassword', error);
     }
+    await markPasswordCreated();
     return { success: true };
   } catch (error) {
     return fail('updatePassword', error);

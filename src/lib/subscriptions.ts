@@ -202,17 +202,35 @@ export function nextRenewalDate(sub: Subscription, from: Date = new Date()): str
   return iso;
 }
 
-/** Aylık eşdeğer toplam: monthly→amount, yearly→amount/12. */
-export function totalMonthlySpend(subs: Subscription[]): number {
-  return subs.reduce((sum, s) => sum + (s.frequency === 'monthly' ? s.amount : s.amount / 12), 0);
+/**
+ * Para birimi güvenliği (bkz. lib/currencyScope.ts): farklı para birimlerindeki abonelikler
+ * ASLA tek toplama karışmaz. Toplam/geçmiş/değişim hesaplayan tüm fonksiyonlar aktif raporlama
+ * para birimine filtreler; `currency` parametresi ZORUNLUDUR (opsiyonel olsaydı unutulan bir
+ * çağrı sessizce eski yanlış davranışa — 500 TRY + 10 USD = "510" — düşerdi).
+ * Abonelik LİSTESİ dokunulmadan tüm para birimlerini göstermeye devam eder.
+ */
+
+/** Aylık eşdeğer toplam (yalnızca `currency`): monthly→amount, yearly→amount/12. */
+export function totalMonthlySpend(subs: Subscription[], currency: Currency): number {
+  return subs
+    .filter((s) => s.currency === currency)
+    .reduce((sum, s) => sum + (s.frequency === 'monthly' ? s.amount : s.amount / 12), 0);
 }
 
-/** Belirli bir ayda aktif olan aboneliklerin aylık eşdeğer toplamı. */
-function monthTotalAt(subs: Subscription[], year: number, monthIndex: number): number {
+/** Belirli bir ayda aktif olan (ve `currency` eşleşen) aboneliklerin aylık eşdeğer toplamı. */
+function monthTotalAt(
+  subs: Subscription[],
+  year: number,
+  monthIndex: number,
+  currency: Currency
+): number {
   const monthStart = new Date(year, monthIndex, 1);
   const monthEnd = new Date(year, monthIndex + 1, 0);
   let total = 0;
   for (const s of subs) {
+    if (s.currency !== currency) {
+      continue;
+    }
     const start = fromISODate(s.startDate);
     const end = s.endDate ? fromISODate(s.endDate) : null;
     const activeInMonth = start <= monthEnd && (!end || end >= monthStart);
@@ -223,9 +241,10 @@ function monthTotalAt(subs: Subscription[], year: number, monthIndex: number): n
   return total;
 }
 
-/** Son N ay (kronolojik, sonuncusu = bu ay) için aylık abonelik harcaması. */
+/** Son N ay (kronolojik, sonuncusu = bu ay) için `currency` cinsinden aylık abonelik harcaması. */
 export function monthlySpendHistory(
   subs: Subscription[],
+  currency: Currency,
   months: number = 7
 ): { month: string; total: number }[] {
   const now = new Date();
@@ -234,28 +253,36 @@ export function monthlySpendHistory(
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     out.push({
       month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      total: monthTotalAt(subs, d.getFullYear(), d.getMonth()),
+      total: monthTotalAt(subs, d.getFullYear(), d.getMonth(), currency),
     });
   }
   return out;
 }
 
-export function thisMonthTotal(subs: Subscription[], asOf: Date = new Date()): number {
-  return monthTotalAt(subs, asOf.getFullYear(), asOf.getMonth());
+export function thisMonthTotal(
+  subs: Subscription[],
+  currency: Currency,
+  asOf: Date = new Date()
+): number {
+  return monthTotalAt(subs, asOf.getFullYear(), asOf.getMonth(), currency);
 }
 
-export function lastMonthTotal(subs: Subscription[], asOf: Date = new Date()): number {
+export function lastMonthTotal(
+  subs: Subscription[],
+  currency: Currency,
+  asOf: Date = new Date()
+): number {
   const d = new Date(asOf.getFullYear(), asOf.getMonth() - 1, 1);
-  return monthTotalAt(subs, d.getFullYear(), d.getMonth());
+  return monthTotalAt(subs, d.getFullYear(), d.getMonth(), currency);
 }
 
-/** Aylık değişim yüzdesi; geçen ay 0 ise null (yeni başlangıç). */
-export function monthOverMonthPct(subs: Subscription[]): number | null {
-  const last = lastMonthTotal(subs);
+/** `currency` cinsinden aylık değişim yüzdesi; geçen ay 0 ise null (yeni başlangıç). */
+export function monthOverMonthPct(subs: Subscription[], currency: Currency): number | null {
+  const last = lastMonthTotal(subs, currency);
   if (last === 0) {
     return null;
   }
-  return ((thisMonthTotal(subs) - last) / last) * 100;
+  return ((thisMonthTotal(subs, currency) - last) / last) * 100;
 }
 
 /** Tüm abonelikler arasında en yakın yenilenme. */

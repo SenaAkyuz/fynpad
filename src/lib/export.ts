@@ -161,6 +161,7 @@ function buildHtml(
 <body>
   <h1>FynPad — ${escapeHtml(t('export.report.title'))}</h1>
   <p class="period">${escapeHtml(t('export.report.period'))}: ${escapeHtml(period)}</p>
+  <p class="period">${escapeHtml(t('export.report.summaryCurrency', { currency }))}</p>
 
   <table>
     <thead>

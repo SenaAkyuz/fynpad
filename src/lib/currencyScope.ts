@@ -33,3 +33,17 @@ export function hasOtherCurrencies(
 ): boolean {
   return transactions.some((tx) => tx.currency !== currency);
 }
+
+/** Uygulamanın desteklediği para birimleri — seçici/filtre sıralaması bunu izler. */
+const CURRENCY_ORDER: Currency[] = ['TRY', 'USD', 'EUR'];
+
+/**
+ * Verilen kayıtlarda gerçekten bulunan para birimleri (sabit sırada: TRY, USD, EUR).
+ * Raporlama para birimi seçicisinin görünürlüğü ve seçenekleri buradan türetilir: uzunluğu
+ * ≥ 2 ise seçici gösterilir, aksi halde tek-para-birimi deneyimi hiç değişmez. Transaction ve
+ * Subscription ortak `currency` alanına sahip olduğu için ikisinde de çalışır (ek sorgu açmaz).
+ */
+export function distinctCurrencies(items: { currency: Currency }[]): Currency[] {
+  const present = new Set(items.map((i) => i.currency));
+  return CURRENCY_ORDER.filter((c) => present.has(c));
+}

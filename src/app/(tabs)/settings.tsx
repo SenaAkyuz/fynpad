@@ -14,8 +14,9 @@ import { Screen } from '@/components/ui/Screen';
 import { SyncStatusIndicator } from '@/components/ui/SyncStatusIndicator';
 import { Text } from '@/components/ui/Text';
 import { useCategories } from '@/hooks/useCategories';
+import { usePasswordStatus } from '@/hooks/useAuthCapabilities';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { getConsentReady, isPrivacyOptionsRequired, showAdPrivacyOptions } from '@/lib/adsConsent';
+import { getConsentReady, showAdPrivacyOptions } from '@/lib/adsConsent';
 import { signOut } from '@/lib/auth';
 import { authenticate, canUseBiometric } from '@/lib/biometric';
 import { clearLocalSecurityForUser } from '@/lib/lockSecurity';
@@ -45,12 +46,12 @@ export default function SettingsScreen() {
   const { data: categories = [] } = useCategories();
   const updateProfile = useUpdateProfile();
 
-  const session = useAuthStore((s) => s.session);
+  const { data: hasPassword = false } = usePasswordStatus();
   // 'email' identity varsa hesabın zaten bir şifresi vardır → "Şifre Değiştir".
   // Yoksa (yalnızca Google OAuth) hesabın şifresi yok → "Şifre Oluştur".
-  const hasPassword = session?.user?.identities?.some((i) => i.provider === 'email') ?? false;
 
   const [picker, setPicker] = useState<PickerKind>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
   const currency: Currency = profile?.defaultCurrency ?? 'TRY';
   const defaultsCount = categories.filter((c) => c.isDefault).length;
@@ -78,11 +79,11 @@ export default function SettingsScreen() {
     if (Platform.OS === 'web') return;
     let mounted = true;
     void (async () => {
-      // Açılıştaki consent init'i bekle: aksi halde requestInfoUpdate henüz bitmemişken
-      // `false` okunup satır bu mount boyunca gizli kalıyordu (bkz. lib/adsConsent.ts).
-      await getConsentReady();
-      const required = await isPrivacyOptionsRequired();
-      if (mounted) setShowAdPreferencesRow(required);
+      // Açılıştaki consent akışını bekle ve sonucundan BESLEN: ayrı bir sorgu yapılmaz
+      // (tek paylaşılan promise). Aksi halde consent bitmeden `false` okunup satır bu mount
+      // boyunca gizli kalıyordu (bkz. lib/adsConsent.ts → getConsentReady).
+      const { privacyOptionsRequired } = await getConsentReady();
+      if (mounted) setShowAdPreferencesRow(privacyOptionsRequired);
     })();
     return () => {
       mounted = false;
@@ -100,9 +101,16 @@ export default function SettingsScreen() {
 
   const onSignOut = () => {
     const confirmSignOut = () => {
+      if (signingOut) return;
+      setSigningOut(true);
       void (async () => {
-        await signOut();
-        router.replace('/(auth)/login');
+        try {
+          await signOut();
+          router.replace('/(auth)/login');
+        } catch {
+          setSigningOut(false);
+          Alert.alert(t('settings.signOutFailed'));
+        }
       })();
     };
 
@@ -151,6 +159,7 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="dollar-sign"
             label={t('settings.currency')}
+            description={t('settings.currencyDescription')}
             value={currency}
             onPress={() => setPicker('currency')}
           />
@@ -226,6 +235,8 @@ export default function SettingsScreen() {
 
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled: signingOut, busy: signingOut }}
+          disabled={signingOut}
           onPress={onSignOut}
           style={({ pressed }) => [
             styles.signOut,
@@ -235,7 +246,7 @@ export default function SettingsScreen() {
         >
           <Icon name="log-out" size={20} color={colors.onTertiaryContainer} strokeWidth={2} />
           <Text variant="labelMd" color="onTertiaryContainer">
-            {t('settings.signOut')}
+            {signingOut ? t('common.loading') : t('settings.signOut')}
           </Text>
         </Pressable>
 

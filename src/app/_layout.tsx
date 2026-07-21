@@ -23,7 +23,7 @@ import { Toast } from '@/components/ui/Toast';
 import { useAppLifecycle } from '@/hooks/useAppLifecycle';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { transactionsKey } from '@/hooks/useTransactions';
-import { requestConsent } from '@/lib/adsConsent';
+import { getConsentReady } from '@/lib/adsConsent';
 import { fontMap } from '@/lib/fonts';
 import { startNetworkMonitoring, stopNetworkMonitoring } from '@/lib/networkStatus';
 import { clearAppCache } from '@/lib/clearAppCache';
@@ -112,6 +112,7 @@ export default function RootLayout() {
   const dailyExpenseRemindersEnabled = useAppStore((s) => s.dailyExpenseRemindersEnabled);
   const remindersUserId = useAppStore((s) => s.remindersUserId);
   const hydrateDailyReminders = useAppStore((s) => s.hydrateDailyReminders);
+  const hydrateReportingCurrency = useAppStore((s) => s.hydrateReportingCurrency);
 
   const initialized = useAuthStore((s) => s.initialized);
   const session = useAuthStore((s) => s.session);
@@ -150,6 +151,11 @@ export default function RootLayout() {
     void hydrateDailyReminders(sessionUserId);
   }, [initialized, sessionUserId, hydrateDailyReminders]);
 
+  useEffect(() => {
+    if (!initialized) return;
+    void hydrateReportingCurrency(sessionUserId);
+  }, [initialized, sessionUserId, hydrateReportingCurrency]);
+
   // Arka plana düşünce kilitle (kilit açık + oturum varsa).
   useAppLifecycle();
 
@@ -164,22 +170,28 @@ export default function RootLayout() {
     void applyOrientationPolicy();
   }, []);
 
-  // AdMob: önce EU/UK consent (UMP), sonra SDK init + ilk interstitial. Web'de no-op (native yok).
-  // Native modül eksik/başlatma patlarsa uygulamanın açılışını engellememeli (try/catch).
+  // AdMob: önce EU/UK consent (UMP). canRequestAds FALSE ise reklam sistemi HİÇ başlatılmaz
+  // (SDK init + interstitial + banner). Sonuç store'a yazılır → bannerlar da aynı kapıyı okur.
+  // Web'de no-op (native yok). Native modül eksik/başlatma patlarsa açılışı engellememeli.
+  const setAdsAllowed = useAppStore((s) => s.setAdsAllowed);
   useEffect(() => {
     if (Platform.OS === 'web') {
       return;
     }
     void (async () => {
       try {
-        await requestConsent(); // EU/UK'de consent formu; Türkiye'de no-op
+        const { canRequestAds } = await getConsentReady();
+        if (!canRequestAds) {
+          return; // consent kesinleşmedi/reddedildi → hiçbir reklam isteği yapılmaz
+        }
         await mobileAds().initialize();
         initInterstitial();
+        setAdsAllowed(true);
       } catch (e) {
         if (__DEV__) console.warn('[FynPad] AdMob init skipped:', e);
       }
     })();
-  }, []);
+  }, [setAdsAllowed]);
 
   // Zamanlamaları tercihle senkronla. YALNIZCA tercih aktif kullanıcı için hydrate edildiyse
   // çalışır (remindersUserId === sessionUserId) — aksi halde önceki hesabın değeriyle yanlış

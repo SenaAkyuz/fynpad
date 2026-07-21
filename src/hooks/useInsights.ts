@@ -17,6 +17,7 @@ import type { Insight } from '@/types';
  */
 export function useInsights(): { insights: Insight[]; isLoading: boolean } {
   const locale = useAppStore((s) => s.locale);
+  const reportingCurrency = useAppStore((s) => s.reportingCurrency);
   const { data: transactions = [], isLoading: lt } = useTransactions();
   const { data: categories = [], isLoading: lc } = useCategories();
   const { data: budgets = [], isLoading: lb } = useBudgets();
@@ -39,10 +40,21 @@ export function useInsights(): { insights: Insight[]; isLoading: boolean } {
         goals,
         budgetStatuses,
         profile,
+        reportingCurrency,
         locale,
         today: new Date(),
       }),
-    [transactions, categories, budgets, subscriptions, goals, budgetStatuses, profile, locale]
+    [
+      transactions,
+      categories,
+      budgets,
+      subscriptions,
+      goals,
+      budgetStatuses,
+      profile,
+      reportingCurrency,
+      locale,
+    ]
   );
 
   return { insights, isLoading: lt || lc || lb || ls || lg };

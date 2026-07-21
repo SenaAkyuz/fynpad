@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AdBanner } from '@/components/ads/AdBanner';
+import { CurrencyScopeSelector } from '@/components/CurrencyScopeSelector';
 import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { IncomeExpenseCards } from '@/components/dashboard/IncomeExpenseCards';
@@ -20,7 +21,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
 import { getPeriodRange } from '@/lib/period';
-import { hasOtherCurrencies } from '@/lib/currencyScope';
+import { distinctCurrencies, filterByCurrency, hasOtherCurrencies } from '@/lib/currencyScope';
 import { getBreakdown, getTotals } from '@/lib/transactions';
 import { useAppStore } from '@/stores/useAppStore';
 import { usePeriodStore } from '@/stores/usePeriodStore';
@@ -41,7 +42,12 @@ export default function DashboardScreen() {
   const { data: transactions = [], isLoading } = useTransactions(range);
   const { data: profile } = useProfile();
 
-  const currency: Currency = profile?.defaultCurrency ?? 'TRY';
+  const reportingCurrency = useAppStore((s) => s.reportingCurrency);
+  const setReportingCurrency = useAppStore((s) => s.setReportingCurrency);
+  const currency: Currency = reportingCurrency ?? profile?.defaultCurrency ?? 'TRY';
+
+  // Seçici yalnızca kullanıcının birden fazla para biriminde işlemi varsa görünür (koşullu).
+  const currencies = useMemo(() => distinctCurrencies(transactions), [transactions]);
 
   // Özetler YALNIZCA varsayılan para birimindeki işlemlerden hesaplanır (bkz. lib/currencyScope.ts).
   const totals = useMemo(() => getTotals(transactions, currency), [transactions, currency]);
@@ -57,6 +63,7 @@ export default function DashboardScreen() {
 
   const trendPercent = totals.income > 0 ? (totals.net / totals.income) * 100 : 0;
   const hasTransactions = transactions.length > 0;
+  const hasCurrencyTransactions = filterByCurrency(transactions, currency).length > 0;
 
   const trendKey = filter.type === 'custom' ? 'custom' : filter.type;
 
@@ -77,6 +84,12 @@ export default function DashboardScreen() {
 
         <PeriodSelector />
 
+        <CurrencyScopeSelector
+          currencies={currencies}
+          value={currency}
+          onChange={(c) => void setReportingCurrency(c)}
+        />
+
         <IncomeExpenseCards
           income={totals.income}
           expense={totals.expense}
@@ -95,6 +108,14 @@ export default function DashboardScreen() {
         {hasExcludedCurrencies ? (
           <Text variant="labelSm" color="onSurfaceVariant" style={styles.currencyNote}>
             {t('dashboard.currencyNote', { currency })}
+          </Text>
+        ) : null}
+
+        {hasTransactions && !hasCurrencyTransactions ? (
+          // Seçili para biriminde bu dönem veri yok. Para birimi seçici artık üstte görünür
+          // olduğu için "Ayarlar'dan değiştir" ipucu kaldırıldı — net boş durum metni yeterli.
+          <Text variant="bodyMd" color="onSurfaceVariant">
+            {t('dashboard.noCurrencyTransactions', { currency })}
           </Text>
         ) : null}
 

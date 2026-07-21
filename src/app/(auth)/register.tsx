@@ -258,6 +258,9 @@ export default function RegisterScreen() {
               onPress={onGoogleSignIn}
               style={styles.googleButton}
             />
+            <Text variant="labelSm" color="onSurfaceVariant" style={styles.googleHint}>
+              {t('signUp.googleContinueHint')}
+            </Text>
           </GlassCard>
 
           <View style={styles.footer}>
@@ -340,6 +343,10 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     marginTop: spacing.lg,
+  },
+  googleHint: {
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   offlineHint: {
     marginTop: spacing.lg,

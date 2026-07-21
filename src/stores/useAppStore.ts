@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import i18n from '@/locales/i18n';
 import { secureStorage, storage } from '@/lib/storage';
+import type { Currency } from '@/types';
 
 export type ThemeMode = 'light' | 'dark';
 export type Locale = 'tr' | 'en';
@@ -13,6 +14,7 @@ export type Locale = 'tr' | 'en';
  * blob'unda tutulduğunda A hesabında kapatmak B hesabında da kapalı gösteriyordu.
  */
 const dailyRemindersKey = (userId: string) => `reminders.daily.${userId}`;
+const reportingCurrencyKey = (userId: string) => `reporting.currency.${userId}`;
 
 export type AppState = {
   themeMode: ThemeMode;
@@ -20,6 +22,14 @@ export type AppState = {
   dailyExpenseRemindersEnabled: boolean;
   /** tercihin ait olduğu kullanıcı (null = oturum yok / henüz hydrate edilmedi) */
   remindersUserId: string | null;
+  reportingCurrency: Currency | null;
+  reportingCurrencyUserId: string | null;
+  /**
+   * UMP consent kararı reklam isteğine izin veriyor mu (bkz. lib/adsConsent → getConsentReady).
+   * Başlangıç `false`: consent daha bilinmiyorsa HİÇBİR reklam (SDK init, banner, interstitial)
+   * başlatılmaz. Persist EDİLMEZ — her açılışta consent akışından yeniden türetilir.
+   */
+  adsAllowed: boolean;
   /** persist rehydrate tamamlandı mı (splash'i tutmak için) */
   hydrated: boolean;
   setThemeMode: (mode: ThemeMode) => void;
@@ -32,6 +42,9 @@ export type AppState = {
   setDailyExpenseRemindersEnabled: (enabled: boolean) => Promise<boolean>;
   /** userId ile hydrate: null (çıkış) ise varsayılana döner. */
   hydrateDailyReminders: (userId: string | null) => Promise<void>;
+  setReportingCurrency: (currency: Currency) => Promise<void>;
+  hydrateReportingCurrency: (userId: string | null) => Promise<void>;
+  setAdsAllowed: (allowed: boolean) => void;
 };
 
 export const useAppStore = create<AppState>()(
@@ -41,8 +54,12 @@ export const useAppStore = create<AppState>()(
       locale: (i18n.language as Locale) ?? 'en',
       dailyExpenseRemindersEnabled: false,
       remindersUserId: null,
+      reportingCurrency: null,
+      reportingCurrencyUserId: null,
+      adsAllowed: false,
       hydrated: false,
       setThemeMode: (themeMode) => set({ themeMode }),
+      setAdsAllowed: (adsAllowed) => set({ adsAllowed }),
       setLocale: (locale) => {
         set({ locale });
         void i18n.changeLanguage(locale);
@@ -78,6 +95,26 @@ export const useAppStore = create<AppState>()(
         }
         const value = await storage.getItem(dailyRemindersKey(userId));
         set({ remindersUserId: userId, dailyExpenseRemindersEnabled: value === '1' });
+      },
+      setReportingCurrency: async (reportingCurrency) => {
+        const { reportingCurrencyUserId } = get();
+        set({ reportingCurrency });
+        if (reportingCurrencyUserId) {
+          await secureStorage.setItem(
+            reportingCurrencyKey(reportingCurrencyUserId),
+            reportingCurrency
+          );
+        }
+      },
+      hydrateReportingCurrency: async (userId) => {
+        if (!userId) {
+          set({ reportingCurrencyUserId: null, reportingCurrency: null });
+          return;
+        }
+        const stored = await storage.getItem(reportingCurrencyKey(userId));
+        const reportingCurrency: Currency | null =
+          stored === 'TRY' || stored === 'USD' || stored === 'EUR' ? stored : null;
+        set({ reportingCurrencyUserId: userId, reportingCurrency });
       },
     }),
     {

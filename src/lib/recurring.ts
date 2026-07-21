@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { toISODate } from '@/lib/format';
+import { fromISODate, toISODate } from '@/lib/format';
 import type { CategoryKind, Currency, RecurringFrequency, RecurringRule } from '@/types';
 
 /** DB satırı (snake_case) → app tipi (camelCase). */
@@ -55,15 +55,6 @@ function rowToRule(r: RecurringRuleRow): RecurringRule {
 
 export { rowToRule, type RecurringRuleRow };
 
-async function requireUserId(): Promise<string> {
-  const { data } = await supabase.auth.getUser();
-  const userId = data.user?.id;
-  if (!userId) {
-    throw new Error('Not authenticated');
-  }
-  return userId;
-}
-
 export type RecurringRuleInput = {
   categoryId: string;
   amount: number;
@@ -76,6 +67,16 @@ export type RecurringRuleInput = {
   monthOfYear?: number | null;
   startDate: string;
   endDate?: string | null;
+  clientRequestId: string;
+  /**
+   * Bugüne (seçilen işlem tarihine) YAZILACAK ilk ödemenin tarihi, veya `null`.
+   *
+   * null → RPC bugüne HİÇBİR kayıt yazmaz; tüm occurrence'lar yalnızca catch-up/scheduler
+   * tarafından kuralın gerçek tetiklenme günlerinde üretilir. Geçmiş başlangıçta (6 Mayıs)
+   * bu null olmalı — aksi halde kuralın occurrence'ı olmayan yanlış bir "bugün" işlemi
+   * oluşuyordu. Yalnızca "bugün ödedim + bugünden başlat" senaryosunda tarih taşınır.
+   */
+  initialTransactionDate: string | null;
   /**
    * Part 7 / brief 4.4: tekrarlayan kural aynı anda abonelik olarak işaretlenebilir.
    * is_subscription=true ise DB constraint gereği serviceName dolu + kind 'expense' +
@@ -118,35 +119,130 @@ export async function listRecurringRules(): Promise<RecurringRule[]> {
  * (backfill — start_date <= today ise). RPC çağrısı idempotent olduğundan güvenli.
  */
 export async function createRecurringRule(input: RecurringRuleInput): Promise<RecurringRule> {
-  const userId = await requireUserId();
-  const { data, error } = await supabase
-    .from('recurring_rules')
-    .insert({
-      user_id: userId,
-      category_id: input.categoryId,
-      amount: input.amount,
-      currency: input.currency,
-      kind: input.kind,
-      note: input.note ?? null,
-      frequency: input.frequency,
-      day_of_week: input.dayOfWeek ?? null,
-      day_of_month: input.dayOfMonth ?? null,
-      month_of_year: input.monthOfYear ?? null,
-      start_date: input.startDate,
-      end_date: input.endDate ?? null,
-      is_subscription: input.isSubscription ?? false,
-      service_name: input.isSubscription ? (input.serviceName ?? null) : null,
-      plan_name: input.isSubscription ? (input.planName ?? null) : null,
-      icon_key: input.isSubscription ? (input.iconKey ?? null) : null,
-    })
-    .select('*')
-    .single();
+  const { data, error } = await supabase.rpc('create_recurring_rule_with_initial_transaction', {
+    p_client_request_id: input.clientRequestId,
+    p_category_id: input.categoryId,
+    p_amount: input.amount,
+    p_currency: input.currency,
+    p_kind: input.kind,
+    p_note: input.note ?? null,
+    p_frequency: input.frequency,
+    p_day_of_week: input.dayOfWeek ?? null,
+    p_day_of_month: input.dayOfMonth ?? null,
+    p_month_of_year: input.monthOfYear ?? null,
+    p_start_date: input.startDate,
+    p_end_date: input.endDate ?? null,
+    p_initial_transaction_date: input.initialTransactionDate,
+  });
   if (error) {
     throw error;
   }
   // Backfill: start_date geçmişteyse eksik işlemleri üret.
-  await processRecurringRules();
   return rowToRule(data as RecurringRuleRow);
+}
+
+/**
+ * Kuralın `from`'dan SONRAKİ ilk tetiklenme tarihi ('YYYY-MM-DD'), yoksa null.
+ *
+ * DB'deki `recurring_rule_fires_on` ile AYNI semantiği uygular (0003):
+ *   daily   → her gün
+ *   weekly  → haftanın günü (0=Pazar, JS getDay() ile aynı)
+ *   monthly → min(dayOfMonth, ayın son günü)  ← 31 seçilip 30 çeken ay
+ *   yearly  → monthOfYear + aynı gün sığdırma
+ * Aksi halde ekranda gösterilen "sonraki tekrar" tarihi scheduler'ın gerçekte üreteceği
+ * tarihten sapardı. `from` DAHİL DEĞİLDİR — ertesi günden başlar.
+ */
+export function nextOccurrenceDate(
+  rule: {
+    frequency: RecurringFrequency;
+    dayOfWeek?: number | null;
+    dayOfMonth?: number | null;
+    monthOfYear?: number | null;
+    startDate: string;
+    endDate?: string | null;
+  },
+  from: Date = new Date()
+): string | null {
+  const firesOn = (d: Date): boolean => {
+    switch (rule.frequency) {
+      case 'daily':
+        return true;
+      case 'weekly':
+        return d.getDay() === (rule.dayOfWeek ?? 0);
+      case 'monthly': {
+        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        return d.getDate() === Math.min(rule.dayOfMonth ?? 1, lastDay);
+      }
+      case 'yearly': {
+        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        return (
+          d.getMonth() + 1 === (rule.monthOfYear ?? 1) &&
+          d.getDate() === Math.min(rule.dayOfMonth ?? 1, lastDay)
+        );
+      }
+      default:
+        return false;
+    }
+  };
+
+  const start = fromISODate(rule.startDate);
+  // Aramaya from'un ERTESİ gününden başla; start_date daha ileriyse oradan.
+  const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate() + 1);
+  if (cursor < start) {
+    cursor.setTime(start.getTime());
+  }
+
+  // Yearly'de en kötü ihtimalle ~366+31 gün taranır; üst sınır güvenli.
+  for (let i = 0; i < 800; i += 1) {
+    const iso = toISODate(cursor);
+    if (rule.endDate && iso > rule.endDate) {
+      return null;
+    }
+    if (firesOn(cursor)) {
+      return iso;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return null;
+}
+
+/** DB'deki catch-up penceresi (0011/0012 `max_catchup_days`) ile aynı üst sınır. */
+export const MAX_CATCHUP_DAYS = 400;
+
+/**
+ * `start`'tan `to` tarihine (dahil) kadar kuralın kaç kez tetiklendiğini sayar — yani
+ * kaydetme anında catch-up'ın üreteceği geçmiş+bugünkü işlem sayısı.
+ *
+ * DB ile AYNI iki sınırı uygular: (1) `nextOccurrenceDate` = `recurring_rule_fires_on`
+ * semantiği, (2) `MAX_CATCHUP_DAYS` penceresi (`to - 400` günden eski occurrence'lar
+ * scheduler tarafından da üretilmez). Böylece bilgi satırındaki sayı gerçekte oluşacak
+ * işlem sayısıyla birebir tutar.
+ */
+export function countOccurrencesUpTo(
+  rule: Parameters<typeof nextOccurrenceDate>[0],
+  to: Date = new Date()
+): number {
+  const toISO = toISODate(to);
+  const earliest = new Date(to.getFullYear(), to.getMonth(), to.getDate() - MAX_CATCHUP_DAYS);
+  const earliestISO = toISODate(earliest);
+
+  // Aramaya penceresinin (start_date veya earliest, hangisi büyükse) bir gün öncesinden
+  // başla — nextOccurrenceDate `from`'u dahil etmez. Pencereden eski occurrence'lar zaten
+  // sayılmayacağı için onları taramaya gerek yok (çok eski başlangıçta döngü sınırına
+  // takılmadan doğru sonuç verir).
+  const searchStartISO = rule.startDate > earliestISO ? rule.startDate : earliestISO;
+  const cursor = fromISODate(searchStartISO);
+  cursor.setDate(cursor.getDate() - 1);
+
+  let count = 0;
+  // Pencere en çok MAX_CATCHUP_DAYS gün → daily'de en fazla ~401 occurrence.
+  for (let i = 0; i <= MAX_CATCHUP_DAYS + 1; i += 1) {
+    const next = nextOccurrenceDate(rule, cursor);
+    if (!next || next > toISO) break;
+    count += 1;
+    cursor.setTime(fromISODate(next).getTime());
+  }
+  return count;
 }
 
 export type RecurringRulePatch = Partial<{

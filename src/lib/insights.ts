@@ -36,6 +36,12 @@ export type GenerateContext = GoalInsightContext & {
   budgets: CategoryBudget[];
   subscriptions: Subscription[];
   budgetStatuses: BudgetStatus[];
+  /**
+   * Ekranda aktif raporlama para birimi (dashboard/analiz seçicisi). Verilmezse profil
+   * varsayılanına düşer. Kullanıcı USD grafiğine bakarken TRY içgörüsü görmesin diye
+   * "ortalamanın üzerinde harcama" kuralı bunu kullanır.
+   */
+  reportingCurrency?: Currency | null;
 };
 
 function severityOrder(s: InsightSeverity): number {
@@ -123,8 +129,9 @@ function ruleAboveAverageSpending(ctx: GenerateContext): Insight[] {
   const result: Insight[] = [];
   const thisMonth = new Set([yearMonth(ctx.today)]);
   const prev3 = new Set(previousMonths(ctx.today, 3));
-  // Karşılaştırma tek para biriminde yapılır (bkz. lib/currencyScope.ts).
-  const currency: Currency = ctx.profile?.defaultCurrency ?? 'TRY';
+  // Karşılaştırma tek para biriminde yapılır (bkz. lib/currencyScope.ts) ve ekrandaki aktif
+  // raporlama para birimini izler → dashboard/analiz ile tutarlı kalır.
+  const currency: Currency = ctx.reportingCurrency ?? ctx.profile?.defaultCurrency ?? 'TRY';
 
   for (const cat of ctx.categories.filter((c) => c.kind === 'expense')) {
     const thisMonthSpend = sumExpense(ctx.transactions, cat.id, thisMonth, currency);

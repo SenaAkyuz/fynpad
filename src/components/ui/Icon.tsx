@@ -30,6 +30,7 @@ export type IconName =
   | 'check'
   | 'chevron-left'
   | 'chevron-right'
+  | 'chevron-down'
   | 'trash-2'
   | 'calendar'
   | 'heart'
@@ -216,6 +217,7 @@ const ICONS: Record<IconName, (s: Stroke, color: string) => ReactNode> = {
   check: (s) => <Polyline {...s} points="20 6 9 17 4 12" />,
   'chevron-left': (s) => <Polyline {...s} points="15 18 9 12 15 6" />,
   'chevron-right': (s) => <Polyline {...s} points="9 18 15 12 9 6" />,
+  'chevron-down': (s) => <Polyline {...s} points="6 9 12 15 18 9" />,
   'trash-2': (s) => (
     <>
       <Polyline {...s} points="3 6 5 6 21 6" />

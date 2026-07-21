@@ -3,7 +3,6 @@ import {
   AdsConsent,
   AdsConsentDebugGeography,
   AdsConsentPrivacyOptionsRequirementStatus,
-  AdsConsentStatus,
 } from 'react-native-google-mobile-ads';
 
 /**
@@ -21,35 +20,34 @@ const DEV_TEST_DEVICE_IDS: string[] = [
 ];
 
 /**
- * AdMob için GDPR/EU consent (UMP). `react-native-google-mobile-ads` paketinin YERLEŞİK
- * AdsConsent API'sini kullanır — ekstra paket yok.
- *
- * EU/UK kullanıcılarında consent formu gösterilir; EU dışı (ör. Türkiye) kullanıcılarda
- * `status` REQUIRED olmadığı için form ÇIKMAZ. Hata olsa bile akış bloklanmaz — reklamlar
- * gerekirse non-personalized olarak gösterilebilir. mobileAds().initialize()'dan ÖNCE çağrılmalı.
+ * UMP (GDPR/EU consent) akışının sonucu. Reklam sisteminin tamamı bu değerlerle kapılanır:
+ *  - `canRequestAds`: SDK reklam isteği yapabilir mi (consent kararı kesinleşti mi). Bu `false`
+ *    iken HİÇBİR reklam isteği çıkmamalı (banner + interstitial + SDK init dahil).
+ *  - `privacyOptionsRequired`: Ayarlar'daki "Reklam Tercihleri" satırı gösterilmeli mi (EU/UK).
  */
+export type ConsentResult = {
+  canRequestAds: boolean;
+  privacyOptionsRequired: boolean;
+};
+
 /**
- * Açılıştaki `requestConsent()` çağrısının promise'i (modül seviyesinde).
+ * AdMob için GDPR/EU consent (UMP). `react-native-google-mobile-ads` v16'nın YERLEŞİK
+ * `AdsConsent.gatherConsent()` yardımcısını kullanır — requestInfoUpdate + gerekiyorsa formu
+ * yükleyip gösterme adımlarını TEK çağrıda yapar. Ekstra paket yok.
  *
- * `isPrivacyOptionsRequired()` yalnızca requestInfoUpdate TAMAMLANDIKTAN sonra doğru değeri
- * döner. Ayarlar ekranı consent güncellenmeden önce açılırsa `false` okuyup "Reklam
- * Tercihleri" satırını o mount boyunca gizli bırakıyordu. Okuyucular önce bunu `await`
- * ederek deterministik sonuç alır.
+ * Tek bir paylaşılan promise (modül seviyesi): birden fazla çağıran (açılıştaki init +
+ * Ayarlar ekranı + bannerlar) AYNI sonucu alır, çift form gösterimi olmaz. mobileAds()
+ * initialize()'dan ve herhangi bir banner render'ından ÖNCE çözülmüş olmalıdır.
  */
-let consentReady: Promise<void> | null = null;
+let consentPromise: Promise<ConsentResult> | null = null;
 
-/** Açılıştaki consent init'i bekler. Henüz başlamadıysa hemen çözülür. */
-export function getConsentReady(): Promise<void> {
-  return consentReady ?? Promise.resolve();
+/** Consent akışını (ilk çağrıda) başlatır ve paylaşılan sonucu döner. */
+export function getConsentReady(): Promise<ConsentResult> {
+  consentPromise ??= runConsentFlow();
+  return consentPromise;
 }
 
-export async function requestConsent(): Promise<void> {
-  const run = doRequestConsent();
-  consentReady = run;
-  return run;
-}
-
-async function doRequestConsent(): Promise<void> {
+async function runConsentFlow(): Promise<ConsentResult> {
   try {
     // DEV: EEA coğrafyasını taklit et → UMP consent formu + "Reklam Tercihleri" (privacy options)
     // formu test ortamında görünür olur. Emülatör otomatik test cihazıdır; gerçek cihaz için
@@ -61,31 +59,19 @@ async function doRequestConsent(): Promise<void> {
           testDeviceIdentifiers: DEV_TEST_DEVICE_IDS,
         }
       : undefined;
-    const consentInfo = await AdsConsent.requestInfoUpdate(debugOptions);
-    if (consentInfo.isConsentFormAvailable && consentInfo.status === AdsConsentStatus.REQUIRED) {
-      await AdsConsent.showForm();
-    }
+
+    // gatherConsent: bilgi güncelle + gerekiyorsa formu yükle/göster (tek adım, v16 helper).
+    const info = await AdsConsent.gatherConsent(debugOptions);
+    return {
+      canRequestAds: info.canRequestAds === true,
+      privacyOptionsRequired:
+        info.privacyOptionsRequirementStatus === AdsConsentPrivacyOptionsRequirementStatus.REQUIRED,
+    };
   } catch (e) {
     if (__DEV__) console.log('[FynPad/ads] consent error:', e);
-    // Consent alınamasa bile akışı bloklama.
-  }
-}
-
-/**
- * UMP "privacy options" formu bu kullanıcı için GEREKLİ mi (yalnızca EU/UK gibi bölgelerde).
- * Ayarlar'daki "Reklam Tercihleri" satırı buna göre gösterilir: Türkiye gibi bölgelerde satır
- * hiç çıkmaz — eskiden çıkıyor ve tıklayınca "kullanılamıyor" diyerek kırık özellik izlenimi
- * veriyordu. `requestConsent()` (açılışta) requestInfoUpdate'i zaten çağırdığı için buradaki
- * getConsentInfo güncel değeri döner.
- */
-export async function isPrivacyOptionsRequired(): Promise<boolean> {
-  try {
-    const info = await AdsConsent.getConsentInfo();
-    return (
-      info.privacyOptionsRequirementStatus === AdsConsentPrivacyOptionsRequirementStatus.REQUIRED
-    );
-  } catch {
-    return false;
+    // GÜVENLİ VARSAYILAN: ağ hatası / form yüklenememesi / consent kesinleşmemesi durumunda
+    // reklam İSTEME. Eski akış burada sessizce devam edip reklam başlatıyordu (UMP ihlali).
+    return { canRequestAds: false, privacyOptionsRequired: false };
   }
 }
 

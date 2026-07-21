@@ -8,6 +8,7 @@
     "syncing": "Syncing {{count}} change(s)...",
     "queuedOffline": "{{count}} change(s) queued for sync",
     "offlineSavedSyncLater": "You're offline — saved and will sync when online",
+    "loading": "Loading...",
     "errorTitle": "Something went wrong",
     "errorMessage": "An unexpected error occurred. You can try again.",
     "errorRetry": "Try again"
@@ -124,7 +125,9 @@
     "recentTransactions": "Recent Transactions",
     "viewAll": "View All",
     "total": "Total",
-    "currencyNote": "Summaries are calculated in {{currency}} only. Transactions in other currencies are listed but excluded from totals.",
+    "currencyNote": "Summaries are calculated using {{currency}} transactions only. Other currencies are excluded from totals.",
+    "noCurrencyTransactions": "There are no {{currency}} transactions in this period.",
+    "currencyChangeHint": "You can change the currency in Settings.",
     "noTransactions": "No transactions in this period",
     "period": {
       "day": "Day",
@@ -166,7 +169,9 @@
       "allDates": "All Dates",
       "thisMonth": "This Month",
       "thisYear": "This Year",
-      "last30days": "Last 30 Days"
+      "last30days": "Last 30 Days",
+      "currency": "Currency",
+      "allCurrencies": "All Currencies"
     },
     "empty": "No transactions match these filters",
     "clearFilters": "Clear Filters",
@@ -210,6 +215,9 @@
   },
   "recurring": {
     "toggle": "Recurring",
+    "scheduleSummary": "First record: {{first}} · Next: {{next}}",
+    "scheduleSummaryNoNext": "First record: {{first}} · No next occurrence",
+    "pastStartSummary": "Past start date: {{count}} transactions will be created (from {{from}})",
     "frequency": "Frequency",
     "freqDaily": "Daily",
     "freqWeekly": "Weekly",
@@ -563,6 +571,7 @@
     "languageTr": "Turkish",
     "languageEn": "English",
     "currency": "Default Currency",
+    "currencyDescription": "Automatically selected for new transactions, and reports open in this currency. Existing transactions remain unchanged; currencies are not converted.",
     "currencyTry": "Turkish Lira (₺)",
     "currencyUsd": "US Dollar ($)",
     "currencyEur": "Euro (€)",
@@ -588,6 +597,7 @@
     "exportData": "Export Data",
     "version": "Version",
     "signOut": "Sign Out",
+    "signOutFailed": "Could not sign out. Please try again.",
     "signOutConfirmTitle": "Are you sure you want to sign out?",
     "signOutConfirmAction": "Sign Out",
     "signOutCancel": "Cancel",
@@ -626,7 +636,8 @@
     "confirmPasswordPlaceholder": "Re-enter your new password",
     "submit": "Save",
     "createSuccess": "Your password has been set. You can now also sign in with email and password.",
-    "changeSuccess": "Your password has been updated."
+    "changeSuccess": "Your password has been updated.",
+    "forgotPassword": "I forgot my password"
   },
   "transactionEdit": {
     "title": "Edit Transaction",
@@ -662,7 +673,8 @@
       "totalIncome": "Total Income",
       "totalExpense": "Total Expense",
       "net": "Net",
-      "generatedAt": "Generated"
+      "generatedAt": "Generated",
+      "summaryCurrency": "Summary in {{currency}} (other currencies excluded from totals)"
     },
     "columns": {
       "date": "Date",
@@ -695,7 +707,7 @@
       "All your budgets will be deleted",
       "All your subscriptions will be deleted",
       "This action cannot be undone",
-      "Your email becomes available for a new sign-up"
+      "If you continue with the same Google account later, a new empty FynPad account will be created; deleted data cannot be restored"
     ],
     "confirmPrompt": "Type {{keyword}} below to continue",
     "confirmKeyword": "DELETE",
@@ -784,7 +796,8 @@
     "consentAnd": " and ",
     "consentPrivacy": "Privacy Policy",
     "consentSuffix": ".",
-    "consentRequired": "Please accept the Terms of Service to continue."
+    "consentRequired": "Please accept the Terms of Service to continue.",
+    "googleContinueHint": "Continuing with Google may sign in to an existing account or create a new one."
   },
   "errors": {
     "auth": {
@@ -798,7 +811,8 @@
       "network": "Connection error. Check your internet.",
       "oauthCancelled": "Google sign-in was cancelled.",
       "unknown": "Something went wrong. Please try again.",
-      "emailNotConfirmed": "Please verify your email address first."
+      "emailNotConfirmed": "Please verify your email address first.",
+      "sessionExpired": "Your session has expired. Please sign in again."
     },
     "profile": {
       "updateFailed": "Couldn't update profile"

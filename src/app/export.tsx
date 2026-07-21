@@ -48,6 +48,7 @@ export default function ExportScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const locale = useAppStore((s) => s.locale);
+  const reportingCurrency = useAppStore((s) => s.reportingCurrency);
   const { data: profile } = useProfile();
 
   const initial = rangeFor('thisYear');
@@ -103,8 +104,10 @@ export default function ExportScreen() {
         format,
         locale,
         t,
-        // Özet toplamları varsayılan para biriminde; satırlar kendi currency'siyle kalır.
-        currency: profile?.defaultCurrency ?? 'TRY',
+        // Özet toplamları AKTİF raporlama para biriminde (dashboard/analiz ile tutarlı);
+        // işlem satırları kendi currency'siyle kalır. PDF başlığı hangi para biriminde
+        // olduğunu yazar (bkz. lib/export.ts).
+        currency: reportingCurrency ?? profile?.defaultCurrency ?? 'TRY',
       });
     } catch (e) {
       if (e instanceof ExportError) {

@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
@@ -6,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -17,8 +19,10 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
-import { reauthenticateWithPassword, updatePassword } from '@/lib/auth';
+import { authCapabilitiesKey } from '@/hooks/useAuthCapabilities';
+import { reauthenticateWithPassword, sendPasswordResetEmail, updatePassword } from '@/lib/auth';
 import { passwordFormSchema, type ChangePasswordForm } from '@/lib/validation';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useNetworkStore } from '@/stores/useNetworkStore';
 import { useToastStore } from '@/stores/useToastStore';
 import { spacing } from '@/theme/tokens';
@@ -34,6 +38,8 @@ export default function SetPasswordScreen() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isChange = mode === 'change';
   const isOnline = useNetworkStore((s) => s.isOnline);
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
 
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,6 +74,7 @@ export default function SetPasswordScreen() {
     const res = await updatePassword({ newPassword: values.password });
     setLoading(false);
     if (res.success) {
+      queryClient.setQueryData([...authCapabilitiesKey, user?.id], true);
       useToastStore
         .getState()
         .show(isChange ? 'setPassword.changeSuccess' : 'setPassword.createSuccess', 'success');
@@ -75,6 +82,19 @@ export default function SetPasswordScreen() {
     } else {
       setFormError(t(res.errorKey));
     }
+  };
+
+  const onForgotPassword = async () => {
+    if (!user?.email || !isOnline) return;
+    setFormError('');
+    setLoading(true);
+    const res = await sendPasswordResetEmail({ email: user.email });
+    setLoading(false);
+    if (!res.success) {
+      setFormError(t(res.errorKey));
+      return;
+    }
+    router.push({ pathname: '/(auth)/reset-password-otp', params: { email: user.email } });
   };
 
   return (
@@ -182,6 +202,18 @@ export default function SetPasswordScreen() {
               onPress={handleSubmit(onSubmit)}
               style={styles.submit}
             />
+            {isChange ? (
+              <Pressable
+                accessibilityRole="button"
+                disabled={!isOnline || loading}
+                onPress={() => void onForgotPassword()}
+                style={styles.forgotPassword}
+              >
+                <Text variant="labelMd" color="primary">
+                  {t('setPassword.forgotPassword')}
+                </Text>
+              </Pressable>
+            ) : null}
           </GlassCard>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -223,5 +255,10 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: spacing.xl,
+  },
+  forgotPassword: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    padding: spacing.sm,
   },
 });
