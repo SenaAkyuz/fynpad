@@ -39,6 +39,13 @@ tablet-*.png
 .env
 .env*.local
 
+# local agent task files
+.claude/settings.local.json
+CLAUDE_*.md
+
+# Supabase CLI local cache
+supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 
